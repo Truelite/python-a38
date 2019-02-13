@@ -6,6 +6,10 @@ This library implements a declarative data model similar to Django models, that
 is designed to describe, validate and serialize Italian Fattura Elettronica
 data.
 
+# Dependencies
+
+None: just the python3 standard library.
+
 # Copyright
 
 Copyright 2019 Truelite S.r.l.
