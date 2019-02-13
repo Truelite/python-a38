@@ -10,6 +10,103 @@ data.
 
 None: just the python3 standard library.
 
+
+# Example
+
+```py
+import a38.fattura as a38
+import datetime
+from decimal import Decimal
+
+def riepilogo_standard(dettaglio):
+    from collections import defaultdict
+    # Group by aliquota
+    by_aliquota = defaultdict(list)
+    for linea in dettaglio:
+        by_aliquota[linea.aliquota_iva].append(linea)
+
+    riepilogo = []
+    for aliquota, linee in by_aliquota.items():
+        imponibile = sum(l.prezzo_totale for l in linee)
+        imposta = imponibile * aliquota / Decimal("100.00")
+        riepilogo.append(a38.DatiRiepilogo(aliquota_iva=aliquota, imponibile_importo=imponibile, imposta=imposta, esigibilita_iva="I"))
+
+    return riepilogo
+
+cedente_prestatore = a38.CedentePrestatore(
+    a38.DatiAnagraficiCedentePrestatore(
+        a38.IdFiscaleIVA("IT", "01234567890"),
+        codice_fiscale="NTNBLN22C23A123U",
+        anagrafica=a38.Anagrafica(denominazione="Test User"),
+        regime_fiscale="RF01",
+    ),
+    a38.Sede(indirizzo="via Monferrato", numero_civico="1", cap="50100", comune="Firenze", provincia="FI", nazione="IT"),
+    iscrizione_rea=a38.IscrizioneREA(
+        ufficio="FI",
+        numero_rea="123456",
+        stato_liquidazione="LN",
+    ),
+    contatti=a38.Contatti(email="local_part@pec_domain.it"),
+)
+
+cessionario_committente = a38.CessionarioCommittente(
+    a38.DatiAnagraficiCessionarioCommittente(
+        a38.IdFiscaleIVA("IT", "76543210987"),
+        anagrafica=a38.Anagrafica(denominazione="A Company SRL"),
+    ),
+    a38.Sede(indirizzo="via Langhe", numero_civico="1", cap="50142", comune="Firenze", provincia="FI", nazione="IT"),
+)
+
+bill_number = 1
+
+f = a38.FatturaPrivati()
+f.fattura_elettronica_header.dati_trasmissione = a38.DatiTrasmissione(
+    a38.IdTrasmittente("IT", "10293847561"),
+    codice_destinatario="FUFUFU")
+f.fattura_elettronica_header.cedente_prestatore = cedente_prestatore
+f.fattura_elettronica_header.cessionario_committente = cessionario_committente
+f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGeneraliDocumento(
+    tipo_documento="TD01",
+    divisa="EUR",
+    data=datetime.date.today(),
+    numero=bill_number,
+    causale="Test billing",
+)
+
+dettaglio = [
+    a38.DettaglioLinee(1, descrizione="Test item", quantita=2,
+		       unita_misura="kg", prezzo_unitario=Decimal("25.50"),
+		       aliquota_iva=Decimal("22.00")),
+    a38.DettaglioLinee(1, descrizione="Other item", quantita=1,
+		       unita_misura="kg", prezzo_unitario=Decimal("15.50"),
+		       aliquota_iva=Decimal("22.00")),
+]
+
+for d in dettaglio:
+    d.prezzo_totale = d.prezzo_unitario * d.quantita
+
+riepilogo = riepilogo_standard(dettaglio)
+
+f.fattura_elettronica_body.dati_beni_servizi = a38.DatiBeniServizi(dettaglio, riepilogo)
+f.fattura_elettronica_body.dati_generali.dati_generali_documento.importo_totale_documento = sum(r.imponibile_importo + r.imposta for r in riepilogo)
+
+f.validate()
+
+filename = "{}{}_{:05d}.xml".format(
+    f.fattura_elettronica_header.cedente_prestatore.dati_anagrafici.id_fiscale_iva.id_paese,
+    f.fattura_elettronica_header.cedente_prestatore.dati_anagrafici.id_fiscale_iva.id_codice,
+    bill_number)
+
+from a38.builder import Builder
+builder = Builder()
+builder.default_namespace = a38.NS
+builder.nsmap = {"fe": a38.NS}
+f.to_xml(builder)
+tree = builder.get_tree()
+with open(filename, "wb") as out:
+    tree.write(out)
+```
+
 # Copyright
 
 Copyright 2019 Truelite S.r.l.
