@@ -1,6 +1,5 @@
 from contextlib import contextmanager
-# import xml.etree.ElementTree as ET
-from lxml import etree as ET
+import xml.etree.ElementTree as ET
 
 
 class Builder:
@@ -18,7 +17,7 @@ class Builder:
 
     def add(self, tag: str, value: str, **attrs):
         tag = self._decorate_tag_name(tag)
-        self.etreebuilder.start(tag, attrs, self.nsmap)
+        self.etreebuilder.start(tag, attrs)
         if value is not None:
             self.etreebuilder.data(value)
         self.etreebuilder.end(tag)
@@ -26,7 +25,7 @@ class Builder:
     @contextmanager
     def element(self, tag: str, **attrs):
         tag = self._decorate_tag_name(tag)
-        self.etreebuilder.start(tag, attrs, self.nsmap)
+        self.etreebuilder.start(tag, attrs)
         yield self
         self.etreebuilder.end(tag)
 
