@@ -39,6 +39,10 @@ class DatiTrasmissione(models.Model):
     id_trasmittente = IdTrasmittente
     progressivo_invio = fields.ProgressivoInvioField()
     formato_trasmissione = fields.StringField(length=5, choices=("FPR12", "FPA12"))
+    # FIXME: se la fattura deve essere recapitata ad un soggetto che intende
+    # ricevere le fatture elettroniche attraverso il canale PEC, il campo deve
+    # essere valorizzato con sette zeri (“0000000”) e deve essere valorizzato
+    # il campo PECDestinatario
     codice_destinatario = fields.StringField(null=True, min_length=6, max_length=7)
     contatti_trasmittente = fields.ModelField(ContattiTrasmittente, null=True)
     pec_destinatario = fields.StringField(null=True, min_length=8, max_length=256)
@@ -166,6 +170,10 @@ class DettaglioLinee(models.Model):
 
 class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
+    # FIXME: Su questo valore il sistema effettua un controllo per verificare
+    # la correttezza del calcolo; per i dettagli sull’algoritmo di calcolo si
+    # rimanda al file Elenco controlli versione 1.4 presente sul sito
+    # www.fatturapa.gov.it.
     imponibile_importo = fields.DecimalField(max_length=15)
     imposta = fields.DecimalField(max_length=15)
     esigibilita_iva = fields.StringField(xmltag="EsigibilitaIVA", length=1, choices=("I", "D", "S"), null=True)
@@ -227,8 +235,23 @@ class DatiBeniServizi(models.Model):
                         imposta=imposta, esigibilita_iva="I"))
 
 
+class DatiDocumentiCorrelati(models.Model):
+    # riferimento_numero_linea = fields.IntegerField(max_length=4, null=True)
+    id_documento = fields.StringField(max_length=20)
+    data = fields.DateField(null=True)
+    num_item = fields.StringField(max_length=20)
+    codice_commessa_convenzione = fields.StringField(max_length=100)
+    codice_cup = fields.StringField(max_length=15, xmltag="CodiceCUP")
+    codice_cig = fields.StringField(max_length=15, xmltag="CodiceCIG")
+
+
+class DatiContratto(DatiDocumentiCorrelati):
+    pass
+
+
 class DatiGenerali(models.Model):
     dati_generali_documento = DatiGeneraliDocumento
+    dati_contratto = fields.ModelField(DatiContratto, null=True)
 
 
 class FatturaElettronicaBody(models.Model):

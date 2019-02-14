@@ -327,7 +327,13 @@ class ModelField(Field):
         return self.model.get_xmltag()
 
     def validate(self, value):
-        value = super().validate(value)
+        value = self.clean_value(value)
+        if not self.has_value(value):
+            if not self.null:
+                self.validation_error("value is None or empty")
+            else:
+                return value
+
         if value is None:
             return value
 
