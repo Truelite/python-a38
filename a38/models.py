@@ -8,16 +8,17 @@ class ModelBase:
     def __init__(self):
         pass
 
-    def get_xmltag(self) -> str:
-        xmltag = getattr(self, "xmltag", None)
+    @classmethod
+    def get_xmltag(cls) -> str:
+        xmltag = getattr(cls, "xmltag", None)
         if xmltag is not None:
             return xmltag
 
-        xmlns = getattr(self, "xmlns", None)
+        xmlns = getattr(cls, "xmlns", None)
         if xmlns:
-            return "{" + xmlns + "}" + self.__class__.__name__
+            return "{" + xmlns + "}" + cls.__name__
         else:
-            return self.__class__.__name__
+            return cls.__name__
 
     def get_xmlattrs(self) -> Dict[str, str]:
         return {}
@@ -113,3 +114,24 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         if field is not None:
             value = field.clean_value(value)
         super().__setattr__(key, value)
+
+    def _to_tuple(self):
+        return tuple(getattr(self, name) for name in self._meta.keys())
+
+    def __eq__(self, other):
+        return self._to_tuple() == other._to_tuple()
+
+    def __ne__(self, other):
+        return self._to_tuple() != other._to_tuple()
+
+    def __lt__(self, other):
+        return self._to_tuple() < other._to_tuple()
+
+    def __gt__(self, other):
+        return self._to_tuple() > other._to_tuple()
+
+    def __le__(self, other):
+        return self._to_tuple() <= other._to_tuple()
+
+    def __ge__(self, other):
+        return self._to_tuple() >= other._to_tuple()

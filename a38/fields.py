@@ -293,6 +293,9 @@ class ModelField(Field):
         return self.model()
 
     def has_value(self, value):
+        if value is None:
+            return False
+
         for name, field in self.model._meta.items():
             if field.has_value(getattr(value, name)):
                 return True
@@ -305,6 +308,9 @@ class ModelField(Field):
 
     def validate(self, value):
         value = super().validate(value)
+        if value is None:
+            return value
+
         if not isinstance(value, self.model):
             self.validation_error("{} is not an instance of {}".format(repr(value), self.model.__name__))
 
