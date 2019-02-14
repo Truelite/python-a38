@@ -66,9 +66,7 @@ f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
 	prezzo_unitario="15.50", aliquota_iva="22.00")
 
 f.fattura_elettronica_body.dati_beni_servizi.build_dati_riepilogo()
-
-riepilogo = f.fattura_elettronica_body.dati_beni_servizi.dati_riepilogo
-f.fattura_elettronica_body.dati_generali.dati_generali_documento.importo_totale_documento = sum(r.imponibile_importo + r.imposta for r in riepilogo)
+f.fattura_elettronica_body.build_importo_totale_documento()
 
 f.validate()
 

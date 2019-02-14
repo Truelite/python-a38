@@ -206,6 +206,22 @@ class FatturaElettronicaBody(models.Model):
     dati_generali = DatiGenerali
     dati_beni_servizi = DatiBeniServizi
 
+    def build_importo_totale_documento(self):
+        """
+        Convenience method to compute
+        dati_generali.dati_generali_documento.importo_totale_documento.
+        It replaces an existing value in importo_totale_documento.
+
+        It only adds imponibile_importo and imposta values from
+        dati_beni_servizi.dati_riepilogo.
+
+        For anything more complicated, you need to compute
+        importo_totale_documento yourself, or better, extend this function and
+        submit a pull request.
+        """
+        totale = sum(r.imponibile_importo + r.imposta for r in self.dati_beni_servizi.dati_riepilogo)
+        self.dati_generali.dati_generali_documento.importo_totale_documento = totale
+
 
 class Fattura(models.Model):
     fattura_elettronica_header = FatturaElettronicaHeader
