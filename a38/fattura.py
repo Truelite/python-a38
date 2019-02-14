@@ -421,7 +421,6 @@ class FatturaPA12(Fattura):
     """
     Fattura PA 1.2
     """
-    # FIXME: this is still untested
     def get_versione(self):
         return "FPA12"
 
