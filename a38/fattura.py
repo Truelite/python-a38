@@ -279,7 +279,7 @@ class Fattura(models.Model):
     def from_etree(self, el):
         versione = el.attrib.get("versione", None)
         if versione is None:
-            raise RuntimeError("root element {} misses versione attrbute".format(el.tag))
+            raise RuntimeError("root element {} misses attribute 'versione'".format(el.tag))
 
         if versione != self.get_versione():
             raise RuntimeError("root element versione is {} instead of {}".format(versione, self.get_versione()))
@@ -301,4 +301,23 @@ class FatturaPA12(Fattura):
     """
     # FIXME: this is still untested
     def get_versione(self):
-        return "FPR12"
+        return "FPA12"
+
+
+def auto_from_etree(root):
+    expected_tag = "{{{}}}FatturaElettronica".format(NS)
+    if root.tag != expected_tag:
+        raise RuntimeError("Root element {} is not {}".format(root.tag, expected_tag))
+    versione = root.attrib.get("versione", None)
+    if versione is None:
+        raise RuntimeError("root element {} misses attribute 'versione'".format(root.tag))
+
+    if versione == "FPR12":
+        res = FatturaPrivati12()
+    elif versione == "FPA12":
+        res = FatturaPA12()
+    else:
+        raise RuntimeError("unsupported versione {}".format(versione))
+
+    res.from_etree(root)
+    return res

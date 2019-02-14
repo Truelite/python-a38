@@ -207,3 +207,10 @@ class TestFatturaPrivati12(TestCase):
             xml2 = out.getvalue()
 
         self.assertEqual(xml1, xml2)
+
+        f = a38.auto_from_etree(tree.getroot())
+        f.validate()
+        tree = f.build_etree()
+        with io.StringIO() as out:
+            tree.write(out, encoding="unicode")
+            xml2 = out.getvalue()
