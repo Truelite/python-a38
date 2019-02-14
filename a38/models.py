@@ -105,3 +105,9 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         with builder.element(self.get_xmltag(), **self.get_xmlattrs()) as b:
             for name, field in self._meta.items():
                 field.to_xml(b, getattr(self, name))
+
+    def __setattr__(self, key, value):
+        field = self._meta.get(key, None)
+        if field is not None:
+            value = field.clean_value(value)
+        super().__setattr__(key, value)

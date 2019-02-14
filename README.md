@@ -16,7 +16,6 @@ None: just the python3 standard library.
 ```py
 import a38.fattura as a38
 import datetime
-from decimal import Decimal
 
 def riepilogo_standard(dettaglio):
     from collections import defaultdict
@@ -28,7 +27,7 @@ def riepilogo_standard(dettaglio):
     riepilogo = []
     for aliquota, linee in by_aliquota.items():
         imponibile = sum(l.prezzo_totale for l in linee)
-        imposta = imponibile * aliquota / Decimal("100.00")
+        imposta = imponibile * aliquota / 100
         riepilogo.append(a38.DatiRiepilogo(aliquota_iva=aliquota, imponibile_importo=imponibile, imposta=imposta, esigibilita_iva="I"))
 
     return riepilogo
@@ -75,11 +74,11 @@ f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGener
 
 dettaglio = [
     a38.DettaglioLinee(1, descrizione="Test item", quantita=2,
-		       unita_misura="kg", prezzo_unitario=Decimal("25.50"),
-		       aliquota_iva=Decimal("22.00")),
+		       unita_misura="kg", prezzo_unitario="25.50",
+		       aliquota_iva="22.00"),
     a38.DettaglioLinee(1, descrizione="Other item", quantita=1,
-		       unita_misura="kg", prezzo_unitario=Decimal("15.50"),
-		       aliquota_iva=Decimal("22.00")),
+		       unita_misura="kg", prezzo_unitario="15.50",
+		       aliquota_iva="22.00"),
 ]
 
 for d in dettaglio:
