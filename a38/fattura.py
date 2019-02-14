@@ -45,7 +45,7 @@ class DatiTrasmissione(models.Model):
     # il campo PECDestinatario
     codice_destinatario = fields.StringField(null=True, min_length=6, max_length=7)
     contatti_trasmittente = fields.ModelField(ContattiTrasmittente, null=True)
-    pec_destinatario = fields.StringField(null=True, min_length=8, max_length=256)
+    pec_destinatario = fields.StringField(null=True, min_length=8, max_length=256, xmltag="PECDestinatario")
 
     def validate_model(self):
         super().validate_model()
