@@ -369,7 +369,7 @@ class Fattura(models.Model):
     __xmltag__ = "FatturaElettronica"
 
     fattura_elettronica_header = FatturaElettronicaHeader
-    fattura_elettronica_body = FatturaElettronicaBody
+    fattura_elettronica_body = fields.ModelListField(FatturaElettronicaBody)
 
     def validate(self):
         self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = self.get_versione()

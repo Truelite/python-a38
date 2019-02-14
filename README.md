@@ -55,7 +55,9 @@ f.fattura_elettronica_header.dati_trasmissione = a38.DatiTrasmissione(
     codice_destinatario="FUFUFU")
 f.fattura_elettronica_header.cedente_prestatore = cedente_prestatore
 f.fattura_elettronica_header.cessionario_committente = cessionario_committente
-f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGeneraliDocumento(
+
+body = a38.FatturaElettronicaBody()
+body.dati_generali.dati_generali_documento = a38.DatiGeneraliDocumento(
     tipo_documento="TD01",
     divisa="EUR",
     data=datetime.date.today(),
@@ -63,16 +65,18 @@ f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGener
     causale=["Test billing"],
 )
 
-f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
+body.dati_beni_servizi.add_dettaglio_linee(
 	descrizione="Test item", quantita=2, unita_misura="kg",
 	prezzo_unitario="25.50", aliquota_iva="22.00")
 
-f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
+body.dati_beni_servizi.add_dettaglio_linee(
 	descrizione="Other item", quantita=1, unita_misura="kg",
 	prezzo_unitario="15.50", aliquota_iva="22.00")
 
-f.fattura_elettronica_body.dati_beni_servizi.build_dati_riepilogo()
-f.fattura_elettronica_body.build_importo_totale_documento()
+body.dati_beni_servizi.build_dati_riepilogo()
+body.build_importo_totale_documento()
+
+f.fattura_elettronica_body.append(body)
 
 f.validate()
 
