@@ -1,6 +1,18 @@
 from . import models
 from . import fields
 
+#
+# This file describes the data model of the Italian Fattura Elettronica.
+#
+# Models and fields are inspired from Django's ORM.
+#
+# XML tag names are built automatically from the field names, and can be
+# specified explicitly with the xmltag argument.
+#
+# Models can be used as fields using `fields.ModelField`. Specifying a Model
+# class as a field, automatically wraps it in a `ModelField`.
+#
+
 
 NS = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"
 
@@ -257,12 +269,18 @@ class Fattura(models.Model):
         return builder.get_tree()
 
 
-class FatturaPrivati(Fattura):
+class FatturaPrivati12(Fattura):
+    """
+    Fattura privati 1.2
+    """
     def get_versione(self):
         return "FPR12"
 
 
-class FatturaPA(Fattura):
+class FatturaPA12(Fattura):
+    """
+    Fattura PA 1.2
+    """
     # FIXME: this is still untested
     def get_versione(self):
         return "FPR12"

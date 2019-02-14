@@ -49,7 +49,7 @@ cessionario_committente = a38.CessionarioCommittente(
 
 bill_number = 1
 
-f = a38.FatturaPrivati()
+f = a38.FatturaPrivati12()
 f.fattura_elettronica_header.dati_trasmissione = a38.DatiTrasmissione(
     a38.IdTrasmittente("IT", "10293847561"),
     codice_destinatario="FUFUFU")
