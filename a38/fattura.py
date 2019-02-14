@@ -263,5 +263,6 @@ class FatturaPrivati(Fattura):
 
 
 class FatturaPA(Fattura):
+    # FIXME: this is still untested
     def get_versione(self):
         return "FPR12"
