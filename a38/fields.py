@@ -119,7 +119,11 @@ class IntegerField(ChoicesMixin, Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        return int(value)
+        try:
+            return int(value)
+        except ValueError as e:
+            self.validation_error("'{}' cannot be converted to int: {}".format(value, str(e)))
+
 
     def validate(self, value):
         value = super().validate(value)

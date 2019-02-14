@@ -156,6 +156,8 @@ class TestIntegerField(FieldTestMixin, TestCase):
         self.assertEqual(f.validate(12), 12)
         self.assertEqual(f.validate("12"), 12)
         self.assertEqual(f.validate(12.3), 12)
+        with self.assertRaises(validation.ValidationError):
+            f.validate("foo")
 
     def test_default(self):
         f = self.get_field(default=7)
