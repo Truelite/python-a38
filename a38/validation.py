@@ -1,8 +1,8 @@
-from typing import Sequence
+from typing import Sequence, Optional
 
 
 class ValidationError(Exception):
-    def __init__(self, field_name: str, msg: str):
+    def __init__(self, field_name: Optional[str], msg: str):
         self.field_name = field_name
         self.msg = msg
 
@@ -10,7 +10,10 @@ class ValidationError(Exception):
         return "{}: {}".format(self.field_name, self.msg)
 
     def add_container_name(self, name):
-        self.field_name = name + "." + self.field_name
+        if self.field_name is None:
+            self.field_name = name
+        else:
+            self.field_name = name + "." + self.field_name
 
 
 class ValidationErrors(Exception):

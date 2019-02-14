@@ -59,11 +59,20 @@ class Anagrafica(models.Model):
     def validate_model(self):
         super().validate_model()
         if self.denominazione is None:
-            if self.nome is None or self.cognome is None:
-                self.validation_error(("nome", "cognome", "denominazione"), "nome and cognome must both be set if denominazione is empty")
+            if self.nome is None and self.cognome is None:
+                self.validation_error(("nome", "cognome", "denominazione"), "nome and cognome, or denominazione, must be set")
+            elif self.nome is None:
+                self.validation_error("nome", "nome and cognome must both be set if denominazione is empty")
+            elif self.cognome is None:
+                self.validation_error("cognome", "nome and cognome must both be set if denominazione is empty")
         else:
-            if self.nome is not None or self.cognome is not None:
-                self.validation_error(("nome", "cognome", "denominazione"), "nome and cognome must not be set if denominazione is not empty")
+            should_not_be_set = []
+            if self.nome is not None:
+                should_not_be_set.append("nome")
+            if self.cognome is not None:
+                should_not_be_set.append("cognome")
+            if should_not_be_set:
+                self.validation_error(should_not_be_set, "{} must not be set if denominazione is not empty".format(" and ".join(should_not_be_set)))
 
 
 class DatiAnagraficiBase(models.Model):
@@ -201,7 +210,7 @@ class DatiBeniServizi(models.Model):
             by_aliquota[linea.aliquota_iva].append(linea)
 
         self.dati_riepilogo = []
-        for aliquota, linee in by_aliquota.items():
+        for aliquota, linee in sorted(by_aliquota.items()):
             imponibile = sum(l.prezzo_totale for l in linee)
             imposta = imponibile * aliquota / 100
             self.dati_riepilogo.append(

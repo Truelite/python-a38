@@ -3,6 +3,7 @@ from .validation import ValidationError, ValidationErrors
 import datetime
 import decimal
 from decimal import Decimal
+from contextlib import contextmanager
 import time
 
 
@@ -65,6 +66,17 @@ class Field:
         """
         raise ValidationError(self.name, msg)
 
+    @contextmanager
+    def annotate_validation_errors(self, *extra_names):
+        try:
+            yield
+        except (ValidationError, ValidationErrors) as e:
+            if extra_names:
+                e.add_container_name(".".join(str(x) for x in tuple(self.name, *extra_names)))
+            else:
+                e.add_container_name(self.name)
+            raise
+
     def clean_value(self, value):
         """
         Return a cleaned version of the given value
@@ -88,13 +100,16 @@ class Field:
         value = self.clean_value(value)
         if value is None:
             return
-        builder.add(self.get_xmltag(), value)
+        builder.add(self.get_xmltag(), self.to_str(value))
 
     def to_dict(self, value):
         """
         Return a json-able value for this field
         """
         return self.clean_value(value)
+
+    def to_str(self, value):
+        return str(value)
 
 
 class ChoicesMixin:
@@ -135,15 +150,6 @@ class IntegerField(ChoicesMixin, Field):
             self.validation_error("'{}' should be no more than {} digits long".format(value, self.max_length))
         return value
 
-    def to_xml(self, builder, value):
-        """
-        Add this field to an XML tree
-        """
-        value = self.clean_value(value)
-        if value is None:
-            return
-        builder.add(self.get_xmltag(), str(value))
-
 
 class DecimalField(ChoicesMixin, Field):
     def __init__(self, max_length=None, decimals=2, **kw):
@@ -161,7 +167,7 @@ class DecimalField(ChoicesMixin, Field):
         except decimal.InvalidOperation as e:
             self.validation_error("'{}' cannot be converted to Decimal: {}".format(value, str(e)))
 
-    def _to_xml_value(self, value):
+    def to_str(self, value):
         return str(self.clean_value(value).quantize(self.quantize_sample))
 
     def validate(self, value):
@@ -171,19 +177,10 @@ class DecimalField(ChoicesMixin, Field):
         if not isinstance(value, Decimal):
             self.validation_error("'{}' should be a Decimal", repr(value))
         if self.max_length is not None:
-            xml_value = self._to_xml_value(value)
+            xml_value = self.to_str(value)
             if len(xml_value) > self.max_length:
                 self.validation_error("'{}' should be no more than {} digits long".format(xml_value, self.max_length))
         return value
-
-    def to_xml(self, builder, value):
-        """
-        Add this field to an XML tree
-        """
-        value = self.clean_value(value)
-        if value is None:
-            return
-        builder.add(self.get_xmltag(), self._to_xml_value(value))
 
 
 class StringField(ChoicesMixin, Field):
@@ -239,14 +236,10 @@ class DateField(ChoicesMixin, Field):
             self.validation_error("value must be an instance of datetime.date")
         return value
 
-    def to_xml(self, builder, value):
-        """
-        Add this field to an XML tree
-        """
-        value = self.clean_value(value)
+    def to_str(self, value):
         if value is None:
-            return
-        builder.add(self.get_xmltag(), value.strftime("%Y-%m-%d"))
+            return "None"
+        return value.strftime("%Y-%m-%d")
 
 
 class ProgressivoInvioField(StringField):
@@ -296,7 +289,8 @@ class ModelField(Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        return self.model.clean_value(value)
+        with self.annotate_validation_errors():
+            return self.model.clean_value(value)
 
     def has_value(self, value):
         if value is None:
@@ -320,14 +314,8 @@ class ModelField(Field):
         if not isinstance(value, self.model):
             self.validation_error("{} is not an instance of {}".format(repr(value), self.model.__name__))
 
-        try:
+        with self.annotate_validation_errors():
             value.validate_fields()
-        except ValidationError as e:
-            e.add_container_name(self.name)
-            raise
-        except ValidationErrors as e:
-            e.add_container_name(self.name)
-            raise
 
         value.validate_model()
         return value
@@ -360,7 +348,8 @@ class ModelListField(Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        return [self.model.clean_value(val) for val in value]
+        with self.annotate_validation_errors():
+            return [self.model.clean_value(val) for val in value]
 
     def has_value(self, value):
         if value is None:
@@ -388,11 +377,8 @@ class ModelListField(Field):
             if not isinstance(val, self.model):
                 self.validation_error("list element {} '{}' is not an instance of {}".format(idx, repr(val), self.model.__name__))
 
-            try:
+            with self.annotate_validation_errors(idx):
                 val.validate_fields()
-            except ValidationError as e:
-                e.add_container_name(self.name + ".{}".format(idx))
-                raise
 
             val.validate_model()
         return value

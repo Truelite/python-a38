@@ -1,6 +1,7 @@
 from unittest import TestCase
 from a38 import fields
 from a38 import models
+from a38 import validation
 
 
 class Sample(models.Model):
@@ -27,3 +28,17 @@ class TestModel(TestCase):
         self.assertIsInstance(val, Sample)
         self.assertEqual(val.name, "foo")
         self.assertIsNone(val.value)
+
+        self.assertIsNone(Sample.clean_value(None))
+        with self.assertRaises(validation.ValidationError):
+            Sample.clean_value("foo")
+
+    def test_compare(self):
+        self.assertEqual(Sample("test", 7), Sample("test", 7))
+        self.assertNotEqual(Sample("test", 7), Sample("test", 6))
+        self.assertLess(Sample("test", 6), Sample("test", 7))
+        self.assertLessEqual(Sample("test", 6), Sample("test", 7))
+        self.assertLessEqual(Sample("test", 7), Sample("test", 7))
+        self.assertGreater(Sample("test", 7), Sample("test", 6))
+        self.assertGreaterEqual(Sample("test", 7), Sample("test", 6))
+        self.assertGreaterEqual(Sample("test", 7), Sample("test", 7))

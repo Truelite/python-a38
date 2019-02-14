@@ -84,7 +84,7 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         if isinstance(value, cls):
             return value
         if not isinstance(value, ModelBase):
-            raise ValidationError("{} is not a Model instance".format(repr(value)))
+            raise ValidationError(None, "{} is not a Model instance".format(repr(value)))
         kw = {}
         for name, field in cls._meta.items():
             kw[name] = getattr(value, name, None)
@@ -109,7 +109,10 @@ class Model(ModelBase, metaclass=ModelMetaclass):
 
     def validation_error(self, fields: Union[str, Sequence[str]], msg: str):
         if isinstance(fields, str):
-            raise ValidationError(fields, msg)
+            fields = (fields,)
+
+        if len(fields) == 1:
+            raise ValidationError(fields[0], msg)
         else:
             raise ValidationErrors(tuple(
                 ValidationError(f, msg) for f in fields))
@@ -148,3 +151,15 @@ class Model(ModelBase, metaclass=ModelMetaclass):
 
     def __ge__(self, other):
         return self._to_tuple() >= other._to_tuple()
+
+    def __str__(self):
+        vals = []
+        for name, field in self._meta.items():
+            vals.append(name + "=" + field.to_str(getattr(self, name)))
+        return "{}({})".format(self.__class__.__name__, ", ".join(vals))
+
+    def __repr__(self):
+        vals = []
+        for name, field in self._meta.items():
+            vals.append(name + "=" + field.to_str(getattr(self, name)))
+        return "{}({})".format(self.__class__.__name__, ", ".join(vals))
