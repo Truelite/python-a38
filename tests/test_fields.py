@@ -279,6 +279,8 @@ class TestProgressivoInvioField(FieldTestMixin, TestCase):
 
     def test_construct_default(self):
         f = self.get_field()
+
+        # The field generates always different, always increasing values
         a = f.get_construct_default()
         b = f.get_construct_default()
         c = f.get_construct_default()
@@ -289,3 +291,6 @@ class TestProgressivoInvioField(FieldTestMixin, TestCase):
         self.assertNotEqual(b, c)
         self.assertNotEqual(b, d)
         self.assertNotEqual(c, d)
+        self.assertLess(a, b)
+        self.assertLess(b, c)
+        self.assertLess(c, d)

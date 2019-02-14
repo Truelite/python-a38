@@ -262,7 +262,7 @@ class ProgressivoInvioField(StringField):
             if self.sequence > (64 ** 3):
                 raise RuntimeError("Generated more than {} fatture per second, overflowing local counter".format(64**4))
 
-        value = ts << 16 + self.sequence
+        value = (ts << 16) + self.sequence
         return self._encode_b56(value, 10)
 
 
