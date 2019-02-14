@@ -150,9 +150,52 @@ class DatiBeniServizi(models.Model):
     dettaglio_linee = fields.ModelListField(DettaglioLinee)
     dati_riepilogo = fields.ModelListField(DatiRiepilogo)
 
-    def add_dettaglio(self, **kw):
+    def add_dettaglio_linee(self, **kw):
+        """
+        Convenience method to add entries to dettaglio_linee, autocomputing
+        numero_linea and prezzo_totale when missing.
+
+        prezzo_totale is just computed as prezzo_unitario * quantita.
+
+        For anything more complicated, you need to compute prezzo_totale
+        yourself add pass it explicitly, or better, extend this function and
+        submit a pull request.
+        """
         kw.setdefault("numero_linea", len(self.dettaglio_linee) + 1)
         self.dettaglio_linee.append(DettaglioLinee(**kw))
+
+        # Compute prezzo_totale where not set
+        for d in self.dettaglio_linee:
+            if d.prezzo_totale is not None:
+                continue
+            d.prezzo_totale = d.prezzo_unitario * d.quantita
+
+    def build_dati_riepilogo(self):
+        """
+        Convenience method to compute dati_riepilogo. It replaces existing
+        values in dati_riepilogo.
+
+        It only groups dettaglio_linee by aliquota, sums prezzo_totale to
+        compute imponibile, and applies IVA.
+
+        For anything more complicated, you need to compute dati_riepilogo
+        yourself, or better, extend this function and submit a pull request.
+        """
+        from collections import defaultdict
+
+        # Group by aliquota
+        by_aliquota = defaultdict(list)
+        for linea in self.dettaglio_linee:
+            by_aliquota[linea.aliquota_iva].append(linea)
+
+        self.dati_riepilogo = []
+        for aliquota, linee in by_aliquota.items():
+            imponibile = sum(l.prezzo_totale for l in linee)
+            imposta = imponibile * aliquota / 100
+            self.dati_riepilogo.append(
+                    DatiRiepilogo(
+                        aliquota_iva=aliquota, imponibile_importo=imponibile,
+                        imposta=imposta, esigibilita_iva="I"))
 
 
 class DatiGenerali(models.Model):

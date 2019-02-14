@@ -17,21 +17,6 @@ None: just the python3 standard library.
 import a38.fattura as a38
 import datetime
 
-def riepilogo_standard(dettaglio):
-    from collections import defaultdict
-    # Group by aliquota
-    by_aliquota = defaultdict(list)
-    for linea in dettaglio:
-        by_aliquota[linea.aliquota_iva].append(linea)
-
-    riepilogo = []
-    for aliquota, linee in by_aliquota.items():
-        imponibile = sum(l.prezzo_totale for l in linee)
-        imposta = imponibile * aliquota / 100
-        riepilogo.append(a38.DatiRiepilogo(aliquota_iva=aliquota, imponibile_importo=imponibile, imposta=imposta, esigibilita_iva="I"))
-
-    return riepilogo
-
 cedente_prestatore = a38.CedentePrestatore(
     a38.DatiAnagraficiCedentePrestatore(
         a38.IdFiscaleIVA("IT", "01234567890"),
@@ -72,20 +57,17 @@ f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGener
     causale="Test billing",
 )
 
-f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio(
+f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
 	descrizione="Test item", quantita=2, unita_misura="kg",
 	prezzo_unitario="25.50", aliquota_iva="22.00")
 
-f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio(
+f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
 	descrizione="Other item", quantita=1, unita_misura="kg",
 	prezzo_unitario="15.50", aliquota_iva="22.00")
 
-for d in f.fattura_elettronica_body.dati_beni_servizi.dettaglio_linee:
-    d.prezzo_totale = d.prezzo_unitario * d.quantita
+f.fattura_elettronica_body.dati_beni_servizi.build_dati_riepilogo()
 
-riepilogo = riepilogo_standard(f.fattura_elettronica_body.dati_beni_servizi.dettaglio_linee)
-
-f.fattura_elettronica_body.dati_beni_servizi.dati_riepilogo = riepilogo
+riepilogo = f.fattura_elettronica_body.dati_beni_servizi.dati_riepilogo
 f.fattura_elettronica_body.dati_generali.dati_generali_documento.importo_totale_documento = sum(r.imponibile_importo + r.imposta for r in riepilogo)
 
 f.validate()
