@@ -72,21 +72,20 @@ f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGener
     causale="Test billing",
 )
 
-dettaglio = [
-    a38.DettaglioLinee(1, descrizione="Test item", quantita=2,
-		       unita_misura="kg", prezzo_unitario="25.50",
-		       aliquota_iva="22.00"),
-    a38.DettaglioLinee(1, descrizione="Other item", quantita=1,
-		       unita_misura="kg", prezzo_unitario="15.50",
-		       aliquota_iva="22.00"),
-]
+f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio(
+	descrizione="Test item", quantita=2, unita_misura="kg",
+	prezzo_unitario="25.50", aliquota_iva="22.00")
 
-for d in dettaglio:
+f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio(
+	descrizione="Other item", quantita=1, unita_misura="kg",
+	prezzo_unitario="15.50", aliquota_iva="22.00")
+
+for d in f.fattura_elettronica_body.dati_beni_servizi.dettaglio_linee:
     d.prezzo_totale = d.prezzo_unitario * d.quantita
 
-riepilogo = riepilogo_standard(dettaglio)
+riepilogo = riepilogo_standard(f.fattura_elettronica_body.dati_beni_servizi.dettaglio_linee)
 
-f.fattura_elettronica_body.dati_beni_servizi = a38.DatiBeniServizi(dettaglio, riepilogo)
+f.fattura_elettronica_body.dati_beni_servizi.dati_riepilogo = riepilogo
 f.fattura_elettronica_body.dati_generali.dati_generali_documento.importo_totale_documento = sum(r.imponibile_importo + r.imposta for r in riepilogo)
 
 f.validate()

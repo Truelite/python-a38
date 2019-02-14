@@ -150,6 +150,10 @@ class DatiBeniServizi(models.Model):
     dettaglio_linee = fields.ModelListField(DettaglioLinee)
     dati_riepilogo = fields.ModelListField(DatiRiepilogo)
 
+    def add_dettaglio(self, **kw):
+        kw.setdefault("numero_linea", len(self.dettaglio_linee) + 1)
+        self.dettaglio_linee.append(DettaglioLinee(**kw))
+
 
 class DatiGenerali(models.Model):
     dati_generali_documento = DatiGeneraliDocumento

@@ -72,6 +72,8 @@ class Model(ModelBase, metaclass=ModelMetaclass):
             value = kw.pop(name, None)
             if value is None:
                 value = field.get_construct_default()
+            else:
+                value = field.clean_value(value)
             setattr(self, name, value)
 
     def validate_fields(self):
