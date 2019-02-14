@@ -4,4 +4,5 @@ include README.md
 include doc/README.md
 include tests/*.py
 include download-docs
+include test-parse
 include test-coverage
