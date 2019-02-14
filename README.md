@@ -1,10 +1,16 @@
 # Python A38
 
-Generate Italian Fattura Elettronica from Python.
+Library to generate Italian Fattura Elettronica from Python.
 
 This library implements a declarative data model similar to Django models, that
 is designed to describe, validate and serialize Italian Fattura Elettronica
 data.
+
+Only part of the specification is implemented, with more added as needs will
+arise. You are welcome to implement the missing pieces you need and send a pull
+request: the idea is to have a good, free (as in freedom) library to make
+billing in Italy with Python easier for everyone.
+
 
 # Dependencies
 
