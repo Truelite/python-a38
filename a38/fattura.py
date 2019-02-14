@@ -148,6 +148,7 @@ class DatiGeneraliDocumento(models.Model):
     data = fields.DateField()
     numero = fields.StringField(max_length=20)
     importo_totale_documento = fields.DecimalField(max_length=15)
+    # FIXME: can be repeated if it does not fit
     causale = fields.StringField(max_length=200)
 
 
@@ -246,7 +247,7 @@ class DatiBeniServizi(models.Model):
 
 
 class DatiDocumentiCorrelati(models.Model):
-    # riferimento_numero_linea = fields.IntegerField(max_length=4, null=True)
+    riferimento_numero_linea = fields.ListField(fields.IntegerField(max_length=4), null=True)
     id_documento = fields.StringField(max_length=20)
     data = fields.DateField(null=True)
     num_item = fields.StringField(max_length=20)
@@ -255,13 +256,33 @@ class DatiDocumentiCorrelati(models.Model):
     codice_cig = fields.StringField(max_length=15, xmltag="CodiceCIG")
 
 
+class DatiOrdineAcquisto(DatiDocumentiCorrelati):
+    pass
+
+
 class DatiContratto(DatiDocumentiCorrelati):
+    pass
+
+
+class DatiConvenzione(DatiDocumentiCorrelati):
+    pass
+
+
+class DatiRicezione(DatiDocumentiCorrelati):
+    pass
+
+
+class DatiFattureCollegate(DatiDocumentiCorrelati):
     pass
 
 
 class DatiGenerali(models.Model):
     dati_generali_documento = DatiGeneraliDocumento
+    dati_ordine_acquisto = fields.ModelField(DatiOrdineAcquisto, null=True)
     dati_contratto = fields.ModelField(DatiContratto, null=True)
+    dati_convenzione = fields.ModelField(DatiConvenzione, null=True)
+    dati_ricezione = fields.ModelField(DatiRicezione, null=True)
+    dati_fatture_collegate = fields.ModelField(DatiFattureCollegate, null=True)
 
 
 class DettaglioPagamento(models.Model):

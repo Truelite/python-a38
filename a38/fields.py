@@ -132,6 +132,68 @@ class ChoicesMixin:
         return value
 
 
+class ListField(Field):
+    multivalue = True
+
+    def __init__(self, field, **kw):
+        super().__init__(**kw)
+        self.field = field
+
+    def set_name(self, name: str):
+        super().set_name(name)
+        self.field.xmltag = self.get_xmltag()
+
+    def get_construct_default(self):
+        return []
+
+    def clean_value(self, value):
+        value = super().clean_value(value)
+        if value is None:
+            return value
+        with self.annotate_validation_errors():
+            return [self.field.clean_value(val) for val in value]
+
+    def has_value(self, value):
+        if value is None:
+            return False
+
+        for el in value:
+            if self.field.has_value(el):
+                return True
+        return False
+
+    def validate(self, value):
+        value = super().validate(value)
+        if value is None:
+            return None
+
+        if not isinstance(value, list):
+            self.validation_error("{} is not a list".format(repr(value)))
+        for idx, val in enumerate(value):
+            with self.annotate_validation_errors(idx):
+                self.field.validate(val)
+        return value
+
+    def to_xml(self, builder, value):
+        value = self.clean_value(value)
+        if not self.has_value(value):
+            return
+        for val in value:
+            self.field.to_xml(builder, val)
+
+    def to_jsonable(self, value):
+        value = self.clean_value(value)
+        if value is None:
+            return None
+        return [self.field.to_jsonable(val) for val in value]
+
+    def from_etree(self, elements):
+        values = []
+        for el in elements:
+            values.append(self.field.from_etree(el))
+        return values
+
+
 class IntegerField(ChoicesMixin, Field):
     def __init__(self, max_length=None, **kw):
         super().__init__(**kw)

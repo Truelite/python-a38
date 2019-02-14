@@ -57,11 +57,11 @@ class FieldTestMixin:
     def test_default(self):
         f = self.get_field(default="default")
         self.assertEqual(f.clean_value(None), "default")
-        self.assertEqual(self.to_xml(f, None), "<Sample>default</Sample>")
+        self.assertEqual(self.to_xml(f, None), "<T><Sample>default</Sample></T>")
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, "value"), "<Sample>value</Sample>")
+        self.assertEqual(self.to_xml(f, "value"), "<T><Sample>value</Sample></T>")
 
     def to_xml(self, field, value):
         """
@@ -69,9 +69,11 @@ class FieldTestMixin:
         value in the XML.
         """
         builder = Builder()
-        field.to_xml(builder, value)
+        with builder.element("T"):
+            field.to_xml(builder, value)
         tree = builder.get_tree()
-        if tree.getroot() is None:
+        root = tree.getroot()
+        if not list(root):
             return None
         with io.StringIO() as out:
             tree.write(out, encoding="unicode")
@@ -93,7 +95,7 @@ class TestStringField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default="default")
         self.assertEqual(f.clean_value(None), "default")
-        self.assertEqual(self.to_xml(f, None), "<Sample>default</Sample>")
+        self.assertEqual(self.to_xml(f, None), "<T><Sample>default</Sample></T>")
 
     def test_length(self):
         f = self.get_field(length=3)
@@ -146,7 +148,7 @@ class TestStringField(FieldTestMixin, TestCase):
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, "value"), "<Sample>value</Sample>")
+        self.assertEqual(self.to_xml(f, "value"), "<T><Sample>value</Sample></T>")
 
 
 class TestIntegerField(FieldTestMixin, TestCase):
@@ -163,7 +165,7 @@ class TestIntegerField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default=7)
         self.assertEqual(f.clean_value(None), 7)
-        self.assertEqual(self.to_xml(f, None), "<Sample>7</Sample>")
+        self.assertEqual(self.to_xml(f, None), "<T><Sample>7</Sample></T>")
 
     def test_max_length(self):
         f = self.get_field(max_length=3)
@@ -192,7 +194,7 @@ class TestIntegerField(FieldTestMixin, TestCase):
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, 1), "<Sample>1</Sample>")
+        self.assertEqual(self.to_xml(f, 1), "<T><Sample>1</Sample></T>")
 
 
 class TestDecimalField(FieldTestMixin, TestCase):
@@ -209,7 +211,7 @@ class TestDecimalField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default="7.0")
         self.assertEqual(f.clean_value(None), Decimal("7.0"))
-        self.assertEqual(self.to_xml(f, None), "<Sample>7.00</Sample>")
+        self.assertEqual(self.to_xml(f, None), "<T><Sample>7.00</Sample></T>")
 
     def test_max_length(self):
         f = self.get_field(max_length=4)
@@ -239,8 +241,8 @@ class TestDecimalField(FieldTestMixin, TestCase):
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, "12.345"), "<Sample>12.34</Sample>")
-        self.assertEqual(self.to_xml(f, "34.567"), "<Sample>34.57</Sample>")
+        self.assertEqual(self.to_xml(f, "12.345"), "<T><Sample>12.34</Sample></T>")
+        self.assertEqual(self.to_xml(f, "34.567"), "<T><Sample>34.57</Sample></T>")
 
 
 class TestDateField(FieldTestMixin, TestCase):
@@ -259,7 +261,7 @@ class TestDateField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default="2019-01-02")
         self.assertEqual(f.clean_value(None), datetime.date(2019, 1, 2))
-        self.assertEqual(self.to_xml(f, None), "<Sample>2019-01-02</Sample>")
+        self.assertEqual(self.to_xml(f, None), "<T><Sample>2019-01-02</Sample></T>")
 
     def test_choices(self):
         f = self.get_field(choices=("2019-01-01", "2019-01-02"))
@@ -280,8 +282,8 @@ class TestDateField(FieldTestMixin, TestCase):
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, datetime.date(2019, 1, 2)), "<Sample>2019-01-02</Sample>")
-        self.assertEqual(self.to_xml(f, "2019-01-02"), "<Sample>2019-01-02</Sample>")
+        self.assertEqual(self.to_xml(f, datetime.date(2019, 1, 2)), "<T><Sample>2019-01-02</Sample></T>")
+        self.assertEqual(self.to_xml(f, "2019-01-02"), "<T><Sample>2019-01-02</Sample></T>")
 
 
 class TestProgressivoInvioField(FieldTestMixin, TestCase):
@@ -338,11 +340,11 @@ class TestModelField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default=Sample("test", 7))
         self.assertEqual(f.clean_value(None), Sample("test", 7))
-        self.assertEqual(self.to_xml(f, None), "<Sample><Name>test</Name><Value>7</Value></Sample>")
+        self.assertEqual(self.to_xml(f, None), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, Sample("test", 7)), "<Sample><Name>test</Name><Value>7</Value></Sample>")
+        self.assertEqual(self.to_xml(f, Sample("test", 7)), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
 
 
 class TestModelListField(FieldTestMixin, TestCase):
@@ -364,9 +366,36 @@ class TestModelListField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default=[Sample("test", 7)])
         self.assertEqual(f.clean_value(None), [Sample("test", 7)])
-        self.assertEqual(self.to_xml(f, None), "<Sample><Name>test</Name><Value>7</Value></Sample>")
+        self.assertEqual(self.to_xml(f, None), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
 
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertIsNone(self.to_xml(f, []))
-        self.assertEqual(self.to_xml(f, [Sample("test", 7)]), "<Sample><Name>test</Name><Value>7</Value></Sample>")
+        self.assertEqual(self.to_xml(f, [Sample("test", 7)]), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
+
+
+class TestListField(FieldTestMixin, TestCase):
+    field_class = fields.ListField
+
+    def get_field(self, *args, **kw):
+        return super().get_field(fields.StringField(), *args, **kw)
+
+    def test_construct_default(self):
+        f = self.get_field()
+        value = f.get_construct_default()
+        self.assertEqual(value, [])
+
+    def test_value(self):
+        f = self.get_field()
+        self.assertEqual(f.validate([]), [])
+        self.assertEqual(f.validate(["test1", "test2"]), ["test1", "test2"])
+
+    def test_default(self):
+        f = self.get_field(default=["test1", "test2"])
+        self.assertEqual(f.clean_value(None), ["test1", "test2"])
+        self.assertEqual(self.to_xml(f, None), "<T><Sample>test1</Sample><Sample>test2</Sample></T>")
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertIsNone(self.to_xml(f, []))
+        self.assertEqual(self.to_xml(f, ["test", "foo"]), "<T><Sample>test</Sample><Sample>foo</Sample></T>")

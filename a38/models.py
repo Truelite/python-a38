@@ -174,22 +174,22 @@ class Model(ModelBase, metaclass=ModelMetaclass):
             raise RuntimeError("element is {} instead of {}".format(el.tag, self.get_xmltag()))
 
         tag_map = {field.get_xmltag(): (name, field) for name, field in self._meta.items()}
-        multivalues = None
+
+        # Group values by tag
+        by_name = defaultdict(list)
         for child in el:
             try:
                 name, field = tag_map[child.tag]
             except KeyError:
                 raise RuntimeError("found unexpected element {} in {}".format(child.tag, el.tag))
 
-            if field.multivalue:
-                # Gather multivalue fields and process them later
-                if multivalues is None:
-                    multivalues = defaultdict(list)
-                multivalues[name].append(child)
-            else:
-                setattr(self, name, field.from_etree(child))
+            by_name[name].append(child)
 
-        if multivalues:
-            for name, elements in multivalues.items():
-                field = self._meta[name]
+        for name, elements in by_name.items():
+            field = self._meta[name]
+            if field.multivalue:
                 setattr(self, name, field.from_etree(elements))
+            elif len(elements) != 1:
+                raise RuntimeError("found {} {} elements in {} instead of just 1".format(len(elements), child.tag, el.tag))
+            else:
+                setattr(self, name, field.from_etree(elements[0]))
