@@ -45,6 +45,23 @@ class FieldTestMixin:
         self.assertIsNone(f.validate(None))
         self.assertIsNone(f.clean_value(None))
 
+    def test_construct_default(self):
+        f = self.get_field()
+        self.assertIsNone(f.get_construct_default())
+
+    def test_value(self):
+        f = self.get_field(null=True)
+        self.assertEqual(f.validate("value"), "value")
+
+    def test_default(self):
+        f = self.get_field(default="default")
+        self.assertEqual(f.clean_value(None), "default")
+        self.assertEqual(self.to_xml(f, None), "<Test>default</Test>")
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertEqual(self.to_xml(f, "value"), "<Test>value</Test>")
+
     def to_xml(self, field, value):
         """
         Serialize the field to XML. Returns None is the field generated no
@@ -61,18 +78,7 @@ class FieldTestMixin:
 
 
 class TestField(FieldTestMixin, TestCase):
-    def test_value(self):
-        f = self.get_field(null=True)
-        self.assertEqual(f.validate("value"), "value")
-
-    def test_default(self):
-        f = self.get_field(default="default")
-        self.assertEqual(f.clean_value(None), "default")
-        self.assertEqual(self.to_xml(f, None), "<Test>default</Test>")
-
-    def test_xml(self):
-        f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, "value"), "<Test>value</Test>")
+    pass
 
 
 class TestStringField(FieldTestMixin, TestCase):
@@ -266,3 +272,20 @@ class TestDateField(FieldTestMixin, TestCase):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, datetime.date(2019, 1, 2)), "<Test>2019-01-02</Test>")
         self.assertEqual(self.to_xml(f, "2019-01-02"), "<Test>2019-01-02</Test>")
+
+
+class TestProgressivoInvioField(FieldTestMixin, TestCase):
+    field_class = fields.ProgressivoInvioField
+
+    def test_construct_default(self):
+        f = self.get_field()
+        a = f.get_construct_default()
+        b = f.get_construct_default()
+        c = f.get_construct_default()
+        d = f.get_construct_default()
+        self.assertNotEqual(a, b)
+        self.assertNotEqual(a, c)
+        self.assertNotEqual(a, d)
+        self.assertNotEqual(b, c)
+        self.assertNotEqual(b, d)
+        self.assertNotEqual(c, d)
