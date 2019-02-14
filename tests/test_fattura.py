@@ -91,6 +91,12 @@ class TestDatiBeniServizi(TestCase):
         self.assertEqual(o.dettaglio_linee[0], a38.DettaglioLinee(1, "Line 1", 2, "m²", 7, 14, 22))
         self.assertEqual(o.dettaglio_linee[1], a38.DettaglioLinee(2, "Line 2", 1, "A", "0.4", "0.4", 22))
 
+    def test_add_dettaglio_linee_without_quantita(self):
+        o = a38.DatiBeniServizi()
+        o.add_dettaglio_linee(descrizione="Line 1", prezzo_unitario=7, aliquota_iva=22)
+        self.assertEqual(len(o.dettaglio_linee), 1)
+        self.assertEqual(o.dettaglio_linee[0], a38.DettaglioLinee(1, descrizione="Line 1", prezzo_unitario=7, prezzo_totale=7, aliquota_iva=22))
+
     def test_build_dati_riepilogo(self):
         o = a38.DatiBeniServizi()
         o.add_dettaglio_linee(descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)

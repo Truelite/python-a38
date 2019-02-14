@@ -156,6 +156,13 @@ class DettaglioLinee(models.Model):
     prezzo_totale = fields.DecimalField(max_length=21)
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
 
+    def validate_model(self):
+        super().validate_model()
+        if self.quantita is None and self.unita_misura is not None:
+            self.validation_error("quantita", "field must be present when unita_misura is set")
+        if self.quantita is not None and self.unita_misura is None:
+            self.validation_error("unita_misura", "field must be present when quantita is set")
+
 
 class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
@@ -187,7 +194,10 @@ class DatiBeniServizi(models.Model):
         for d in self.dettaglio_linee:
             if d.prezzo_totale is not None:
                 continue
-            d.prezzo_totale = d.prezzo_unitario * d.quantita
+            if d.quantita is None:
+                d.prezzo_totale = d.prezzo_unitario
+            else:
+                d.prezzo_totale = d.prezzo_unitario * d.quantita
 
     def build_dati_riepilogo(self):
         """
