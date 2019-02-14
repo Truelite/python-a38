@@ -1,6 +1,7 @@
 from typing import Optional
 from .validation import ValidationError, ValidationErrors
 import datetime
+import decimal
 from decimal import Decimal
 import time
 
@@ -124,7 +125,6 @@ class IntegerField(ChoicesMixin, Field):
         except ValueError as e:
             self.validation_error("'{}' cannot be converted to int: {}".format(value, str(e)))
 
-
     def validate(self, value):
         value = super().validate(value)
         if value is None:
@@ -156,7 +156,10 @@ class DecimalField(ChoicesMixin, Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        return Decimal(value)
+        try:
+            return Decimal(value)
+        except decimal.InvalidOperation as e:
+            self.validation_error("'{}' cannot be converted to Decimal: {}".format(value, str(e)))
 
     def _to_xml_value(self, value):
         return str(self.clean_value(value).quantize(self.quantize_sample))
@@ -188,7 +191,7 @@ class StringField(ChoicesMixin, Field):
         super().__init__(**kw)
         if length is not None:
             if min_length is not None or max_length is not None:
-                raise RuntimeError("length cannot be used with min_length or max_length")
+                raise ValueError("length cannot be used with min_length or max_length")
             self.min_length = self.max_length = length
         else:
             self.min_length = min_length
@@ -217,8 +220,16 @@ class DateField(ChoicesMixin, Field):
         if value is None:
             return value
         if isinstance(value, str):
-            return datetime.datetime.strptime(value, "%Y-%m-%d").date()
-        return value
+            try:
+                return datetime.datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError as e:
+                self.validation_error("'{}' is not a valid date: {}".format(value, str(e)))
+        elif isinstance(value, datetime.datetime):
+            return value.date()
+        elif isinstance(value, datetime.date):
+            return value
+        else:
+            self.validation_error("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
 
     def validate(self, value):
         value = super().validate(value)
@@ -264,7 +275,7 @@ class ProgressivoInvioField(StringField):
         else:
             self.sequence += 1
             if self.sequence > (64 ** 3):
-                raise RuntimeError("Generated more than {} fatture per second, overflowing local counter".format(64**4))
+                raise OverflowError("Generated more than {} fatture per second, overflowing local counter".format(64 ** 3))
 
         value = (ts << 16) + self.sequence
         return self._encode_b56(value, 10)

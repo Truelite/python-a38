@@ -202,6 +202,8 @@ class TestDecimalField(FieldTestMixin, TestCase):
         self.assertEqual(f.validate(12), Decimal("12.00"))
         self.assertEqual(f.validate("12"), Decimal("12.00"))
         self.assertEqual(f.validate("12.345"), Decimal("12.345"))
+        with self.assertRaises(validation.ValidationError):
+            f.validate("foo")
 
     def test_default(self):
         f = self.get_field(default="7.0")
@@ -247,6 +249,11 @@ class TestDateField(FieldTestMixin, TestCase):
         f = self.get_field()
         self.assertEqual(f.validate(datetime.date(2019, 1, 2)), datetime.date(2019, 1, 2))
         self.assertEqual(f.validate("2019-01-02"), datetime.date(2019, 1, 2))
+        self.assertEqual(f.validate(datetime.datetime(2019, 1, 2, 12, 30)), datetime.date(2019, 1, 2))
+        with self.assertRaises(validation.ValidationError):
+            f.validate("foo")
+        with self.assertRaises(validation.ValidationError):
+            f.validate([123])
 
     def test_default(self):
         f = self.get_field(default="2019-01-02")
