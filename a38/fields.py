@@ -1,10 +1,12 @@
 from typing import Optional
 from .validation import ValidationError, ValidationErrors
+from dateutil.parser import isoparse
 import datetime
 import decimal
 from decimal import Decimal
 from contextlib import contextmanager
 import time
+import pytz
 
 
 def to_xmltag(name: str, xmlns: Optional[str] = None):
@@ -322,6 +324,50 @@ class DateField(ChoicesMixin, Field):
         if value is None:
             return "None"
         return value.strftime("%Y-%m-%d")
+
+
+class DateTimeField(ChoicesMixin, Field):
+    tz_rome = pytz.timezone("Europe/Rome")
+
+    def clean_value(self, value):
+        value = super().clean_value(value)
+        if value is None:
+            return value
+        if isinstance(value, str):
+            try:
+                res = isoparse(value)
+                if res.tzinfo is None:
+                    res = self.tz_rome.localize(res)
+                return res
+            except ValueError as e:
+                self.validation_error("'{}' is not a valid datetime: {}".format(value, str(e)))
+        elif isinstance(value, datetime.datetime):
+            if value.tzinfo is None:
+                return self.tz_rome.localize(value)
+            return value
+        elif isinstance(value, datetime.date):
+            return datetime.datetime.combine(value, datetime.time(0, 0, 0, tzinfo=self.tz_rome))
+        else:
+            self.validation_error("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
+
+    def validate(self, value):
+        value = super().validate(value)
+        if value is None:
+            return value
+        if not isinstance(value, datetime.datetime):
+            self.validation_error("value must be an instance of datetime.datetime")
+        return value
+
+    def to_jsonable(self, value):
+        """
+        Return a json-able value for this field
+        """
+        return self.to_str(self.clean_value(value))
+
+    def to_str(self, value):
+        if value is None:
+            return "None"
+        return value.isoformat()
 
 
 class ProgressivoInvioField(StringField):

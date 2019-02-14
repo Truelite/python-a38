@@ -80,26 +80,30 @@ class Anagrafica(models.Model):
 
 
 class DatiAnagraficiBase(models.Model):
-    __xmltag__ = "DatiAnagrafici"
     id_fiscale_iva = IdFiscaleIVA
     codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
     anagrafica = Anagrafica
 
 
 class DatiAnagraficiCedentePrestatore(DatiAnagraficiBase):
+    __xmltag__ = "DatiAnagrafici"
     regime_fiscale = fields.StringField(
             length=4, choices=("RF01", "RF02", "RF04", "RF05", "RF06", "RF07",
                                "RF08", "RF09", "RF10", "RF11", "RF12", "RF13",
                                "RF14", "RF15", "RF16", "RF17", "RF18", "RF19"))
 
 
-class Sede(models.Model):
+class IndirizzoType(models.Model):
     indirizzo = fields.StringField(max_length=60)
     numero_civico = fields.StringField(max_length=8, null=True)
     cap = fields.StringField(xmltag="CAP", length=5)
     comune = fields.StringField(max_length=60)
     provincia = fields.StringField(length=2, null=True)
     nazione = fields.StringField(length=2)
+
+
+class Sede(IndirizzoType):
+    pass
 
 
 class IscrizioneREA(models.Model):
@@ -126,7 +130,7 @@ class CedentePrestatore(models.Model):
 
 
 class DatiAnagraficiCessionarioCommittente(DatiAnagraficiBase):
-    pass
+    __xmltag__ = "DatiAnagrafici"
 
 
 class CessionarioCommittente(models.Model):
@@ -148,8 +152,7 @@ class DatiGeneraliDocumento(models.Model):
     data = fields.DateField()
     numero = fields.StringField(max_length=20)
     importo_totale_documento = fields.DecimalField(max_length=15)
-    # FIXME: can be repeated if it does not fit
-    causale = fields.StringField(max_length=200)
+    causale = fields.ListField(fields.StringField(max_length=200))
 
 
 class AltriDatiGestionali(models.Model):
@@ -276,6 +279,30 @@ class DatiFattureCollegate(DatiDocumentiCorrelati):
     pass
 
 
+class DatiAnagraficiVettore(DatiAnagraficiBase):
+    numero_licenza_guida = fields.StringField(max_length=20, null=True)
+
+
+class IndirizzoResa(IndirizzoType):
+    pass
+
+
+class DatiTrasporto(models.Model):
+    dati_anagrafici_vettore = fields.ModelField(DatiAnagraficiVettore, null=True)
+    mezzo_trasporto = fields.StringField(max_length=80, null=True)
+    causale_trasporto = fields.StringField(max_length=100, null=True)
+    numero_colli = fields.IntegerField(max_length=4, null=True)
+    descrizione = fields.StringField(max_length=100, null=True)
+    unita_misura_peso = fields.StringField(max_length=10, null=True)
+    peso_lordo = fields.DecimalField(max_length=7, null=True)
+    peso_netto = fields.DecimalField(max_length=7, null=True)
+    data_ora_ritiro = fields.DateTimeField(null=True)
+    data_inizio_trasporto = fields.DateField(null=True)
+    tipo_resa = fields.StringField(length=3, null=True)
+    indirizzo_resa = fields.ModelField(IndirizzoResa, null=True)
+    data_ora_consegna = fields.DateTimeField(null=True)
+
+
 class DatiGenerali(models.Model):
     dati_generali_documento = DatiGeneraliDocumento
     dati_ordine_acquisto = fields.ModelField(DatiOrdineAcquisto, null=True)
@@ -283,6 +310,7 @@ class DatiGenerali(models.Model):
     dati_convenzione = fields.ModelField(DatiConvenzione, null=True)
     dati_ricezione = fields.ModelField(DatiRicezione, null=True)
     dati_fatture_collegate = fields.ModelField(DatiFattureCollegate, null=True)
+    dati_trasporto = fields.ModelField(DatiTrasporto, null=True)
 
 
 class DettaglioPagamento(models.Model):

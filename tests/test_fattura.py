@@ -158,7 +158,7 @@ class TestFatturaPrivati12(TestCase):
             divisa="EUR",
             data=datetime.date(2019, 1, 1),
             numero=1,
-            causale="Test billing",
+            causale=["Test billing"],
         )
 
         f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(

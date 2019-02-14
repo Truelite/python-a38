@@ -286,6 +286,52 @@ class TestDateField(FieldTestMixin, TestCase):
         self.assertEqual(self.to_xml(f, "2019-01-02"), "<T><Sample>2019-01-02</Sample></T>")
 
 
+class TestDateTimeField(FieldTestMixin, TestCase):
+    field_class = fields.DateTimeField
+
+    def mkdt(self, ye, mo, da, ho, mi, se=0, tz=None):
+        if tz is None:
+            tz = fields.DateTimeField.tz_rome
+        return tz.localize(datetime.datetime(ye, mo, da, ho, mi, se))
+
+    def test_value(self):
+        f = self.get_field()
+        self.assertEqual(f.validate(datetime.datetime(2019, 1, 2, 12, 30)), self.mkdt(2019, 1, 2, 12, 30))
+        self.assertEqual(f.validate("2019-01-02T12:30:00"), self.mkdt(2019, 1, 2, 12, 30))
+        self.assertEqual(f.validate(datetime.datetime(2019, 1, 2, 12, 30)), self.mkdt(2019, 1, 2, 12, 30))
+        with self.assertRaises(validation.ValidationError):
+            f.validate("foo")
+        with self.assertRaises(validation.ValidationError):
+            f.validate([123])
+
+    def test_default(self):
+        f = self.get_field(default="2019-01-02T12:30:00")
+        self.assertEqual(f.clean_value(None), self.mkdt(2019, 1, 2, 12, 30))
+        self.assertEqual(self.to_xml(f, None), "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>")
+
+    def test_choices(self):
+        f = self.get_field(choices=("2019-01-01T12:00:00", "2019-01-02T12:30:00"))
+        self.assertEqual(f.validate("2019-01-01T12:00:00"), self.mkdt(2019, 1, 1, 12, 00))
+        self.assertEqual(f.validate("2019-01-02T12:30:00"), self.mkdt(2019, 1, 2, 12, 30))
+        with self.assertRaises(validation.ValidationError):
+            f.validate(self.mkdt(2019, 1, 2, 12, 15))
+        with self.assertRaises(validation.ValidationError):
+            f.validate(None)
+
+    def test_choices_nullable(self):
+        f = self.get_field(choices=("2019-01-01T12:00:00", "2019-01-02T12:30:00"), null=True)
+        self.assertEqual(f.validate("2019-01-01T12:00:00"), self.mkdt(2019, 1, 1, 12, 00))
+        self.assertEqual(f.validate("2019-01-02T12:30:00"), self.mkdt(2019, 1, 2, 12, 30))
+        self.assertEqual(f.validate(None), None)
+        with self.assertRaises(validation.ValidationError):
+            f.validate(self.mkdt(2019, 1, 2, 12, 15))
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertEqual(self.to_xml(f, self.mkdt(2019, 1, 2, 12, 30)), "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>")
+        self.assertEqual(self.to_xml(f, "2019-01-02T12:13:14"), "<T><Sample>2019-01-02T12:13:14+01:00</Sample></T>")
+
+
 class TestProgressivoInvioField(FieldTestMixin, TestCase):
     field_class = fields.ProgressivoInvioField
 

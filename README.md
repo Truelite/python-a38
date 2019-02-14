@@ -14,7 +14,7 @@ billing in Italy with Python easier for everyone.
 
 # Dependencies
 
-None: just the python3 standard library.
+dateutil, pytz, and the python3 standard library.
 
 
 # Example
@@ -60,7 +60,7 @@ f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGener
     divisa="EUR",
     data=datetime.date.today(),
     numero=bill_number,
-    causale="Test billing",
+    causale=["Test billing"],
 )
 
 f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
