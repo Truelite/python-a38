@@ -96,12 +96,7 @@ filename = "{}{}_{:05d}.xml".format(
     f.fattura_elettronica_header.cedente_prestatore.dati_anagrafici.id_fiscale_iva.id_codice,
     bill_number)
 
-from a38.builder import Builder
-builder = Builder()
-builder.default_namespace = a38.NS
-builder.nsmap = {"fe": a38.NS}
-f.to_xml(builder)
-tree = builder.get_tree()
+tree = f.build_etree()
 with open(filename, "wb") as out:
     tree.write(out)
 ```

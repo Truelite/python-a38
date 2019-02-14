@@ -8,7 +8,6 @@ class Builder:
             etreebuilder = ET.TreeBuilder()
         self.etreebuilder = etreebuilder
         self.default_namespace = None
-        self.nsmap = None
 
     def _decorate_tag_name(self, tag: str):
         if self.default_namespace is not None and not tag.startswith("{"):

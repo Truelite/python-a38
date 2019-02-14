@@ -183,6 +183,16 @@ class Fattura(models.Model):
                 for name, field in self._meta.items():
                     field.to_xml(b1, getattr(self, name))
 
+    def build_etree(self):
+        """
+        Build and return an ElementTree with the fattura in XML format
+        """
+        from a38.builder import Builder
+        builder = Builder()
+        builder.default_namespace = NS
+        self.to_xml(builder)
+        return builder.get_tree()
+
 
 class FatturaPrivati(Fattura):
     def get_versione(self):
