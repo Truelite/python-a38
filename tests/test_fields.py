@@ -1,9 +1,10 @@
 from unittest import TestCase
-# import io
-# from a38.builder import Builder
-# from a38.fattura import IdFiscaleIVA, DatiAnagrafici
 from a38 import fields
 from a38 import validation
+from a38.builder import Builder
+from decimal import Decimal
+import datetime
+import io
 
 NS = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"
 
@@ -36,10 +37,27 @@ class FieldTestMixin:
         # are being filled
         self.assertIsNone(f.clean_value(None))
 
+        # Values set to None are skipped in XML
+        self.assertIsNone(self.to_xml(f, None))
+
     def test_nullable(self):
         f = self.get_field(null=True)
         self.assertIsNone(f.validate(None))
         self.assertIsNone(f.clean_value(None))
+
+    def to_xml(self, field, value):
+        """
+        Serialize the field to XML. Returns None is the field generated no
+        value in the XML.
+        """
+        builder = Builder()
+        field.to_xml(builder, value)
+        tree = builder.get_tree()
+        if tree.getroot() is None:
+            return None
+        with io.StringIO() as out:
+            tree.write(out, encoding="unicode")
+            return out.getvalue()
 
 
 class TestField(FieldTestMixin, TestCase):
@@ -50,6 +68,11 @@ class TestField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default="default")
         self.assertEqual(f.clean_value(None), "default")
+        self.assertEqual(self.to_xml(f, None), "<Test>default</Test>")
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertEqual(self.to_xml(f, "value"), "<Test>value</Test>")
 
 
 class TestStringField(FieldTestMixin, TestCase):
@@ -59,6 +82,11 @@ class TestStringField(FieldTestMixin, TestCase):
         f = self.get_field()
         self.assertEqual(f.validate("value"), "value")
         self.assertEqual(f.validate(12), "12")
+
+    def test_default(self):
+        f = self.get_field(default="default")
+        self.assertEqual(f.clean_value(None), "default")
+        self.assertEqual(self.to_xml(f, None), "<Test>default</Test>")
 
     def test_length(self):
         f = self.get_field(length=3)
@@ -109,6 +137,10 @@ class TestStringField(FieldTestMixin, TestCase):
         with self.assertRaises(validation.ValidationError):
             f.validate("a")
 
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertEqual(self.to_xml(f, "value"), "<Test>value</Test>")
+
 
 class TestIntegerField(FieldTestMixin, TestCase):
     field_class = fields.IntegerField
@@ -118,6 +150,11 @@ class TestIntegerField(FieldTestMixin, TestCase):
         self.assertEqual(f.validate(12), 12)
         self.assertEqual(f.validate("12"), 12)
         self.assertEqual(f.validate(12.3), 12)
+
+    def test_default(self):
+        f = self.get_field(default=7)
+        self.assertEqual(f.clean_value(None), 7)
+        self.assertEqual(self.to_xml(f, None), "<Test>7</Test>")
 
     def test_max_length(self):
         f = self.get_field(max_length=3)
@@ -143,3 +180,89 @@ class TestIntegerField(FieldTestMixin, TestCase):
         self.assertEqual(f.validate(None), None)
         with self.assertRaises(validation.ValidationError):
             f.validate("3")
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertEqual(self.to_xml(f, 1), "<Test>1</Test>")
+
+
+class TestDecimalField(FieldTestMixin, TestCase):
+    field_class = fields.DecimalField
+
+    def test_value(self):
+        f = self.get_field()
+        self.assertEqual(f.validate(12), Decimal("12.00"))
+        self.assertEqual(f.validate("12"), Decimal("12.00"))
+        self.assertEqual(f.validate("12.345"), Decimal("12.345"))
+
+    def test_default(self):
+        f = self.get_field(default="7.0")
+        self.assertEqual(f.clean_value(None), Decimal("7.0"))
+        self.assertEqual(self.to_xml(f, None), "<Test>7.00</Test>")
+
+    def test_max_length(self):
+        f = self.get_field(max_length=4)
+        self.assertEqual(f.validate(1), Decimal("1.00"))
+        # 12 becomes 12.00 which is 5 characters long on a max_length of 4
+        with self.assertRaises(validation.ValidationError):
+            f.validate(12)
+
+    def test_choices(self):
+        f = self.get_field(choices=("1.1", "2.2"))
+        self.assertEqual(f.validate("1.1"), Decimal("1.1"))
+        self.assertEqual(f.validate(Decimal("2.2")), Decimal("2.2"))
+        with self.assertRaises(validation.ValidationError):
+            # 1.1 does not have an exact decimal representation
+            f.validate(1.1)
+        with self.assertRaises(validation.ValidationError):
+            f.validate(None)
+
+    def test_choices_nullable(self):
+        f = self.get_field(choices=("1.1", "2.2"), null=True)
+        self.assertEqual(f.validate("1.1"), Decimal("1.1"))
+        self.assertEqual(f.validate(Decimal("2.2")), Decimal("2.2"))
+        self.assertEqual(f.validate(None), None)
+        with self.assertRaises(validation.ValidationError):
+            # 1.1 does not have an exact decimal representation
+            f.validate(1.1)
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertEqual(self.to_xml(f, "12.345"), "<Test>12.34</Test>")
+        self.assertEqual(self.to_xml(f, "34.567"), "<Test>34.57</Test>")
+
+
+class TestDateField(FieldTestMixin, TestCase):
+    field_class = fields.DateField
+
+    def test_value(self):
+        f = self.get_field()
+        self.assertEqual(f.validate(datetime.date(2019, 1, 2)), datetime.date(2019, 1, 2))
+        self.assertEqual(f.validate("2019-01-02"), datetime.date(2019, 1, 2))
+
+    def test_default(self):
+        f = self.get_field(default="2019-01-02")
+        self.assertEqual(f.clean_value(None), datetime.date(2019, 1, 2))
+        self.assertEqual(self.to_xml(f, None), "<Test>2019-01-02</Test>")
+
+    def test_choices(self):
+        f = self.get_field(choices=("2019-01-01", "2019-01-02"))
+        self.assertEqual(f.validate("2019-01-01"), datetime.date(2019, 1, 1))
+        self.assertEqual(f.validate("2019-01-02"), datetime.date(2019, 1, 2))
+        with self.assertRaises(validation.ValidationError):
+            f.validate(datetime.date(2019, 1, 3))
+        with self.assertRaises(validation.ValidationError):
+            f.validate(None)
+
+    def test_choices_nullable(self):
+        f = self.get_field(choices=("2019-01-01", "2019-01-02"), null=True)
+        self.assertEqual(f.validate("2019-01-01"), datetime.date(2019, 1, 1))
+        self.assertEqual(f.validate("2019-01-02"), datetime.date(2019, 1, 2))
+        self.assertEqual(f.validate(None), None)
+        with self.assertRaises(validation.ValidationError):
+            f.validate(datetime.date(2019, 1, 3))
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertEqual(self.to_xml(f, datetime.date(2019, 1, 2)), "<Test>2019-01-02</Test>")
+        self.assertEqual(self.to_xml(f, "2019-01-02"), "<Test>2019-01-02</Test>")

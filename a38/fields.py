@@ -84,9 +84,10 @@ class Field:
         """
         Add this field to an XML tree
         """
+        value = self.clean_value(value)
         if value is None:
             return
-        builder.add(self.get_xmltag(), self.clean_value(value))
+        builder.add(self.get_xmltag(), value)
 
     def to_dict(self, value):
         """
@@ -98,6 +99,8 @@ class Field:
 class ChoicesMixin:
     def __init__(self, choices=None, **kw):
         super().__init__(**kw)
+        if choices is not None:
+            choices = [self.clean_value(c) for c in choices]
         self.choices = choices
 
     def validate(self, value):
@@ -121,7 +124,7 @@ class IntegerField(ChoicesMixin, Field):
     def validate(self, value):
         value = super().validate(value)
         if value is None:
-            return
+            return value
         if not isinstance(value, int):
             self.validation_error("'{}' should be an int", repr(value))
         if self.max_length is not None and len(str(value)) > self.max_length:
@@ -132,12 +135,13 @@ class IntegerField(ChoicesMixin, Field):
         """
         Add this field to an XML tree
         """
+        value = self.clean_value(value)
         if value is None:
             return
-        builder.add(self.get_xmltag(), str(self.clean_value(value)))
+        builder.add(self.get_xmltag(), str(value))
 
 
-class DecimalField(Field):
+class DecimalField(ChoicesMixin, Field):
     def __init__(self, max_length=None, decimals=2, **kw):
         super().__init__(**kw)
         self.max_length = max_length
@@ -150,23 +154,29 @@ class DecimalField(Field):
             return value
         return Decimal(value)
 
+    def _to_xml_value(self, value):
+        return str(self.clean_value(value).quantize(self.quantize_sample))
+
     def validate(self, value):
         value = super().validate(value)
         if value is None:
-            return
+            return value
         if not isinstance(value, Decimal):
             self.validation_error("'{}' should be a Decimal", repr(value))
-        if self.max_length is not None and len(str(value)) > self.max_length:
-            self.validation_error("'{}' should be no more than {} digits long".format(value, self.max_length))
+        if self.max_length is not None:
+            xml_value = self._to_xml_value(value)
+            if len(xml_value) > self.max_length:
+                self.validation_error("'{}' should be no more than {} digits long".format(xml_value, self.max_length))
         return value
 
     def to_xml(self, builder, value):
         """
         Add this field to an XML tree
         """
+        value = self.clean_value(value)
         if value is None:
             return
-        builder.add(self.get_xmltag(), str(self.clean_value(value).quantize(self.quantize_sample)))
+        builder.add(self.get_xmltag(), self._to_xml_value(value))
 
 
 class StringField(ChoicesMixin, Field):
@@ -189,7 +199,7 @@ class StringField(ChoicesMixin, Field):
     def validate(self, value):
         value = super().validate(value)
         if value is None:
-            return
+            return value
         if self.min_length is not None and len(value) < self.min_length:
             self.validation_error("'{}' should be at least {} characters long".format(value, self.min_length))
         if self.max_length is not None and len(value) > self.max_length:
@@ -197,21 +207,31 @@ class StringField(ChoicesMixin, Field):
         return value
 
 
-class DateField(Field):
+class DateField(ChoicesMixin, Field):
+    def clean_value(self, value):
+        value = super().clean_value(value)
+        if value is None:
+            return value
+        if isinstance(value, str):
+            return datetime.datetime.strptime(value, "%Y-%m-%d").date()
+        return value
+
     def validate(self, value):
         value = super().validate(value)
         if value is None:
-            return
+            return value
         if not isinstance(value, datetime.date):
             self.validation_error("value must be an instance of datetime.date")
+        return value
 
     def to_xml(self, builder, value):
         """
         Add this field to an XML tree
         """
+        value = self.clean_value(value)
         if value is None:
             return
-        builder.add(self.get_xmltag(), self.clean_value(value).strftime("%Y-%m-%d"))
+        builder.add(self.get_xmltag(), value.strftime("%Y-%m-%d"))
 
 
 class ProgressivoInvioField(StringField):
