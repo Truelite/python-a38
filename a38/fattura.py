@@ -76,12 +76,10 @@ class Anagrafica(models.Model):
 
 
 class DatiAnagraficiBase(models.Model):
+    __xmltag__ = "DatiAnagrafici"
     id_fiscale_iva = IdFiscaleIVA
     codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
     anagrafica = Anagrafica
-
-    def get_xmltag(self):
-        return "DatiAnagrafici"
 
 
 class DatiAnagraficiCedentePrestatore(DatiAnagraficiBase):
@@ -245,6 +243,9 @@ class FatturaElettronicaBody(models.Model):
 
 
 class Fattura(models.Model):
+    __xmlns__ = NS
+    __xmltag__ = "FatturaElettronica"
+
     fattura_elettronica_header = FatturaElettronicaHeader
     fattura_elettronica_body = FatturaElettronicaBody
 
@@ -254,9 +255,6 @@ class Fattura(models.Model):
 
     def get_versione(self):
         return None
-
-    def get_xmltag(self):
-        return "FatturaElettronica"
 
     def get_xmlattrs(self):
         return {"versione": self.get_versione()}
@@ -271,11 +269,22 @@ class Fattura(models.Model):
         """
         Build and return an ElementTree with the fattura in XML format
         """
+        self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = self.get_versione()
         from a38.builder import Builder
         builder = Builder()
         builder.default_namespace = NS
         self.to_xml(builder)
         return builder.get_tree()
+
+    def from_etree(self, el):
+        versione = el.attrib.get("versione", None)
+        if versione is None:
+            raise RuntimeError("root element {} misses versione attrbute".format(el.tag))
+
+        if versione != self.get_versione():
+            raise RuntimeError("root element versione is {} instead of {}".format(versione, self.get_versione()))
+
+        return super().from_etree(el)
 
 
 class FatturaPrivati12(Fattura):

@@ -2,6 +2,8 @@ from unittest import TestCase
 import a38.fattura as a38
 from a38 import validation
 from decimal import Decimal
+import datetime
+import io
 
 
 class TestAnagrafica(TestCase):
@@ -111,3 +113,97 @@ class TestFatturaElettronicaBody(TestCase):
         o.build_importo_totale_documento()
 
         self.assertEqual(o.dati_generali.dati_generali_documento.importo_totale_documento, Decimal("19.493"))
+
+
+class TestFatturaPrivati12(TestCase):
+    def build_sample(self):
+        cedente_prestatore = a38.CedentePrestatore(
+            a38.DatiAnagraficiCedentePrestatore(
+                a38.IdFiscaleIVA("IT", "01234567890"),
+                codice_fiscale="NTNBLN22C23A123U",
+                anagrafica=a38.Anagrafica(denominazione="Test User"),
+                regime_fiscale="RF01",
+            ),
+            a38.Sede(indirizzo="via Monferrato", numero_civico="1", cap="50100", comune="Firenze", provincia="FI", nazione="IT"),
+            iscrizione_rea=a38.IscrizioneREA(
+                ufficio="FI",
+                numero_rea="123456",
+                stato_liquidazione="LN",
+            ),
+            contatti=a38.Contatti(email="local_part@pec_domain.it"),
+        )
+
+        cessionario_committente = a38.CessionarioCommittente(
+            a38.DatiAnagraficiCessionarioCommittente(
+                a38.IdFiscaleIVA("IT", "76543210987"),
+                anagrafica=a38.Anagrafica(denominazione="A Company SRL"),
+            ),
+            a38.Sede(indirizzo="via Langhe", numero_civico="1", cap="50142", comune="Firenze", provincia="FI", nazione="IT"),
+        )
+
+        f = a38.FatturaPrivati12()
+        f.fattura_elettronica_header.dati_trasmissione = a38.DatiTrasmissione(
+            a38.IdTrasmittente("IT", "10293847561"),
+            codice_destinatario="FUFUFU")
+        f.fattura_elettronica_header.cedente_prestatore = cedente_prestatore
+        f.fattura_elettronica_header.cessionario_committente = cessionario_committente
+        f.fattura_elettronica_body.dati_generali.dati_generali_documento = a38.DatiGeneraliDocumento(
+            tipo_documento="TD01",
+            divisa="EUR",
+            data=datetime.date(2019, 1, 1),
+            numero=1,
+            causale="Test billing",
+        )
+
+        f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
+                descrizione="Test item", quantita=2, unita_misura="kg",
+                prezzo_unitario="25.50", aliquota_iva="22.00")
+
+        f.fattura_elettronica_body.dati_beni_servizi.add_dettaglio_linee(
+                descrizione="Other item", quantita=1, unita_misura="kg",
+                prezzo_unitario="15.50", aliquota_iva="22.00")
+
+        f.fattura_elettronica_body.dati_beni_servizi.build_dati_riepilogo()
+        f.fattura_elettronica_body.build_importo_totale_documento()
+
+        return f
+
+    def test_validate(self):
+        f = self.build_sample()
+
+        # build_etree also fills formato_trasmissione
+        self.assertIsNone(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione)
+        f.validate()
+        self.assertEqual(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione, "FPR12")
+
+    def test_serialize(self):
+        f = self.build_sample()
+
+        # build_etree also fills formato_trasmissione
+        self.assertIsNone(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione)
+        tree = f.build_etree()
+        self.assertEqual(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione, "FPR12")
+
+        with io.StringIO() as out:
+            tree.write(out, encoding="unicode")
+            xml = out.getvalue()
+
+        self.assertIn('<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" versione="FPR12">', xml)
+        self.assertIn('<FormatoTrasmissione>FPR12</FormatoTrasmissione>', xml)
+
+    def test_parse(self):
+        f = self.build_sample()
+        tree = f.build_etree()
+        with io.StringIO() as out:
+            tree.write(out, encoding="unicode")
+            xml1 = out.getvalue()
+
+        f = a38.FatturaPrivati12()
+        f.from_etree(tree.getroot())
+        f.validate()
+        tree = f.build_etree()
+        with io.StringIO() as out:
+            tree.write(out, encoding="unicode")
+            xml2 = out.getvalue()
+
+        self.assertEqual(xml1, xml2)

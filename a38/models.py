@@ -1,7 +1,7 @@
 from typing import Union, Sequence, Dict
 from .fields import Field, ModelField
 from .validation import ValidationError, ValidationErrors
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 
 class ModelBase:
@@ -10,15 +10,15 @@ class ModelBase:
 
     @classmethod
     def get_xmltag(cls) -> str:
-        xmltag = getattr(cls, "xmltag", None)
-        if xmltag is not None:
-            return xmltag
+        xmltag = getattr(cls, "__xmltag__", None)
+        if xmltag is None:
+            xmltag = cls.__name__
 
-        xmlns = getattr(cls, "xmlns", None)
+        xmlns = getattr(cls, "__xmlns__", None)
         if xmlns:
-            return "{" + xmlns + "}" + cls.__name__
+            return "{" + xmlns + "}" + xmltag
         else:
-            return cls.__name__
+            return xmltag
 
     def get_xmlattrs(self) -> Dict[str, str]:
         return {}
@@ -163,3 +163,28 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         for name, field in self._meta.items():
             vals.append(name + "=" + field.to_str(getattr(self, name)))
         return "{}({})".format(self.__class__.__name__, ", ".join(vals))
+
+    def from_etree(self, el):
+        if el.tag != self.get_xmltag():
+            raise RuntimeError("element is {} instead of {}".format(el.tag, self.get_xmltag()))
+
+        tag_map = {field.get_xmltag(): (name, field) for name, field in self._meta.items()}
+        multivalues = None
+        for child in el:
+            try:
+                name, field = tag_map[child.tag]
+            except KeyError:
+                raise RuntimeError("found unexpected element {} in {}".format(child.tag, el.tag))
+
+            if field.multivalue:
+                # Gather multivalue fields and process them later
+                if multivalues is None:
+                    multivalues = defaultdict(list)
+                multivalues[name].append(child)
+            else:
+                setattr(self, name, field.from_etree(child))
+
+        if multivalues:
+            for name, elements in multivalues.items():
+                field = self._meta[name]
+                setattr(self, name, field.from_etree(elements))

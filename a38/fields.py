@@ -20,6 +20,9 @@ class Field:
 
     It does not contain the value itself.
     """
+    # True for fields that can hold a sequence of values
+    multivalue = False
+
     def __init__(self, xmlns=None, xmltag=None, null=False, default=None):
         self.name = None
         self.xmlns = xmlns
@@ -111,6 +114,9 @@ class Field:
     def to_str(self, value):
         return str(value)
 
+    def from_etree(self, el):
+        return self.clean_value(el.text)
+
 
 class ChoicesMixin:
     def __init__(self, choices=None, **kw):
@@ -168,7 +174,15 @@ class DecimalField(ChoicesMixin, Field):
             self.validation_error("'{}' cannot be converted to Decimal: {}".format(value, str(e)))
 
     def to_str(self, value):
+        if value is None:
+            return "None"
         return str(self.clean_value(value).quantize(self.quantize_sample))
+
+    def to_dict(self, value):
+        """
+        Return a json-able value for this field
+        """
+        return self.to_str(self.clean_value(value))
 
     def validate(self, value):
         value = super().validate(value)
@@ -235,6 +249,12 @@ class DateField(ChoicesMixin, Field):
         if not isinstance(value, datetime.date):
             self.validation_error("value must be an instance of datetime.date")
         return value
+
+    def to_dict(self, value):
+        """
+        Return a json-able value for this field
+        """
+        return self.to_str(self.clean_value(value))
 
     def to_str(self, value):
         if value is None:
@@ -332,11 +352,18 @@ class ModelField(Field):
             return None
         return value.to_dict()
 
+    def from_etree(self, el):
+        res = self.model()
+        res.from_etree(el)
+        return res
+
 
 class ModelListField(Field):
     """
     Field containing a list of model instances
     """
+    multivalue = True
+
     def __init__(self, model, **kw):
         super().__init__(**kw)
         self.model = model
@@ -395,3 +422,11 @@ class ModelListField(Field):
         if value is None:
             return None
         return [val.to_dict() for val in value]
+
+    def from_etree(self, elements):
+        values = []
+        for el in elements:
+            value = self.model()
+            value.from_etree(el)
+            values.append(value)
+        return values
