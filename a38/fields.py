@@ -107,7 +107,7 @@ class ChoicesMixin:
         return value
 
 
-class IntegerField(Field):
+class IntegerField(ChoicesMixin, Field):
     def __init__(self, max_length=None, **kw):
         super().__init__(**kw)
         self.max_length = max_length
