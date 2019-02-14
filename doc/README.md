@@ -1,4 +1,4 @@
-Run the `download_docs` script to populate this directory with official
+Run the `download-docs` script to populate this directory with official
 documentation. Note that the URLS may change, and the script may need to be
 updated from time to time.
 
