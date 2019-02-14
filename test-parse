@@ -32,7 +32,7 @@ def main():
     f = a38.auto_from_etree(tree.getroot())
 
     import json
-    json.dump(f.to_dict(), sys.stdout, indent=1)
+    json.dump(f.to_jsonable(), sys.stdout, indent=1)
 
 
 if __name__ == "__main__":

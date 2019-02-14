@@ -151,6 +151,13 @@ class DatiGeneraliDocumento(models.Model):
     causale = fields.StringField(max_length=200)
 
 
+class AltriDatiGestionali(models.Model):
+    tipo_dato = fields.StringField(max_length=10)
+    riferimento_testo = fields.StringField(max_length=60, null=True)
+    riferimento_numero = fields.DecimalField(max_length=21, null=True)
+    riferimento_data = fields.DateField(null=True)
+
+
 class DettaglioLinee(models.Model):
     numero_linea = fields.IntegerField(max_length=4)
     descrizione = fields.StringField(max_length=1000)
@@ -159,6 +166,8 @@ class DettaglioLinee(models.Model):
     prezzo_unitario = fields.DecimalField(max_length=21)
     prezzo_totale = fields.DecimalField(max_length=21)
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
+    natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
+    altri_dati_gestionali = fields.ModelListField(AltriDatiGestionali, null=True)
 
     def validate_model(self):
         super().validate_model()
@@ -170,6 +179,7 @@ class DettaglioLinee(models.Model):
 
 class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
+    natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
     # FIXME: Su questo valore il sistema effettua un controllo per verificare
     # la correttezza del calcolo; per i dettagli sull’algoritmo di calcolo si
     # rimanda al file Elenco controlli versione 1.4 presente sul sito
@@ -254,9 +264,39 @@ class DatiGenerali(models.Model):
     dati_contratto = fields.ModelField(DatiContratto, null=True)
 
 
+class DettaglioPagamento(models.Model):
+    beneficiario = fields.StringField(max_length=200, null=True)
+    modalita_pagamento = fields.StringField(length=4, choices=["MP{:02d}".format(i) for i in range(1, 23)])
+    data_riferimento_termini_pagamento = fields.DateField(null=True)
+    giorni_termini_pagamento = fields.IntegerField(max_length=3, null=True)
+    data_scadenza_pagamento = fields.DateField(null=True)
+    importo_pagamento = fields.DecimalField(max_length=15)
+    cod_ufficio_postale = fields.StringField(max_length=20, null=True)
+    cognome_quietanzante = fields.StringField(max_length=60, null=True)
+    nome_quietanzante = fields.StringField(max_length=60, null=True)
+    cf_quietanzante = fields.StringField(max_length=16, null=True)
+    titolo_quietanzante = fields.StringField(min_length=2, max_length=10, null=True)
+    istituto_finanziario = fields.StringField(max_length=80, null=True)
+    iban = fields.StringField(min_length=15, max_length=34, null=True, xmltag="IBAN")
+    abi = fields.StringField(length=5, null=True, xmltag="ABI")
+    cab = fields.StringField(length=5, null=True, xmltag="CAB")
+    bic = fields.StringField(min_length=8, max_length=11, null=True, xmltag="BIC")
+    sconto_pagamento_anticipato = fields.DecimalField(max_length=15, null=True)
+    data_limite_pagamento_anticipato = fields.DateField(null=True)
+    penalita_pagamenti_ritardati = fields.DecimalField(max_length=15, null=True)
+    data_decorrenza_penale = fields.DateField(null=True)
+    codice_pagamento = fields.StringField(max_length=60, null=True)
+
+
+class DatiPagamento(models.Model):
+    condizioni_pagamento = fields.StringField(length=4, choices=("TP01", "TP02", "TP03"))
+    dettaglio_pagamento = fields.ModelListField(DettaglioPagamento)
+
+
 class FatturaElettronicaBody(models.Model):
     dati_generali = DatiGenerali
     dati_beni_servizi = DatiBeniServizi
+    dati_pagamento = fields.ModelField(DatiPagamento, null=True)
 
     def build_importo_totale_documento(self):
         """

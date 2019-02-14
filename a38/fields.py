@@ -105,7 +105,7 @@ class Field:
             return
         builder.add(self.get_xmltag(), self.to_str(value))
 
-    def to_dict(self, value):
+    def to_jsonable(self, value):
         """
         Return a json-able value for this field
         """
@@ -178,7 +178,7 @@ class DecimalField(ChoicesMixin, Field):
             return "None"
         return str(self.clean_value(value).quantize(self.quantize_sample))
 
-    def to_dict(self, value):
+    def to_jsonable(self, value):
         """
         Return a json-able value for this field
         """
@@ -250,7 +250,7 @@ class DateField(ChoicesMixin, Field):
             self.validation_error("value must be an instance of datetime.date")
         return value
 
-    def to_dict(self, value):
+    def to_jsonable(self, value):
         """
         Return a json-able value for this field
         """
@@ -352,11 +352,11 @@ class ModelField(Field):
             return
         value.to_xml(builder)
 
-    def to_dict(self, value):
+    def to_jsonable(self, value):
         value = self.clean_value(value)
         if value is None:
             return None
-        return value.to_dict()
+        return value.to_jsonable()
 
     def from_etree(self, el):
         res = self.model()
@@ -423,11 +423,11 @@ class ModelListField(Field):
         for val in value:
             val.to_xml(builder)
 
-    def to_dict(self, value):
+    def to_jsonable(self, value):
         value = self.clean_value(value)
         if value is None:
             return None
-        return [val.to_dict() for val in value]
+        return [val.to_jsonable() for val in value]
 
     def from_etree(self, elements):
         values = []

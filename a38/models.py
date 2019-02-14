@@ -117,8 +117,13 @@ class Model(ModelBase, metaclass=ModelMetaclass):
             raise ValidationErrors(tuple(
                 ValidationError(f, msg) for f in fields))
 
-    def to_dict(self):
-        return {name: field.to_dict(getattr(self, name)) for name, field in self._meta.items()}
+    def to_jsonable(self):
+        res = {}
+        for name, field in self._meta.items():
+            value = field.to_jsonable(getattr(self, name))
+            if value is not None:
+                res[name] = value
+        return res
 
     def to_xml(self, builder):
         with builder.element(self.get_xmltag(), **self.get_xmlattrs()) as b:
