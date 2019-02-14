@@ -292,6 +292,12 @@ class ModelField(Field):
     def get_construct_default(self):
         return self.model()
 
+    def clean_value(self, value):
+        value = super().clean_value(value)
+        if value is None:
+            return value
+        return self.model.clean_value(value)
+
     def has_value(self, value):
         if value is None:
             return False
@@ -350,7 +356,16 @@ class ModelListField(Field):
     def get_construct_default(self):
         return []
 
+    def clean_value(self, value):
+        value = super().clean_value(value)
+        if value is None:
+            return value
+        return [self.model.clean_value(val) for val in value]
+
     def has_value(self, value):
+        if value is None:
+            return False
+
         for el in value:
             for name, field in self.model._meta.items():
                 if field.has_value(getattr(el, name)):
@@ -364,6 +379,9 @@ class ModelListField(Field):
 
     def validate(self, value):
         value = super().validate(value)
+        if value is None:
+            return None
+
         if not isinstance(value, list):
             self.validation_error("{} is not a list".format(repr(value)))
         for idx, val in enumerate(value):

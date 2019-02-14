@@ -8,6 +8,11 @@ class Sample(models.Model):
     value = fields.IntegerField()
 
 
+class Sample1(models.Model):
+    name = fields.StringField()
+    type = fields.StringField(choices=("A", "B"))
+
+
 class TestModel(TestCase):
     def test_assignment(self):
         o = Sample()
@@ -16,3 +21,9 @@ class TestModel(TestCase):
         o.value = "42"
         self.assertEqual(o.name, "12")
         self.assertEqual(o.value, 42)
+
+    def test_clean_value(self):
+        val = Sample.clean_value(Sample1("foo", "A"))
+        self.assertIsInstance(val, Sample)
+        self.assertEqual(val.name, "foo")
+        self.assertIsNone(val.value)

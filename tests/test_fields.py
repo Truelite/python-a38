@@ -324,6 +324,13 @@ class TestModelField(FieldTestMixin, TestCase):
         self.assertIsNone(value.name)
         self.assertIsNone(value.value)
 
+    def test_empty(self):
+        super().test_empty()
+
+        # Empty models are skipped in XML
+        f = self.get_field()
+        self.assertIsNone(self.to_xml(f, Sample()))
+
     def test_value(self):
         f = self.get_field()
         self.assertEqual(f.validate(Sample("test", 7)), Sample("test", 7))
@@ -336,3 +343,30 @@ class TestModelField(FieldTestMixin, TestCase):
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, Sample("test", 7)), "<Sample><Name>test</Name><Value>7</Value></Sample>")
+
+
+class TestModelListField(FieldTestMixin, TestCase):
+    field_class = fields.ModelListField
+
+    def get_field(self, *args, **kw):
+        return super().get_field(Sample, *args, **kw)
+
+    def test_construct_default(self):
+        f = self.get_field()
+        value = f.get_construct_default()
+        self.assertEqual(value, [])
+
+    def test_value(self):
+        f = self.get_field()
+        self.assertEqual(f.validate([]), [])
+        self.assertEqual(f.validate([Sample("test", 7)]), [Sample("test", 7)])
+
+    def test_default(self):
+        f = self.get_field(default=[Sample("test", 7)])
+        self.assertEqual(f.clean_value(None), [Sample("test", 7)])
+        self.assertEqual(self.to_xml(f, None), "<Sample><Name>test</Name><Value>7</Value></Sample>")
+
+    def test_xml(self):
+        f = self.get_field(null=True)
+        self.assertIsNone(self.to_xml(f, []))
+        self.assertEqual(self.to_xml(f, [Sample("test", 7)]), "<Sample><Name>test</Name><Value>7</Value></Sample>")

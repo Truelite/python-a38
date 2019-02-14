@@ -77,6 +77,19 @@ class Model(ModelBase, metaclass=ModelMetaclass):
                 value = field.clean_value(value)
             setattr(self, name, value)
 
+    @classmethod
+    def clean_value(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, cls):
+            return value
+        if not isinstance(value, ModelBase):
+            raise ValidationError("{} is not a Model instance".format(repr(value)))
+        kw = {}
+        for name, field in cls._meta.items():
+            kw[name] = getattr(value, name, None)
+        return cls(**kw)
+
     def validate_fields(self):
         errors = []
         for name, field in self._meta.items():
