@@ -185,7 +185,8 @@ class ListField(Field):
 
     def to_jsonable(self, value):
         value = self.clean_value(value)
-        if value is None:
+        # Skip on None and empty list
+        if not value:
             return None
         return [self.field.to_jsonable(val) for val in value]
 
@@ -246,7 +247,10 @@ class DecimalField(ChoicesMixin, Field):
         """
         Return a json-able value for this field
         """
-        return self.to_str(self.clean_value(value))
+        value = self.clean_value(value)
+        if value is None:
+            return None
+        return self.to_str(value)
 
     def validate(self, value):
         value = super().validate(value)
@@ -318,7 +322,10 @@ class DateField(ChoicesMixin, Field):
         """
         Return a json-able value for this field
         """
-        return self.to_str(self.clean_value(value))
+        value = self.clean_value(value)
+        if value is None:
+            return None
+        return self.to_str(value)
 
     def to_str(self, value):
         if value is None:
@@ -362,7 +369,10 @@ class DateTimeField(ChoicesMixin, Field):
         """
         Return a json-able value for this field
         """
-        return self.to_str(self.clean_value(value))
+        value = self.clean_value(value)
+        if value is None:
+            return None
+        return self.to_str(value)
 
     def to_str(self, value):
         if value is None:
@@ -533,7 +543,8 @@ class ModelListField(Field):
 
     def to_jsonable(self, value):
         value = self.clean_value(value)
-        if value is None:
+        # Skip on None and empty list
+        if not value:
             return None
         return [val.to_jsonable() for val in value]
 
