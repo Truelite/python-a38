@@ -18,7 +18,7 @@ parse all the example XML files distributed by
 
 # Dependencies
 
-dateutil, pytz, and the python3 standard library.
+dateutil, pytz, asn1crypto, and the python3 standard library.
 
 
 # Example

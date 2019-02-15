@@ -28,8 +28,13 @@ def main():
         level = logging.INFO
     logging.basicConfig(level=level, stream=sys.stderr, format=log_format)
 
-    tree = ET.parse(args.pathname)
-    f = a38.auto_from_etree(tree.getroot())
+    if args.pathname.endswith(".p7m"):
+        from a38.crypto import P7M
+        p7m = P7M(args.pathname)
+        f = p7m.get_fattura()
+    else:
+        tree = ET.parse(args.pathname)
+        f = a38.auto_from_etree(tree.getroot())
 
     import json
     json.dump(f.to_jsonable(), sys.stdout, indent=1)
