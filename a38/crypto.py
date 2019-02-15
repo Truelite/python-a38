@@ -1,6 +1,8 @@
 from typing import Union, BinaryIO
 from asn1crypto.cms import ContentInfo
 import io
+import base64
+import binascii
 import xml.etree.ElementTree as ET
 from . import fattura as a38
 
@@ -24,6 +26,13 @@ class P7M:
             self.data = data
         else:
             self.data = data.read()
+
+        # Data might potentially be base64 encoded
+
+        try:
+            self.data = base64.b64decode(self.data, validate=True)
+        except binascii.Error:
+            pass
 
         self.content_info = ContentInfo.load(self.data)
 
