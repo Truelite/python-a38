@@ -151,7 +151,7 @@ class DatiGeneraliDocumento(models.Model):
     divisa = fields.StringField()
     data = fields.DateField()
     numero = fields.StringField(max_length=20)
-    importo_totale_documento = fields.DecimalField(max_length=15)
+    importo_totale_documento = fields.DecimalField(max_length=15, null=True)
     causale = fields.ListField(fields.StringField(max_length=200))
 
 
