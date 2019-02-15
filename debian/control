@@ -4,11 +4,13 @@ Priority: optional
 Maintainer: Enrico Zini <enrico@debian.org>
 Build-Depends: debhelper (>= 9), dh-python,
                python3-all,
+               python3-dateutil, python3-tz, python3-asn1crypto
 Standards-Version: 4.2.0
 
 Package: python3-a38
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends},
+         python3-dateutil, python3-tz, python3-asn1crypto,
 Recommends: ${python3:Recommends}
 Suggests: ${python3:Suggests}
 Description: parse and generate Italian Fattura Elettronica
