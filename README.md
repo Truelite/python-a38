@@ -18,7 +18,9 @@ parse all the example XML files distributed by
 
 # Dependencies
 
-dateutil, pytz, asn1crypto, and the python3 standard library.
+Required: dateutil, pytz, asn1crypto, and the python3 standard library.
+
+Optional: yapf for formatting `a38tool python` output
 
 
 # Example

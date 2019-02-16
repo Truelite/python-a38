@@ -11,7 +11,7 @@ Package: python3-a38
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends},
          python3-dateutil, python3-tz, python3-asn1crypto,
-Recommends: ${python3:Recommends}
+Recommends: ${python3:Recommends}, python3-yapf
 Suggests: ${python3:Suggests}
 Description: parse and generate Italian Fattura Elettronica
  This library implements a declarative data model similar to Django models,

@@ -1,0 +1,185 @@
+#!/usr/bin/python3
+import argparse
+import logging
+import contextlib
+import sys
+import a38.fattura as a38
+import xml.etree.ElementTree as ET
+
+log = logging.getLogger("test-parse")
+
+
+class Fail(Exception):
+    pass
+
+
+class App:
+    NAME = None
+
+    def __init__(self, args):
+        pass
+
+    def load_fattura(self, pathname):
+        if pathname.endswith(".p7m"):
+            from a38.crypto import P7M
+            p7m = P7M(pathname)
+            return p7m.get_fattura()
+        else:
+            tree = ET.parse(pathname)
+            return a38.auto_from_etree(tree.getroot())
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = subparsers.add_parser(cls.NAME, help=cls.__doc__.strip())
+        parser.set_defaults(app=cls)
+        return parser
+
+
+class Exporter(App):
+    WRITE_MODE = None
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.files = args.files
+        self.output = args.output
+
+    @contextlib.contextmanager
+    def open_output(self):
+        if self.output is None:
+            if "b" in self.WRITE_MODE:
+                yield sys.stdout.buffer
+            else:
+                yield sys.stdout
+        else:
+            with open(self.output, self.WRITE_MODE) as out:
+                yield out
+
+    def run(self):
+        with self.open_output() as out:
+            for pathname in self.files:
+                f = self.load_fattura(pathname)
+                self.write(f, out)
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("-o", "--output", help="output file (default: standard output)")
+        parser.add_argument("files", nargs="+", help="input files (.xml or .xml.p7m)")
+        return parser
+
+
+class ExportJSON(Exporter):
+    """
+    Output a fattura in JSON
+    """
+    NAME = "json"
+    WRITE_MODE = "wt"
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.indent = args.indent if args.indent else None
+
+    def write(self, f, out):
+        import json
+        json.dump(f.to_jsonable(), out, indent=self.indent)
+        out.write("\n")
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("--indent", default=1, type=int, help="indentation space (default: 1, use 0 for all in one line)")
+        return parser
+
+
+class ExportXML(Exporter):
+    """
+    Output a fattura in XML
+    """
+    NAME = "xml"
+    WRITE_MODE = "wb"
+
+    def write(self, f, out):
+        tree = f.build_etree()
+        tree.write(out)
+        out.write(b"\n")
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        return parser
+
+
+class ExportPython(Exporter):
+    """
+    Output a fattura as Python code
+    """
+    NAME = "python"
+    WRITE_MODE = "wt"
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.namespace = args.namespace
+        if self.namespace == "":
+            self.namespace = False
+        self.unformatted = args.unformatted
+
+    def get_code(self, f):
+        code = f.to_python(namespace=self.namespace)
+        if self.unformatted:
+            return code
+
+        try:
+            from yapf.yapflib import yapf_api
+        except ModuleNotFoundError:
+            return code
+        code, changed = yapf_api.FormatCode(code)
+        return code
+
+    def write(self, f, out):
+        print(self.get_code(f), file=out)
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("--namespace", default=None, help="namespace to use for the model classes (default: the module fully qualified name)")
+        parser.add_argument("--unformatted", action="store_true", help="disable code formatting, outputting a single-line statement")
+        return parser
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Handle fattura elettronica files")
+    parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
+    parser.add_argument("--debug", action="store_true", help="debug output")
+
+    subparsers = parser.add_subparsers(help="actions", required=True)
+    subparsers.dest = "command"
+
+    ExportJSON.add_subparser(subparsers)
+    ExportXML.add_subparser(subparsers)
+    ExportPython.add_subparser(subparsers)
+
+    # sp_validate = subparsers.add_parser("validate", help="validate a fattura")
+    # sp_validate.set_defaults(app=run_validate)
+
+    args = parser.parse_args()
+
+    log_format = "%(asctime)-15s %(levelname)s %(message)s"
+    level = logging.WARN
+    if args.debug:
+        level = logging.DEBUG
+    elif args.verbose:
+        level = logging.INFO
+    logging.basicConfig(level=level, stream=sys.stderr, format=log_format)
+
+    app = args.app(args)
+    app.run()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Fail as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+    except Exception:
+        log.exception("uncaught exception")

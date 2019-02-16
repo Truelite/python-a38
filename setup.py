@@ -10,6 +10,10 @@ setup(
     url="https://github.com/Truelite/python-a38/blob/master/a38/fattura.py",
     license="https://www.apache.org/licenses/LICENSE-2.0.html",
     packages=["a38"],
+    scripts=["a38tool"],
     install_requires=["dateutil", "pytz", "asn1crypto"],
     test_requires=["dateutil", "pytz", "asn1crypto"],
+    extras_require={
+        "formatted_python": ["yapf"],
+    },
 )
