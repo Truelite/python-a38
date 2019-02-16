@@ -60,6 +60,20 @@ class Anagrafica(models.Model):
     titolo = fields.StringField(min_length=2, max_length=10, null=True)
     cod_eori = fields.StringField(xmltag="CodEORI", min_length=13, max_length=17, null=True)
 
+    @property
+    def full_name(self):
+        """
+        Return denominazione or "{nome} {cognome}", whichever is set.
+
+        If none are set, return None
+        """
+        if self.denominazione is not None:
+            return self.denominazione
+        elif self.nome is not None and self.cognome is not None:
+            return self.nome + " " + self.cognome
+        else:
+            return None
+
     def validate_model(self):
         super().validate_model()
         if self.denominazione is None:
