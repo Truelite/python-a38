@@ -103,7 +103,7 @@ class Field:
         Add this field to an XML tree
         """
         value = self.clean_value(value)
-        if value is None:
+        if not self.has_value(value):
             return
         builder.add(self.get_xmltag(), self.to_str(value))
 
@@ -113,10 +113,16 @@ class Field:
         """
         return self.clean_value(value)
 
-    def to_str(self, value):
+    def to_str(self, value) -> str:
+        """
+        Return this value as a string that can be parsed by clean_value
+        """
         return str(value)
 
     def from_etree(self, el):
+        """
+        Return a value from an ElementTree Element
+        """
         return self.clean_value(el.text)
 
 
@@ -185,8 +191,7 @@ class ListField(Field):
 
     def to_jsonable(self, value):
         value = self.clean_value(value)
-        # Skip on None and empty list
-        if not value:
+        if not self.has_value(value):
             return None
         return [self.field.to_jsonable(val) for val in value]
 
@@ -239,7 +244,7 @@ class DecimalField(ChoicesMixin, Field):
             self.validation_error("'{}' cannot be converted to Decimal: {}".format(value, str(e)))
 
     def to_str(self, value):
-        if value is None:
+        if not self.has_value(value):
             return "None"
         return str(self.clean_value(value).quantize(self.quantize_sample))
 
@@ -248,7 +253,7 @@ class DecimalField(ChoicesMixin, Field):
         Return a json-able value for this field
         """
         value = self.clean_value(value)
-        if value is None:
+        if not self.has_value(value):
             return None
         return self.to_str(value)
 
@@ -323,7 +328,7 @@ class DateField(ChoicesMixin, Field):
         Return a json-able value for this field
         """
         value = self.clean_value(value)
-        if value is None:
+        if not self.has_value(value):
             return None
         return self.to_str(value)
 
@@ -370,12 +375,12 @@ class DateTimeField(ChoicesMixin, Field):
         Return a json-able value for this field
         """
         value = self.clean_value(value)
-        if value is None:
+        if not self.has_value(value):
             return None
         return self.to_str(value)
 
     def to_str(self, value):
-        if value is None:
+        if not self.has_value(value):
             return "None"
         return value.isoformat()
 
@@ -472,7 +477,7 @@ class ModelField(Field):
 
     def to_jsonable(self, value):
         value = self.clean_value(value)
-        if value is None:
+        if not self.has_value(value):
             return None
         return value.to_jsonable()
 
@@ -543,8 +548,7 @@ class ModelListField(Field):
 
     def to_jsonable(self, value):
         value = self.clean_value(value)
-        # Skip on None and empty list
-        if not value:
+        if not self.has_value(value):
             return None
         return [val.to_jsonable() for val in value]
 
