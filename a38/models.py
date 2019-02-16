@@ -128,9 +128,10 @@ class Model(ModelBase, metaclass=ModelMetaclass):
     def to_python(self, **kw):
         args = []
         for name, field in self._meta.items():
-            args.append(field.to_python(getattr(self, name), **kw))
-        while args and args[-1] == "None":
-            args.pop()
+            value = getattr(self, name)
+            if not field.has_value(value):
+                continue
+            args.append(name + "=" + field.to_python(value, **kw))
         namespace = kw.get("namespace")
         if namespace is None:
             constructor = self.__class__.__module__ + "." + self.__class__.__qualname__
