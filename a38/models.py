@@ -125,6 +125,21 @@ class Model(ModelBase, metaclass=ModelMetaclass):
                 res[name] = value
         return res
 
+    def to_python(self, **kw):
+        args = []
+        for name, field in self._meta.items():
+            args.append(field.to_python(getattr(self, name), **kw))
+        while args and args[-1] == "None":
+            args.pop()
+        namespace = kw.get("namespace")
+        if namespace is None:
+            constructor = self.__class__.__module__ + "." + self.__class__.__qualname__
+        elif namespace is False:
+            constructor = self.__class__.__qualname__
+        else:
+            constructor = namespace + "." + self.__class__.__qualname__
+        return "{}({})".format(constructor, ", ".join(args))
+
     def to_xml(self, builder):
         with builder.element(self.get_xmltag(), **self.get_xmlattrs()) as b:
             for name, field in self._meta.items():

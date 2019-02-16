@@ -63,6 +63,20 @@ class FieldTestMixin:
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, "value"), "<T><Sample>value</Sample></T>")
 
+    def test_to_python_none(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, None)
+
+    def assert_to_python_works(self, field, value, **kw):
+        kw.setdefault("namespace", False)
+        py = field.to_python(value, **kw)
+        try:
+            parsed = eval(py)
+        except Exception as e:
+            self.fail("cannot parse generated python {}: {}".format(repr(py), str(e)))
+        clean = field.clean_value(parsed)
+        self.assertEqual(clean, field.clean_value(value))
+
     def to_xml(self, field, value):
         """
         Serialize the field to XML. Returns None is the field generated no
@@ -78,6 +92,11 @@ class FieldTestMixin:
         with io.StringIO() as out:
             tree.write(out, encoding="unicode")
             return out.getvalue()
+
+    def mkdt(self, ye, mo, da, ho, mi, se=0, tz=None):
+        if tz is None:
+            tz = fields.DateTimeField.tz_rome
+        return tz.localize(datetime.datetime(ye, mo, da, ho, mi, se))
 
 
 class TestField(FieldTestMixin, TestCase):
@@ -146,6 +165,13 @@ class TestStringField(FieldTestMixin, TestCase):
         with self.assertRaises(validation.ValidationError):
             f.validate("a")
 
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, "")
+        self.assert_to_python_works(f, "foo")
+        self.assert_to_python_works(f, "'\"\n")
+        self.assert_to_python_works(f, r"\d\t\n")
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, "value"), "<T><Sample>value</Sample></T>")
@@ -191,6 +217,12 @@ class TestIntegerField(FieldTestMixin, TestCase):
         self.assertEqual(f.validate(None), None)
         with self.assertRaises(validation.ValidationError):
             f.validate("3")
+
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, 1)
+        self.assert_to_python_works(f, 123456)
+        self.assert_to_python_works(f, 3 ** 80)
 
     def test_xml(self):
         f = self.get_field(null=True)
@@ -239,6 +271,11 @@ class TestDecimalField(FieldTestMixin, TestCase):
             # 1.1 does not have an exact decimal representation
             f.validate(1.1)
 
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, "1.2")
+        self.assert_to_python_works(f, Decimal("1.20"))
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, "12.345"), "<T><Sample>12.34</Sample></T>")
@@ -280,6 +317,11 @@ class TestDateField(FieldTestMixin, TestCase):
         with self.assertRaises(validation.ValidationError):
             f.validate(datetime.date(2019, 1, 3))
 
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, "2019-01-03")
+        self.assert_to_python_works(f, datetime.date(2019, 2, 4))
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, datetime.date(2019, 1, 2)), "<T><Sample>2019-01-02</Sample></T>")
@@ -288,11 +330,6 @@ class TestDateField(FieldTestMixin, TestCase):
 
 class TestDateTimeField(FieldTestMixin, TestCase):
     field_class = fields.DateTimeField
-
-    def mkdt(self, ye, mo, da, ho, mi, se=0, tz=None):
-        if tz is None:
-            tz = fields.DateTimeField.tz_rome
-        return tz.localize(datetime.datetime(ye, mo, da, ho, mi, se))
 
     def test_value(self):
         f = self.get_field()
@@ -326,6 +363,11 @@ class TestDateTimeField(FieldTestMixin, TestCase):
         with self.assertRaises(validation.ValidationError):
             f.validate(self.mkdt(2019, 1, 2, 12, 15))
 
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, "2019-01-03T04:05:06")
+        self.assert_to_python_works(f, self.mkdt(2019, 1, 2, 3, 4, 5))
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, self.mkdt(2019, 1, 2, 12, 30)), "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>")
@@ -352,6 +394,10 @@ class TestProgressivoInvioField(FieldTestMixin, TestCase):
         self.assertLess(a, b)
         self.assertLess(b, c)
         self.assertLess(c, d)
+
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, "BFABFAF")
 
 
 class Sample(models.Model):
@@ -388,6 +434,10 @@ class TestModelField(FieldTestMixin, TestCase):
         self.assertEqual(f.clean_value(None), Sample("test", 7))
         self.assertEqual(self.to_xml(f, None), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
 
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, Sample("test", 7))
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, Sample("test", 7)), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
@@ -413,6 +463,10 @@ class TestModelListField(FieldTestMixin, TestCase):
         f = self.get_field(default=[Sample("test", 7)])
         self.assertEqual(f.clean_value(None), [Sample("test", 7)])
         self.assertEqual(self.to_xml(f, None), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
+
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, [Sample("test", 7)])
 
     def test_xml(self):
         f = self.get_field(null=True)
@@ -440,6 +494,13 @@ class TestListField(FieldTestMixin, TestCase):
         f = self.get_field(default=["test1", "test2"])
         self.assertEqual(f.clean_value(None), ["test1", "test2"])
         self.assertEqual(self.to_xml(f, None), "<T><Sample>test1</Sample><Sample>test2</Sample></T>")
+
+    def test_to_python(self):
+        f = self.get_field()
+        self.assert_to_python_works(f, ["test1", "foo"])
+
+        f = super().get_field(fields.DateTimeField())
+        self.assert_to_python_works(f, [self.mkdt(2019, 1, 2, 3, 4), self.mkdt(2019, 2, 3, 4, 5)])
 
     def test_xml(self):
         f = self.get_field(null=True)

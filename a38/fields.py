@@ -119,6 +119,12 @@ class Field:
         """
         return str(value)
 
+    def to_python(self, value, **kw) -> str:
+        """
+        Return this value as a python expression
+        """
+        return repr(self.clean_value(value))
+
     def from_etree(self, el):
         """
         Return a value from an ElementTree Element
@@ -194,6 +200,12 @@ class ListField(Field):
         if not self.has_value(value):
             return None
         return [self.field.to_jsonable(val) for val in value]
+
+    def to_python(self, value, **kw) -> str:
+        value = self.clean_value(value)
+        if not self.has_value(value):
+            return repr(None)
+        return "[" + ", ".join(self.field.to_python(v, **kw) for v in value) + "]"
 
     def from_etree(self, elements):
         values = []
@@ -379,6 +391,12 @@ class DateTimeField(ChoicesMixin, Field):
             return None
         return self.to_str(value)
 
+    def to_python(self, value, **kw):
+        value = self.clean_value(value)
+        if not self.has_value(value):
+            return repr(value)
+        return repr(value.isoformat())
+
     def to_str(self, value):
         if not self.has_value(value):
             return "None"
@@ -481,6 +499,12 @@ class ModelField(Field):
             return None
         return value.to_jsonable()
 
+    def to_python(self, value, **kw) -> str:
+        value = self.clean_value(value)
+        if not self.has_value(value):
+            return repr(None)
+        return value.to_python(**kw)
+
     def from_etree(self, el):
         res = self.model()
         res.from_etree(el)
@@ -551,6 +575,12 @@ class ModelListField(Field):
         if not self.has_value(value):
             return None
         return [val.to_jsonable() for val in value]
+
+    def to_python(self, value, **kw) -> str:
+        value = self.clean_value(value)
+        if not self.has_value(value):
+            return repr(None)
+        return "[" + ", ".join(v.to_python(**kw) for v in value) + "]"
 
     def from_etree(self, elements):
         values = []

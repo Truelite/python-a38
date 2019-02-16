@@ -201,6 +201,12 @@ class TestFatturaPrivati12(TestCase):
         self.assertIn('<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" versione="FPR12">', xml)
         self.assertIn('<FormatoTrasmissione>FPR12</FormatoTrasmissione>', xml)
 
+    def test_to_python(self):
+        f = self.build_sample()
+        py = f.to_python(namespace="a38")
+        parsed = eval(py)
+        self.assertEqual(f, parsed)
+
     def test_parse(self):
         f = self.build_sample()
         tree = f.build_etree()
