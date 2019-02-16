@@ -77,7 +77,13 @@ class ExportJSON(Exporter):
 
     def __init__(self, args):
         super().__init__(args)
-        self.indent = args.indent if args.indent else None
+        if args.indent == "no":
+            self.indent = None
+        else:
+            try:
+                self.indent = int(args.indent)
+            except ValueError:
+                raise Fail("--indent argument must be an integer on 'no'")
 
     def write(self, f, out):
         import json
@@ -87,7 +93,7 @@ class ExportJSON(Exporter):
     @classmethod
     def add_subparser(cls, subparsers):
         parser = super().add_subparser(subparsers)
-        parser.add_argument("--indent", default=1, type=int, help="indentation space (default: 1, use 0 for all in one line)")
+        parser.add_argument("--indent", default="1", help="indentation space (default: 1, use 'no' for all in one line)")
         return parser
 
 

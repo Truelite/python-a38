@@ -16,14 +16,40 @@ parse all the example XML files distributed by
 [fatturapa.gov.it](https://www.fatturapa.gov.it/export/fatturazione/it/normativa/f-2.htm)
 
 
-# Dependencies
+## Dependencies
 
 Required: dateutil, pytz, asn1crypto, and the python3 standard library.
 
 Optional: yapf for formatting `a38tool python` output
 
 
-# Example
+## `a38tool` script
+
+A simple command line wrapper to the library functions is available as `a38tool`:
+
+```text
+$ a38tool --help
+usage: a38tool [-h] [--verbose] [--debug] {json,xml,python} ...
+
+Handle fattura elettronica files
+
+positional arguments:
+  {json,xml,python}  actions
+    json             Output a fattura in JSON
+    xml              Output a fattura in XML
+    python           Output a fattura as Python code
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --verbose, -v      verbose output
+  --debug            debug output
+```
+
+See [a38tool.md](a38tool.md) for more details.
+
+
+
+## Example code
 
 ```py
 import a38.fattura as a38
