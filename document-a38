@@ -3,10 +3,12 @@
 import subprocess
 
 
-def sample_output(cmd, max_lines=None, max_line_length=None):
+def sample_output(cmd, max_lines=None, max_line_length=None, returncode=0):
     cmd_fmt = cmd.lstrip("./")
 
-    res = subprocess.run(cmd, universal_newlines=True, capture_output=True, check=True, shell=True)
+    res = subprocess.run(cmd, universal_newlines=True, capture_output=True, shell=True)
+    if res.returncode != returncode:
+        raise RuntimeError(f"{cmd_fmt} return code is {res.returncode} instead of {returncode}")
     print("```text")
     print(f"$ {cmd_fmt}")
     for idx, line in enumerate(res.stdout.splitlines()):
@@ -16,6 +18,9 @@ def sample_output(cmd, max_lines=None, max_line_length=None):
         if max_line_length is not None and len(line) > max_line_length:
             line = line[:max_line_length] + "…"
         print(line)
+    if returncode != 0:
+        print("$ echo $?")
+        print(returncode)
     print("```")
 
 
@@ -25,6 +30,20 @@ General command line help:
 """)
 
 sample_output("./a38tool --help")
+
+
+print("""
+### Difference between two fatture
+""")
+
+sample_output("./a38tool diff --help")
+
+print("""
+Example:
+""")
+
+sample_output("./a38tool diff doc/IT01234567890_FPR01.xml doc/IT01234567890_FPR02.xml", max_lines=6, max_line_length=120, returncode=1)
+
 
 print("""
 ### Convert a fattura to JSON
