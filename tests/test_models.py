@@ -35,10 +35,16 @@ class TestModel(TestCase):
 
     def test_compare(self):
         self.assertEqual(Sample("test", 7), Sample("test", 7))
+        self.assertEqual(Sample(), None)
         self.assertNotEqual(Sample("test", 7), Sample("test", 6))
+        self.assertNotEqual(Sample("test", 7), None)
         self.assertLess(Sample("test", 6), Sample("test", 7))
         self.assertLessEqual(Sample("test", 6), Sample("test", 7))
         self.assertLessEqual(Sample("test", 7), Sample("test", 7))
+        self.assertLessEqual(Sample(), None)
         self.assertGreater(Sample("test", 7), Sample("test", 6))
+        self.assertGreater(Sample("test", 7), None)
         self.assertGreaterEqual(Sample("test", 7), Sample("test", 6))
         self.assertGreaterEqual(Sample("test", 7), Sample("test", 7))
+        self.assertGreaterEqual(Sample("test", 7), None)
+        self.assertGreaterEqual(Sample(), None)

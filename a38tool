@@ -35,6 +35,36 @@ class App:
         return parser
 
 
+class Diff(App):
+    """
+    show the difference between two fatture
+    """
+    NAME = "diff"
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.first = args.first
+        self.second = args.second
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("first", help="first input file (.xml or .xml.p7m)")
+        parser.add_argument("second", help="second input file (.xml or .xml.p7m)")
+        return parser
+
+    def run(self):
+        first = self.load_fattura(self.first)
+        second = self.load_fattura(self.second)
+        from a38.diff import Diff
+        res = Diff()
+        first.diff(res, second)
+        if res:
+            for d in res.differences:
+                print(d)
+            return 1
+
+
 class Exporter(App):
     WRITE_MODE = None
 
@@ -70,7 +100,7 @@ class Exporter(App):
 
 class ExportJSON(Exporter):
     """
-    Output a fattura in JSON
+    output a fattura in JSON
     """
     NAME = "json"
     WRITE_MODE = "wt"
@@ -99,7 +129,7 @@ class ExportJSON(Exporter):
 
 class ExportXML(Exporter):
     """
-    Output a fattura in XML
+    output a fattura in XML
     """
     NAME = "xml"
     WRITE_MODE = "wb"
@@ -117,7 +147,7 @@ class ExportXML(Exporter):
 
 class ExportPython(Exporter):
     """
-    Output a fattura as Python code
+    output a fattura as Python code
     """
     NAME = "python"
     WRITE_MODE = "wt"
@@ -163,6 +193,7 @@ def main():
     ExportJSON.add_subparser(subparsers)
     ExportXML.add_subparser(subparsers)
     ExportPython.add_subparser(subparsers)
+    Diff.add_subparser(subparsers)
 
     # sp_validate = subparsers.add_parser("validate", help="validate a fattura")
     # sp_validate.set_defaults(app=run_validate)
@@ -178,7 +209,9 @@ def main():
     logging.basicConfig(level=level, stream=sys.stderr, format=log_format)
 
     app = args.app(args)
-    app.run()
+    res = app.run()
+    if isinstance(res, int):
+        sys.exit(res)
 
 
 if __name__ == "__main__":

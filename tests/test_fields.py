@@ -3,6 +3,7 @@ from a38 import fields
 from a38 import models
 from a38 import validation
 from a38.builder import Builder
+from a38.diff import Diff
 from decimal import Decimal
 import datetime
 import io
@@ -67,6 +68,10 @@ class FieldTestMixin:
         f = self.get_field()
         self.assert_to_python_works(f, None)
 
+    def test_diff_none(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, None, None)
+
     def assert_to_python_works(self, field, value, **kw):
         kw.setdefault("namespace", False)
         py = field.to_python(value, **kw)
@@ -76,6 +81,37 @@ class FieldTestMixin:
             self.fail("cannot parse generated python {}: {}".format(repr(py), str(e)))
         clean = field.clean_value(parsed)
         self.assertEqual(clean, field.clean_value(value))
+
+    def assert_diff_empty(self, field, first, second):
+        """
+        Check that the field diff between the two values is empty
+        """
+        res = Diff()
+        field.diff(res, first, second)
+        if res.differences:
+            self.assertEqual([(d.prefix, d.field, d.first, d.second) for d in res.differences], [])
+
+    def assert_diff(self, field, first, second, expected):
+        """
+        Check that the field diff between the two differing values, is as
+        expected
+        """
+        res = Diff()
+        field.diff(res, first, second)
+        self.assertEqual([str(d) for d in res.differences], expected)
+
+    def assert_field_diff(self, field, first, second):
+        """
+        Check that the field diff, from a non-composite field, between the two
+        differing values, is as expected
+        """
+        self.assert_diff(field, first, None, ["sample: second is not set"])
+        self.assert_diff(field, None, first, ["sample: first is not set"])
+        self.assert_diff(field, second, None, ["sample: second is not set"])
+        self.assert_diff(field, None, second, ["sample: first is not set"])
+        self.assert_diff(field, first, second, ["sample: {} != {}".format(
+            field.to_str(field.clean_value(first)),
+            field.to_str(field.clean_value(second)))])
 
     def to_xml(self, field, value):
         """
@@ -172,6 +208,12 @@ class TestStringField(FieldTestMixin, TestCase):
         self.assert_to_python_works(f, "'\"\n")
         self.assert_to_python_works(f, r"\d\t\n")
 
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, "", "")
+        self.assert_diff_empty(f, "a", "a")
+        self.assert_field_diff(f, "a", "b")
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, "value"), "<T><Sample>value</Sample></T>")
@@ -223,6 +265,11 @@ class TestIntegerField(FieldTestMixin, TestCase):
         self.assert_to_python_works(f, 1)
         self.assert_to_python_works(f, 123456)
         self.assert_to_python_works(f, 3 ** 80)
+
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, 1, "1")
+        self.assert_field_diff(f, 1, "2")
 
     def test_xml(self):
         f = self.get_field(null=True)
@@ -276,6 +323,11 @@ class TestDecimalField(FieldTestMixin, TestCase):
         self.assert_to_python_works(f, "1.2")
         self.assert_to_python_works(f, Decimal("1.20"))
 
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, Decimal("1.0"), "1.0")
+        self.assert_field_diff(f, "1.0001", "1.0002")
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, "12.345"), "<T><Sample>12.34</Sample></T>")
@@ -322,6 +374,12 @@ class TestDateField(FieldTestMixin, TestCase):
         self.assert_to_python_works(f, "2019-01-03")
         self.assert_to_python_works(f, datetime.date(2019, 2, 4))
 
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, datetime.date(2019, 1, 1), "2019-01-01")
+        self.assert_field_diff(f, datetime.date(2019, 1, 1), "2019-01-02")
+        self.assert_field_diff(f, "2019-01-01", "2019-01-02")
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, datetime.date(2019, 1, 2)), "<T><Sample>2019-01-02</Sample></T>")
@@ -367,6 +425,12 @@ class TestDateTimeField(FieldTestMixin, TestCase):
         f = self.get_field()
         self.assert_to_python_works(f, "2019-01-03T04:05:06")
         self.assert_to_python_works(f, self.mkdt(2019, 1, 2, 3, 4, 5))
+
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, self.mkdt(2019, 1, 2, 3, 4, 5), "2019-01-02T03:04:05+01:00")
+        self.assert_field_diff(f, self.mkdt(2019, 1, 2, 3, 4, 5), self.mkdt(2019, 1, 2, 3, 4, 6))
+        self.assert_field_diff(f, self.mkdt(2019, 1, 2, 3, 4, 5), "2019-01-02T03:04:05+02:00")
 
     def test_xml(self):
         f = self.get_field(null=True)
@@ -438,6 +502,20 @@ class TestModelField(FieldTestMixin, TestCase):
         f = self.get_field()
         self.assert_to_python_works(f, Sample("test", 7))
 
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, Sample("test", 7), Sample("test", "7"))
+        self.assert_diff(f, Sample("test", 6), None, [
+            "sample: second is not set",
+        ])
+        self.assert_diff(f, Sample("test", 6), Sample("test", 7), [
+            "sample.value: 6 != 7",
+        ])
+        self.assert_diff(f, Sample("test1", 6), Sample("test2", 7), [
+            "sample.name: test1 != test2",
+            "sample.value: 6 != 7",
+        ])
+
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertEqual(self.to_xml(f, Sample("test", 7)), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
@@ -467,6 +545,24 @@ class TestModelListField(FieldTestMixin, TestCase):
     def test_to_python(self):
         f = self.get_field()
         self.assert_to_python_works(f, [Sample("test", 7)])
+
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, [], None)
+        self.assert_diff_empty(f, [Sample("test", 7)], [Sample("test", "7")])
+        self.assert_diff_empty(f, [Sample("test", 6)], [Sample("test", 6), None])
+        self.assert_diff(f, [Sample("test", 6)], None, [
+            "sample: second is not set",
+        ])
+        self.assert_diff(f, [Sample("test", 6)], [], [
+            "sample: second is not set",
+        ])
+        self.assert_diff(f, [Sample("test", 6)], [Sample("test", 7)], [
+            "sample.0.value: 6 != 7",
+        ])
+        self.assert_diff(f, [Sample("test", 6)], [Sample("test", 6), Sample("test", 7)], [
+            "sample: first has 1 element, second has 2",
+        ])
 
     def test_xml(self):
         f = self.get_field(null=True)
@@ -501,6 +597,18 @@ class TestListField(FieldTestMixin, TestCase):
 
         f = super().get_field(fields.DateTimeField())
         self.assert_to_python_works(f, [self.mkdt(2019, 1, 2, 3, 4), self.mkdt(2019, 2, 3, 4, 5)])
+
+    def test_diff(self):
+        f = self.get_field()
+        self.assert_diff_empty(f, [], None)
+        self.assert_diff_empty(f, ["test"], ["test"])
+        self.assert_diff_empty(f, ["test"], ["test", None])
+        self.assert_diff(f, ["test"], ["test1"], [
+            "sample.0: test != test1",
+        ])
+        self.assert_diff(f, ["test"], ["test", "test"], [
+            "sample: first has 1 element, second has 2",
+        ])
 
     def test_xml(self):
         f = self.get_field(null=True)

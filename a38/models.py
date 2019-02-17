@@ -77,6 +77,12 @@ class Model(ModelBase, metaclass=ModelMetaclass):
                 value = field.clean_value(value)
             setattr(self, name, value)
 
+    def has_value(self):
+        for name, field in self._meta.items():
+            if field.has_value(getattr(self, name)):
+                return True
+        return False
+
     @classmethod
     def clean_value(cls, value):
         if value is None:
@@ -156,21 +162,71 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         return tuple(getattr(self, name) for name in self._meta.keys())
 
     def __eq__(self, other):
+        other = self.clean_value(other)
+        has_self = self.has_value()
+        has_other = other is not None and other.has_value()
+        if not has_self and not has_other:
+            return True
+        if has_self != has_other:
+            return False
         return self._to_tuple() == other._to_tuple()
 
     def __ne__(self, other):
+        other = self.clean_value(other)
+        has_self = self.has_value()
+        has_other = other is not None and other.has_value()
+        if not has_self and not has_other:
+            return False
+        if has_self != has_other:
+            return True
         return self._to_tuple() != other._to_tuple()
 
     def __lt__(self, other):
+        other = self.clean_value(other)
+        has_self = self.has_value()
+        has_other = other is not None and other.has_value()
+        if not has_self and not has_other:
+            return False
+        if has_self and not has_other:
+            return False
+        if not has_self and has_other:
+            return True
         return self._to_tuple() < other._to_tuple()
 
     def __gt__(self, other):
+        other = self.clean_value(other)
+        has_self = self.has_value()
+        has_other = other is not None and other.has_value()
+        if not has_self and not has_other:
+            return False
+        if has_self and not has_other:
+            return True
+        if not has_self and has_other:
+            return False
         return self._to_tuple() > other._to_tuple()
 
     def __le__(self, other):
+        other = self.clean_value(other)
+        has_self = self.has_value()
+        has_other = other is not None and other.has_value()
+        if not has_self and not has_other:
+            return True
+        if has_self and not has_other:
+            return False
+        if not has_self and has_other:
+            return True
         return self._to_tuple() <= other._to_tuple()
 
     def __ge__(self, other):
+        other = self.clean_value(other)
+        has_self = self.has_value()
+        has_other = other is not None and other.has_value()
+        if not has_self and not has_other:
+            return True
+        if has_self and not has_other:
+            return True
+        if not has_self and has_other:
+            return False
         return self._to_tuple() >= other._to_tuple()
 
     def __str__(self):
@@ -209,3 +265,16 @@ class Model(ModelBase, metaclass=ModelMetaclass):
                 raise RuntimeError("found {} {} elements in {} instead of just 1".format(len(elements), child.tag, el.tag))
             else:
                 setattr(self, name, field.from_etree(elements[0]))
+
+    def diff(self, diff, other):
+        has_self = self.has_value()
+        has_other = other.has_value()
+        if not has_self and not has_other:
+            return
+        if has_self != has_other:
+            diff.add(None, self, other)
+            return
+        for name, field in self._meta.items():
+            first = getattr(self, name)
+            second = getattr(other, name)
+            field.diff(diff, first, second)

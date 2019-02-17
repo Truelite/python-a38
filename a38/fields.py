@@ -131,6 +131,23 @@ class Field:
         """
         return self.clean_value(el.text)
 
+    def diff(self, res, first, second):
+        """
+        Report to res if there are differences between values first and second
+        """
+        first = self.clean_value(first)
+        second = self.clean_value(second)
+        has_first = self.has_value(first)
+        has_second = self.has_value(second)
+        if not has_first and not has_second:
+            return
+        elif has_first and not has_second:
+            res.add_only_first(self, first)
+        elif not has_first and has_second:
+            res.add_only_second(self, second)
+        elif first != second:
+            res.add_different(self, first, second)
+
 
 class ChoicesMixin:
     def __init__(self, choices=None, **kw):
@@ -165,7 +182,10 @@ class ListField(Field):
         if value is None:
             return value
         with self.annotate_validation_errors():
-            return [self.field.clean_value(val) for val in value]
+            res = [self.field.clean_value(val) for val in value]
+        while res and not self.field.has_value(res[-1]):
+            res.pop()
+        return res
 
     def has_value(self, value):
         if value is None:
@@ -206,6 +226,25 @@ class ListField(Field):
         if not self.has_value(value):
             return repr(None)
         return "[" + ", ".join(self.field.to_python(v, **kw) for v in value) + "]"
+
+    def diff(self, res, first, second):
+        first = self.clean_value(first)
+        second = self.clean_value(second)
+        has_first = self.has_value(first)
+        has_second = self.has_value(second)
+        if not has_first and not has_second:
+            return
+        elif has_first and not has_second:
+            res.add_only_first(self, first)
+        elif not has_first and has_second:
+            res.add_only_second(self, second)
+        elif len(first) != len(second):
+            res.add_different_length(self, first, second)
+        else:
+            for idx, (el_first, el_second) in enumerate(zip(first, second)):
+                with res.subfield(self.name + "." + str(idx)) as subres:
+                    if el_first != el_second:
+                        self.field.diff(subres, el_first, el_second)
 
     def from_etree(self, elements):
         values = []
@@ -456,11 +495,7 @@ class ModelField(Field):
     def has_value(self, value):
         if value is None:
             return False
-
-        for name, field in self.model._meta.items():
-            if field.has_value(getattr(value, name)):
-                return True
-        return False
+        return value.has_value()
 
     def get_xmltag(self):
         if self.xmltag is not None:
@@ -505,6 +540,21 @@ class ModelField(Field):
             return repr(None)
         return value.to_python(**kw)
 
+    def diff(self, res, first, second):
+        first = self.clean_value(first)
+        second = self.clean_value(second)
+        has_first = self.has_value(first)
+        has_second = self.has_value(second)
+        if not has_first and not has_second:
+            return
+        elif has_first and not has_second:
+            res.add_only_first(self, first)
+        elif not has_first and has_second:
+            res.add_only_second(self, first)
+        else:
+            with res.subfield(self.name) as subres:
+                first.diff(subres, second)
+
     def from_etree(self, el):
         res = self.model()
         res.from_etree(el)
@@ -529,16 +579,19 @@ class ModelListField(Field):
         if value is None:
             return value
         with self.annotate_validation_errors():
-            return [self.model.clean_value(val) for val in value]
+            res = [self.model.clean_value(val) for val in value]
+        while res and (res[-1] is None or not res[-1].has_value()):
+            res.pop()
+        return res
 
     def has_value(self, value):
         if value is None:
             return False
 
         for el in value:
-            for name, field in self.model._meta.items():
-                if field.has_value(getattr(el, name)):
-                    return True
+            if el.has_value():
+                return True
+
         return False
 
     def get_xmltag(self):
@@ -581,6 +634,24 @@ class ModelListField(Field):
         if not self.has_value(value):
             return repr(None)
         return "[" + ", ".join(v.to_python(**kw) for v in value) + "]"
+
+    def diff(self, res, first, second):
+        first = self.clean_value(first)
+        second = self.clean_value(second)
+        has_first = self.has_value(first)
+        has_second = self.has_value(second)
+        if not has_first and not has_second:
+            return
+        if has_first and not has_second:
+            res.add_only_first(self, first)
+        elif not has_first and has_second:
+            res.add_only_second(self, second)
+        elif len(first) != len(second):
+            res.add_different_length(self, first, second)
+        else:
+            for idx, (el_first, el_second) in enumerate(zip(first, second)):
+                with res.subfield(self.name + "." + str(idx)) as subres:
+                    el_first.diff(subres, el_second)
 
     def from_etree(self, elements):
         values = []
