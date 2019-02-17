@@ -238,13 +238,13 @@ class ListField(Field):
             res.add_only_first(self, first)
         elif not has_first and has_second:
             res.add_only_second(self, second)
-        elif len(first) != len(second):
-            res.add_different_length(self, first, second)
         else:
             for idx, (el_first, el_second) in enumerate(zip(first, second)):
                 with res.subfield(self.name + "." + str(idx)) as subres:
                     if el_first != el_second:
                         self.field.diff(subres, el_first, el_second)
+            if len(first) != len(second):
+                res.add_different_length(self, first, second)
 
     def from_etree(self, elements):
         values = []
@@ -646,12 +646,13 @@ class ModelListField(Field):
             res.add_only_first(self, first)
         elif not has_first and has_second:
             res.add_only_second(self, second)
-        elif len(first) != len(second):
-            res.add_different_length(self, first, second)
         else:
             for idx, (el_first, el_second) in enumerate(zip(first, second)):
                 with res.subfield(self.name + "." + str(idx)) as subres:
                     el_first.diff(subres, el_second)
+
+            if len(first) != len(second):
+                res.add_different_length(self, first, second)
 
     def from_etree(self, elements):
         values = []

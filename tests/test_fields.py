@@ -109,7 +109,7 @@ class FieldTestMixin:
         self.assert_diff(field, None, first, ["sample: first is not set"])
         self.assert_diff(field, second, None, ["sample: second is not set"])
         self.assert_diff(field, None, second, ["sample: first is not set"])
-        self.assert_diff(field, first, second, ["sample: {} != {}".format(
+        self.assert_diff(field, first, second, ["sample: first: {}, second: {}".format(
             field.to_str(field.clean_value(first)),
             field.to_str(field.clean_value(second)))])
 
@@ -509,11 +509,11 @@ class TestModelField(FieldTestMixin, TestCase):
             "sample: second is not set",
         ])
         self.assert_diff(f, Sample("test", 6), Sample("test", 7), [
-            "sample.value: 6 != 7",
+            "sample.value: first: 6, second: 7",
         ])
         self.assert_diff(f, Sample("test1", 6), Sample("test2", 7), [
-            "sample.name: test1 != test2",
-            "sample.value: 6 != 7",
+            "sample.name: first: test1, second: test2",
+            "sample.value: first: 6, second: 7",
         ])
 
     def test_xml(self):
@@ -558,10 +558,14 @@ class TestModelListField(FieldTestMixin, TestCase):
             "sample: second is not set",
         ])
         self.assert_diff(f, [Sample("test", 6)], [Sample("test", 7)], [
-            "sample.0.value: 6 != 7",
+            "sample.0.value: first: 6, second: 7",
         ])
         self.assert_diff(f, [Sample("test", 6)], [Sample("test", 6), Sample("test", 7)], [
-            "sample: first has 1 element, second has 2",
+            "sample: second has 1 extra element",
+        ])
+        self.assert_diff(f, [Sample("test", 6)], [Sample("test", 5), Sample("test", 7)], [
+            "sample.0.value: first: 6, second: 5",
+            "sample: second has 1 extra element",
         ])
 
     def test_xml(self):
@@ -604,10 +608,14 @@ class TestListField(FieldTestMixin, TestCase):
         self.assert_diff_empty(f, ["test"], ["test"])
         self.assert_diff_empty(f, ["test"], ["test", None])
         self.assert_diff(f, ["test"], ["test1"], [
-            "sample.0: test != test1",
+            "sample.0: first: test, second: test1",
         ])
         self.assert_diff(f, ["test"], ["test", "test"], [
-            "sample: first has 1 element, second has 2",
+            "sample: second has 1 extra element",
+        ])
+        self.assert_diff(f, ["test"], ["test1", "test2"], [
+            "sample.0: first: test, second: test1",
+            "sample: second has 1 extra element",
         ])
 
     def test_xml(self):
