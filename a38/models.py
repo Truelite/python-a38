@@ -1,6 +1,6 @@
-from typing import Union, Sequence, Dict
+from typing import Dict, Any, Optional, Tuple
 from .fields import Field, ModelField
-from .validation import ValidationError, ValidationErrors
+from .validation import Validation
 from collections import OrderedDict, defaultdict
 
 
@@ -97,44 +97,28 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         return False
 
     @classmethod
-    def clean_value(cls, value):
+    def clean_value(cls, value: Any) -> Optional["Model"]:
         if value is None:
             return None
         if isinstance(value, cls):
             return value
         if not isinstance(value, ModelBase):
-            raise ValidationError(None, "{} is not a Model instance".format(repr(value)))
+            raise TypeError("{} is not a Model instance".format(value.__class__.__name__))
         kw = {}
         for name, field in cls._meta.items():
             kw[name] = getattr(value, name, None)
         return cls(**kw)
 
-    def validate_fields(self):
-        errors = []
+    def validate_fields(self, validation: Validation):
         for name, field in self._meta.items():
-            try:
-                field.validate(getattr(self, name))
-            except ValidationError as e:
-                errors.append(e)
-        if errors:
-            raise ValidationErrors(errors)
+            field.validate(validation, getattr(self, name))
 
-    def validate_model(self):
+    def validate_model(self, validation: Validation):
         pass
 
-    def validate(self):
-        self.validate_fields()
-        self.validate_model()
-
-    def validation_error(self, fields: Union[str, Sequence[str]], msg: str):
-        if isinstance(fields, str):
-            fields = (fields,)
-
-        if len(fields) == 1:
-            raise ValidationError(fields[0], msg)
-        else:
-            raise ValidationErrors(tuple(
-                ValidationError(f, msg) for f in fields))
+    def validate(self, validation: Validation):
+        self.validate_fields(validation)
+        self.validate_model(validation)
 
     def to_jsonable(self):
         res = {}
@@ -144,7 +128,7 @@ class Model(ModelBase, metaclass=ModelMetaclass):
                 res[name] = value
         return res
 
-    def to_python(self, **kw):
+    def to_python(self, **kw) -> str:
         args = []
         for name, field in self._meta.items():
             value = getattr(self, name)
@@ -165,13 +149,13 @@ class Model(ModelBase, metaclass=ModelMetaclass):
             for name, field in self._meta.items():
                 field.to_xml(b, getattr(self, name))
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: any):
         field = self._meta.get(key, None)
         if field is not None:
             value = field.clean_value(value)
         super().__setattr__(key, value)
 
-    def _to_tuple(self):
+    def _to_tuple(self) -> Tuple[Any]:
         return tuple(getattr(self, name) for name in self._meta.keys())
 
     def __eq__(self, other):

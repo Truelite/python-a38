@@ -65,6 +65,36 @@ class Diff(App):
             return 1
 
 
+class Validate(App):
+    """
+    validate the contents of a fattura
+    """
+    NAME = "validate"
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.pathname = args.file
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("file", help="input file (.xml or .xml.p7m)")
+        return parser
+
+    def run(self):
+        f = self.load_fattura(self.pathname)
+        from a38.validation import Validation
+        res = Validation()
+        f.validate(res)
+        if res.warnings:
+            for w in res.warnings:
+                print(str(w), file=sys.stderr)
+        if res.errors:
+            for e in res.errors:
+                print(str(e), file=sys.stderr)
+            return 1
+
+
 class Exporter(App):
     WRITE_MODE = None
 
@@ -194,6 +224,7 @@ def main():
     ExportXML.add_subparser(subparsers)
     ExportPython.add_subparser(subparsers)
     Diff.add_subparser(subparsers)
+    Validate.add_subparser(subparsers)
 
     # sp_validate = subparsers.add_parser("validate", help="validate a fattura")
     # sp_validate.set_defaults(app=run_validate)

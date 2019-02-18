@@ -6,7 +6,7 @@ import subprocess
 def sample_output(cmd, max_lines=None, max_line_length=None, returncode=0):
     cmd_fmt = cmd.lstrip("./")
 
-    res = subprocess.run(cmd, universal_newlines=True, capture_output=True, shell=True)
+    res = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     if res.returncode != returncode:
         raise RuntimeError(f"{cmd_fmt} return code is {res.returncode} instead of {returncode}")
     print("```text")
@@ -43,6 +43,19 @@ Example:
 """)
 
 sample_output("./a38tool diff doc/IT01234567890_FPR01.xml doc/IT01234567890_FPR02.xml", max_lines=6, max_line_length=120, returncode=1)
+
+
+print("""
+### Validate a fattura
+""")
+
+sample_output("./a38tool validate --help")
+
+print("""
+Example:
+""")
+
+sample_output("./a38tool validate doc/IT01234567890_FPR01.xml", max_lines=6, max_line_length=120, returncode=1)
 
 
 print("""

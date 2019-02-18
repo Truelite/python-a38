@@ -1,10 +1,8 @@
 from typing import Optional
-from .validation import ValidationError, ValidationErrors
 from dateutil.parser import isoparse
 import datetime
 import decimal
 from decimal import Decimal
-from contextlib import contextmanager
 import time
 import pytz
 
@@ -54,33 +52,21 @@ class Field:
         """
         return value is not None
 
-    def validate(self, value):
+    def validate(self, validation, value):
         """
         Raise ValidationError(s) if the given value is not valid for this field.
 
         Return the cleaned value.
         """
-        value = self.clean_value(value)
-        if not self.null and value is None:
-            self.validation_error("value is None")
-        return value
-
-    def validation_error(self, msg):
-        """
-        Raise ValidationError for this field
-        """
-        raise ValidationError(self.name, msg)
-
-    @contextmanager
-    def annotate_validation_errors(self, *extra_names):
         try:
-            yield
-        except (ValidationError, ValidationErrors) as e:
-            if extra_names:
-                e.add_container_name(".".join(str(x) for x in tuple(self.name, *extra_names)))
-            else:
-                e.add_container_name(self.name)
-            raise
+            value = self.clean_value(value)
+        except (TypeError, ValueError) as e:
+            validation.add_error(self, str(e))
+
+        if not self.null and not self.has_value(value):
+            validation.add_error(self, "missing value")
+
+        return value
 
     def clean_value(self, value):
         """
@@ -119,6 +105,12 @@ class Field:
         """
         return str(value)
 
+    def to_repr(self, value) -> str:
+        """
+        Return this value formatted for debugging
+        """
+        return repr(value)
+
     def to_python(self, value, **kw) -> str:
         """
         Return this value as a python expression
@@ -156,10 +148,10 @@ class ChoicesMixin:
             choices = [self.clean_value(c) for c in choices]
         self.choices = choices
 
-    def validate(self, value):
-        value = super().validate(value)
+    def validate(self, validation, value):
+        value = super().validate(validation, value)
         if value is not None and self.choices is not None and value not in self.choices:
-            self.validation_error("'{}' is not a valid choice for this field".format(value))
+            validation.add_error(self, "{} is not a valid choice for this field".format(self.to_repr(value)))
         return value
 
 
@@ -181,8 +173,7 @@ class ListField(Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        with self.annotate_validation_errors():
-            res = [self.field.clean_value(val) for val in value]
+        res = [self.field.clean_value(val) for val in value]
         while res and not self.field.has_value(res[-1]):
             res.pop()
         return res
@@ -190,22 +181,18 @@ class ListField(Field):
     def has_value(self, value):
         if value is None:
             return False
-
         for el in value:
             if self.field.has_value(el):
                 return True
         return False
 
-    def validate(self, value):
-        value = super().validate(value)
-        if value is None:
-            return None
-
-        if not isinstance(value, list):
-            self.validation_error("{} is not a list".format(repr(value)))
+    def validate(self, validation, value):
+        value = super().validate(validation, value)
+        if not self.has_value(value):
+            return value
         for idx, val in enumerate(value):
-            with self.annotate_validation_errors(idx):
-                self.field.validate(val)
+            with validation.subfield(self.name + "." + str(idx)) as sub:
+                self.field.validate(sub, val)
         return value
 
     def to_xml(self, builder, value):
@@ -262,19 +249,14 @@ class IntegerField(ChoicesMixin, Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        try:
-            return int(value)
-        except ValueError as e:
-            self.validation_error("'{}' cannot be converted to int: {}".format(value, str(e)))
+        return int(value)
 
-    def validate(self, value):
-        value = super().validate(value)
-        if value is None:
+    def validate(self, validation, value):
+        value = super().validate(validation, value)
+        if not self.has_value(value):
             return value
-        if not isinstance(value, int):
-            self.validation_error("'{}' should be an int", repr(value))
         if self.max_length is not None and len(str(value)) > self.max_length:
-            self.validation_error("'{}' should be no more than {} digits long".format(value, self.max_length))
+            validation.add_error(self, "'{}' should be no more than {} digits long".format(value, self.max_length))
         return value
 
 
@@ -291,8 +273,8 @@ class DecimalField(ChoicesMixin, Field):
             return value
         try:
             return Decimal(value)
-        except decimal.InvalidOperation as e:
-            self.validation_error("'{}' cannot be converted to Decimal: {}".format(value, str(e)))
+        except decimal.InvalidOperation:
+            raise TypeError("{} cannot be converted to Decimal".format(repr(value)))
 
     def to_str(self, value):
         if not self.has_value(value):
@@ -308,16 +290,14 @@ class DecimalField(ChoicesMixin, Field):
             return None
         return self.to_str(value)
 
-    def validate(self, value):
-        value = super().validate(value)
-        if value is None:
+    def validate(self, validation, value):
+        value = super().validate(validation, value)
+        if not self.has_value(value):
             return value
-        if not isinstance(value, Decimal):
-            self.validation_error("'{}' should be a Decimal", repr(value))
         if self.max_length is not None:
             xml_value = self.to_str(value)
             if len(xml_value) > self.max_length:
-                self.validation_error("'{}' should be no more than {} digits long".format(xml_value, self.max_length))
+                validation.add_error(self, "'{}' should be no more than {} digits long".format(xml_value, self.max_length))
         return value
 
 
@@ -338,14 +318,14 @@ class StringField(ChoicesMixin, Field):
             return value
         return str(value)
 
-    def validate(self, value):
-        value = super().validate(value)
-        if value is None:
+    def validate(self, validation, value):
+        value = super().validate(validation, value)
+        if not self.has_value(value):
             return value
         if self.min_length is not None and len(value) < self.min_length:
-            self.validation_error("'{}' should be at least {} characters long".format(value, self.min_length))
+            validation.add_error(self, "'{}' should be at least {} characters long".format(value, self.min_length))
         if self.max_length is not None and len(value) > self.max_length:
-            self.validation_error("'{}' should be no more than {} characters long".format(value, self.max_length))
+            validation.add_error(self, "'{}' should be no more than {} characters long".format(value, self.max_length))
         return value
 
 
@@ -355,24 +335,13 @@ class DateField(ChoicesMixin, Field):
         if value is None:
             return value
         if isinstance(value, str):
-            try:
-                return datetime.datetime.strptime(value, "%Y-%m-%d").date()
-            except ValueError as e:
-                self.validation_error("'{}' is not a valid date: {}".format(value, str(e)))
+            return datetime.datetime.strptime(value, "%Y-%m-%d").date()
         elif isinstance(value, datetime.datetime):
             return value.date()
         elif isinstance(value, datetime.date):
             return value
         else:
-            self.validation_error("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
-
-    def validate(self, value):
-        value = super().validate(value)
-        if value is None:
-            return value
-        if not isinstance(value, datetime.date):
-            self.validation_error("value must be an instance of datetime.date")
-        return value
+            raise TypeError("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
 
     def to_jsonable(self, value):
         """
@@ -397,13 +366,10 @@ class DateTimeField(ChoicesMixin, Field):
         if value is None:
             return value
         if isinstance(value, str):
-            try:
-                res = isoparse(value)
-                if res.tzinfo is None:
-                    res = self.tz_rome.localize(res)
-                return res
-            except ValueError as e:
-                self.validation_error("'{}' is not a valid datetime: {}".format(value, str(e)))
+            res = isoparse(value)
+            if res.tzinfo is None:
+                res = self.tz_rome.localize(res)
+            return res
         elif isinstance(value, datetime.datetime):
             if value.tzinfo is None:
                 return self.tz_rome.localize(value)
@@ -411,15 +377,7 @@ class DateTimeField(ChoicesMixin, Field):
         elif isinstance(value, datetime.date):
             return datetime.datetime.combine(value, datetime.time(0, 0, 0, tzinfo=self.tz_rome))
         else:
-            self.validation_error("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
-
-    def validate(self, value):
-        value = super().validate(value)
-        if value is None:
-            return value
-        if not isinstance(value, datetime.datetime):
-            self.validation_error("value must be an instance of datetime.datetime")
-        return value
+            raise TypeError("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
 
     def to_jsonable(self, value):
         """
@@ -437,6 +395,11 @@ class DateTimeField(ChoicesMixin, Field):
         return repr(value.isoformat())
 
     def to_str(self, value):
+        if not self.has_value(value):
+            return "None"
+        return value.isoformat()
+
+    def to_repr(self, value):
         if not self.has_value(value):
             return "None"
         return value.isoformat()
@@ -489,8 +452,7 @@ class ModelField(Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        with self.annotate_validation_errors():
-            return self.model.clean_value(value)
+        return self.model.clean_value(value)
 
     def has_value(self, value):
         if value is None:
@@ -502,24 +464,15 @@ class ModelField(Field):
             return self.xmltag
         return self.model.get_xmltag()
 
-    def validate(self, value):
-        value = self.clean_value(value)
+    def validate(self, validation, value):
+        value = super().validate(validation, value)
         if not self.has_value(value):
-            if not self.null:
-                self.validation_error("value is None or empty")
-            else:
-                return value
-
-        if value is None:
             return value
 
-        if not isinstance(value, self.model):
-            self.validation_error("{} is not an instance of {}".format(repr(value), self.model.__name__))
+        with validation.subfield(self.name) as sub:
+            value.validate_fields(sub)
 
-        with self.annotate_validation_errors():
-            value.validate_fields()
-
-        value.validate_model()
+        value.validate_model(validation)
         return value
 
     def to_xml(self, builder, value):
@@ -578,8 +531,7 @@ class ModelListField(Field):
         value = super().clean_value(value)
         if value is None:
             return value
-        with self.annotate_validation_errors():
-            res = [self.model.clean_value(val) for val in value]
+        res = [self.model.clean_value(val) for val in value]
         while res and (res[-1] is None or not res[-1].has_value()):
             res.pop()
         return res
@@ -599,21 +551,16 @@ class ModelListField(Field):
             return self.xmltag
         return self.model.get_xmltag()
 
-    def validate(self, value):
-        value = super().validate(value)
-        if value is None:
-            return None
+    def validate(self, validation, value):
+        value = super().validate(validation, value)
+        if not self.has_value(value):
+            return value
 
-        if not isinstance(value, list):
-            self.validation_error("{} is not a list".format(repr(value)))
         for idx, val in enumerate(value):
-            if not isinstance(val, self.model):
-                self.validation_error("list element {} '{}' is not an instance of {}".format(idx, repr(val), self.model.__name__))
+            with validation.subfield(self.name + "." + str(idx)) as sub:
+                val.validate_fields(sub)
 
-            with self.annotate_validation_errors(idx):
-                val.validate_fields()
-
-            val.validate_model()
+            val.validate_model(validation)
         return value
 
     def to_xml(self, builder, value):

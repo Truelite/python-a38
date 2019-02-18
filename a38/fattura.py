@@ -47,10 +47,12 @@ class DatiTrasmissione(models.Model):
     contatti_trasmittente = fields.ModelField(ContattiTrasmittente, null=True)
     pec_destinatario = fields.StringField(null=True, min_length=8, max_length=256, xmltag="PECDestinatario")
 
-    def validate_model(self):
-        super().validate_model()
+    def validate_model(self, validation):
+        super().validate_model(validation)
         if self.codice_destinatario is None and self.pec_destinatario is None:
-            self.validation_error(("codice_destinatario", "pec_destinatario"), "one of codice_destinatario or pec_destinatario must be set")
+            validation.add_error(
+                    (self._meta["codice_destinatario"], self._meta["pec_destinatario"]),
+                    "one of codice_destinatario or pec_destinatario must be set")
 
 
 class Anagrafica(models.Model):
@@ -74,33 +76,42 @@ class Anagrafica(models.Model):
         else:
             return None
 
-    def validate_model(self):
-        super().validate_model()
+    def validate_model(self, validation):
+        super().validate_model(validation)
         if self.denominazione is None:
             if self.nome is None and self.cognome is None:
-                self.validation_error(("nome", "cognome", "denominazione"), "nome and cognome, or denominazione, must be set")
+                validation.add_error(
+                        (self._meta["nome"], self._meta["cognome"], self._meta["denominazione"]),
+                        "nome and cognome, or denominazione, must be set")
             elif self.nome is None:
-                self.validation_error("nome", "nome and cognome must both be set if denominazione is empty")
+                validation.add_error(
+                        self._meta["nome"],
+                        "nome and cognome must both be set if denominazione is empty")
             elif self.cognome is None:
-                self.validation_error("cognome", "nome and cognome must both be set if denominazione is empty")
+                validation.add_error(
+                        self._meta["cognome"],
+                        "nome and cognome must both be set if denominazione is empty")
         else:
             should_not_be_set = []
             if self.nome is not None:
-                should_not_be_set.append("nome")
+                should_not_be_set.append(self._meta["nome"])
             if self.cognome is not None:
-                should_not_be_set.append("cognome")
+                should_not_be_set.append(self._meta["cognome"])
             if should_not_be_set:
-                self.validation_error(should_not_be_set, "{} must not be set if denominazione is not empty".format(" and ".join(should_not_be_set)))
+                validation.add_error(
+                        should_not_be_set,
+                        "{} must not be set if denominazione is not empty".format(" and ".join(x.name for x in should_not_be_set)))
 
 
-class DatiAnagraficiBase(models.Model):
+class DatiAnagraficiCedentePrestatore(models.Model):
+    __xmltag__ = "DatiAnagrafici"
     id_fiscale_iva = IdFiscaleIVA
     codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
     anagrafica = Anagrafica
-
-
-class DatiAnagraficiCedentePrestatore(DatiAnagraficiBase):
-    __xmltag__ = "DatiAnagrafici"
+    albo_professionale = fields.StringField(max_length=60, null=True)
+    provincia_albo = fields.StringField(length=2, null=True)
+    numero_iscrizione_albo = fields.StringField(max_length=60, null=True)
+    data_iscrizione_albo = fields.DateField(null=True)
     regime_fiscale = fields.StringField(
             length=4, choices=("RF01", "RF02", "RF04", "RF05", "RF06", "RF07",
                                "RF08", "RF09", "RF10", "RF11", "RF12", "RF13",
@@ -143,8 +154,11 @@ class CedentePrestatore(models.Model):
     riferimento_amministrazione = fields.StringField(max_length=20, null=True)
 
 
-class DatiAnagraficiCessionarioCommittente(DatiAnagraficiBase):
+class DatiAnagraficiCessionarioCommittente(models.Model):
     __xmltag__ = "DatiAnagrafici"
+    id_fiscale_iva = fields.ModelField(IdFiscaleIVA, null=True)
+    codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
+    anagrafica = Anagrafica
 
 
 class CessionarioCommittente(models.Model):
@@ -187,12 +201,12 @@ class DettaglioLinee(models.Model):
     natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
     altri_dati_gestionali = fields.ModelListField(AltriDatiGestionali, null=True)
 
-    def validate_model(self):
-        super().validate_model()
+    def validate_model(self, validation):
+        super().validate_model(validation)
         if self.quantita is None and self.unita_misura is not None:
-            self.validation_error("quantita", "field must be present when unita_misura is set")
+            validation.add_error(self._meta["quantita"], "field must be present when unita_misura is set")
         if self.quantita is not None and self.unita_misura is None:
-            self.validation_error("unita_misura", "field must be present when quantita is set")
+            validation.add_error(self._meta["unita_misura"], "field must be present when quantita is set")
 
 
 class DatiRiepilogo(models.Model):
@@ -267,10 +281,10 @@ class DatiDocumentiCorrelati(models.Model):
     riferimento_numero_linea = fields.ListField(fields.IntegerField(max_length=4), null=True)
     id_documento = fields.StringField(max_length=20)
     data = fields.DateField(null=True)
-    num_item = fields.StringField(max_length=20)
-    codice_commessa_convenzione = fields.StringField(max_length=100)
-    codice_cup = fields.StringField(max_length=15, xmltag="CodiceCUP")
-    codice_cig = fields.StringField(max_length=15, xmltag="CodiceCIG")
+    num_item = fields.StringField(max_length=20, null=True)
+    codice_commessa_convenzione = fields.StringField(max_length=100, null=True)
+    codice_cup = fields.StringField(max_length=15, xmltag="CodiceCUP", null=True)
+    codice_cig = fields.StringField(max_length=15, xmltag="CodiceCIG", null=True)
 
 
 class DatiOrdineAcquisto(DatiDocumentiCorrelati):
@@ -293,7 +307,10 @@ class DatiFattureCollegate(DatiDocumentiCorrelati):
     pass
 
 
-class DatiAnagraficiVettore(DatiAnagraficiBase):
+class DatiAnagraficiVettore(models.Model):
+    id_fiscale_iva = IdFiscaleIVA
+    codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
+    anagrafica = Anagrafica
     numero_licenza_guida = fields.StringField(max_length=20, null=True)
 
 

@@ -6,83 +6,80 @@ import datetime
 import io
 
 
-class TestAnagrafica(TestCase):
+class TestFatturaMixin:
+    def assert_validates(self, value, warnings=[], errors=[]):
+        val = validation.Validation()
+        value.validate(val)
+        self.assertEqual([str(x) for x in val.warnings], warnings)
+        self.assertEqual([str(x) for x in val.errors], errors)
+
+
+class TestAnagrafica(TestFatturaMixin, TestCase):
     def test_validation(self):
         a = a38.Anagrafica()
 
-        with self.assertRaises(validation.ValidationErrors) as e:
-            a.validate()
-        self.assertEqual(e.exception.errors[0].field_name, "nome")
-        self.assertEqual(e.exception.errors[0].msg, "nome and cognome, or denominazione, must be set")
-        self.assertEqual(e.exception.errors[1].field_name, "cognome")
-        self.assertEqual(e.exception.errors[1].msg, "nome and cognome, or denominazione, must be set")
-        self.assertEqual(e.exception.errors[2].field_name, "denominazione")
-        self.assertEqual(e.exception.errors[2].msg, "nome and cognome, or denominazione, must be set")
+        self.assert_validates(a, errors=[
+            'nome: nome and cognome, or denominazione, must be set',
+            'cognome: nome and cognome, or denominazione, must be set',
+            'denominazione: nome and cognome, or denominazione, must be set',
+        ])
 
         a.nome = "Test"
-        with self.assertRaises(validation.ValidationError) as e:
-            a.validate()
-        self.assertEqual(e.exception.field_name, "cognome")
-        self.assertEqual(e.exception.msg, "nome and cognome must both be set if denominazione is empty")
+        self.assert_validates(a, errors=[
+            "cognome: nome and cognome must both be set if denominazione is empty",
+        ])
 
         a.cognome = "Test1"
-        a.validate()
+        self.assert_validates(a)
 
         a.nome = None
-        with self.assertRaises(validation.ValidationError) as e:
-            a.validate()
-        self.assertEqual(e.exception.field_name, "nome")
-        self.assertEqual(e.exception.msg, "nome and cognome must both be set if denominazione is empty")
+        self.assert_validates(a, errors=[
+            "nome: nome and cognome must both be set if denominazione is empty",
+        ])
 
         a.denominazione = "Test Test1"
-        with self.assertRaises(validation.ValidationError) as e:
-            a.validate()
-        self.assertEqual(e.exception.field_name, "cognome")
-        self.assertEqual(e.exception.msg, "cognome must not be set if denominazione is not empty")
+        self.assert_validates(a, errors=[
+            "cognome: cognome must not be set if denominazione is not empty",
+        ])
 
         a.denominazione = "Test Test1"
         a.nome = "Test"
-        with self.assertRaises(validation.ValidationErrors) as e:
-            a.validate()
-        self.assertEqual(e.exception.errors[0].field_name, "nome")
-        self.assertEqual(e.exception.errors[0].msg, "nome and cognome must not be set if denominazione is not empty")
-        self.assertEqual(e.exception.errors[1].field_name, "cognome")
-        self.assertEqual(e.exception.errors[1].msg, "nome and cognome must not be set if denominazione is not empty")
+        self.assert_validates(a, errors=[
+            "nome: nome and cognome must not be set if denominazione is not empty",
+            "cognome: nome and cognome must not be set if denominazione is not empty",
+        ])
 
         a.cognome = None
-        with self.assertRaises(validation.ValidationError) as e:
-            a.validate()
-        self.assertEqual(e.exception.field_name, "nome")
-        self.assertEqual(e.exception.msg, "nome must not be set if denominazione is not empty")
+        self.assert_validates(a, errors=[
+            "nome: nome must not be set if denominazione is not empty",
+        ])
 
         a.nome = None
-        a.validate()
+        self.assert_validates(a)
 
 
-class TestDatiTrasmissione(TestCase):
+class TestDatiTrasmissione(TestFatturaMixin, TestCase):
     def test_validation(self):
         dt = a38.DatiTrasmissione(
                 a38.IdTrasmittente("ID", "1234567890"),
                 "12345", "FPR12")
 
-        with self.assertRaises(validation.ValidationErrors) as e:
-            dt.validate()
-        self.assertEqual(e.exception.errors[0].field_name, "codice_destinatario")
-        self.assertEqual(e.exception.errors[0].msg, "one of codice_destinatario or pec_destinatario must be set")
-        self.assertEqual(e.exception.errors[1].field_name, "pec_destinatario")
-        self.assertEqual(e.exception.errors[1].msg, "one of codice_destinatario or pec_destinatario must be set")
+        self.assert_validates(dt, errors=[
+            "codice_destinatario: one of codice_destinatario or pec_destinatario must be set",
+            "pec_destinatario: one of codice_destinatario or pec_destinatario must be set",
+        ])
 
         dt.codice_destinatario = "FUFUFU"
-        dt.validate()
+        self.assert_validates(dt)
 
         dt.pec_destinatario = "local_part@example.org"
-        dt.validate()
+        self.assert_validates(dt)
 
         dt.codice_destinatario = None
-        dt.validate()
+        self.assert_validates(dt)
 
 
-class TestDatiBeniServizi(TestCase):
+class TestDatiBeniServizi(TestFatturaMixin, TestCase):
     def test_add_dettaglio_linee(self):
         o = a38.DatiBeniServizi()
         o.add_dettaglio_linee(descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
@@ -109,7 +106,7 @@ class TestDatiBeniServizi(TestCase):
         self.assertEqual(o.dati_riepilogo[1], a38.DatiRiepilogo(aliquota_iva="22", imponibile_importo="14.40", imposta="3.168", esigibilita_iva="I"))
 
 
-class TestFatturaElettronicaBody(TestCase):
+class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
     def test_build_importo_totale_documento(self):
         o = a38.FatturaElettronicaBody()
         o.dati_beni_servizi.add_dettaglio_linee(descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
@@ -121,7 +118,7 @@ class TestFatturaElettronicaBody(TestCase):
         self.assertEqual(o.dati_generali.dati_generali_documento.importo_totale_documento, Decimal("19.493"))
 
 
-class TestFatturaPrivati12(TestCase):
+class TestFatturaPrivati12(TestFatturaMixin, TestCase):
     def build_sample(self):
         cedente_prestatore = a38.CedentePrestatore(
             a38.DatiAnagraficiCedentePrestatore(
@@ -182,7 +179,7 @@ class TestFatturaPrivati12(TestCase):
     def test_validate(self):
         f = self.build_sample()
         self.assertEqual(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione, "FPR12")
-        f.validate()
+        self.assert_validates(f)
 
     def test_serialize(self):
         f = self.build_sample()
@@ -210,7 +207,7 @@ class TestFatturaPrivati12(TestCase):
 
         f = a38.FatturaPrivati12()
         f.from_etree(tree.getroot())
-        f.validate()
+        self.assert_validates(f)
         tree = f.build_etree()
         with io.StringIO() as out:
             tree.write(out, encoding="unicode")
@@ -219,7 +216,7 @@ class TestFatturaPrivati12(TestCase):
         self.assertEqual(xml1, xml2)
 
         f = a38.auto_from_etree(tree.getroot())
-        f.validate()
+        self.assert_validates(f)
         tree = f.build_etree()
         with io.StringIO() as out:
             tree.write(out, encoding="unicode")

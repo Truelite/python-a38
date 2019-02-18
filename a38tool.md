@@ -4,17 +4,18 @@ General command line help:
 
 ```text
 $ a38tool --help
-usage: a38tool [-h] [--verbose] [--debug] {json,xml,python,diff} ...
+usage: a38tool [-h] [--verbose] [--debug] {json,xml,python,diff,validate} ...
 
 Handle fattura elettronica files
 
 positional arguments:
-  {json,xml,python,diff}
+  {json,xml,python,diff,validate}
                         actions
     json                output a fattura in JSON
     xml                 output a fattura in XML
     python              output a fattura as Python code
     diff                show the difference between two fatture
+    validate            validate the contents of a fattura
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -47,6 +48,28 @@ fattura_elettronica_header.cessionario_committente.dati_anagrafici.anagrafica.de
 fattura_elettronica_body.0.dati_generali.dati_contratto: second is not set
 fattura_elettronica_body.0.dati_beni_servizi.dettaglio_linee.0.descrizione: first: DESCRIZIONE DELLA FORNITURA, second: …
 …
+$ echo $?
+1
+```
+
+### Validate a fattura
+
+```text
+$ a38tool validate --help
+usage: a38tool validate [-h] file
+
+positional arguments:
+  file        input file (.xml or .xml.p7m)
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+Example:
+
+```text
+$ a38tool validate doc/IT01234567890_FPR01.xml
+fattura_elettronica_body.0.dati_beni_servizi.unita_misura: field must be present when quantita is set
 $ echo $?
 1
 ```

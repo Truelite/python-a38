@@ -1,28 +1,51 @@
-from typing import Sequence, Optional
+from typing import Optional, List, Sequence, Union
+from .traversal import Annotation, Traversal
+from . import fields
 
 
-class ValidationError(Exception):
-    def __init__(self, field_name: Optional[str], msg: str):
-        self.field_name = field_name
+class ValidationError(Annotation):
+    def __init__(self, prefix: Optional[str], field: "fields.Field", msg: str):
+        self.prefix = prefix
+        self.field = field
         self.msg = msg
 
     def __str__(self):
-        return "{}: {}".format(self.field_name, self.msg)
+        return "{}: {}".format(self.qualified_field, self.msg)
 
-    def add_container_name(self, name):
-        if self.field_name is None:
-            self.field_name = name
+
+Fields = Union["fields.Field", Sequence["fields.Field"]]
+
+
+class Validation(Traversal):
+    def __init__(self,
+                 prefix: Optional[str] = None,
+                 warnings: Optional[List[ValidationError]] = None,
+                 errors: Optional[List[ValidationError]] = None):
+        super().__init__(prefix)
+        self.warnings: List[ValidationError]
+        self.errors: List[ValidationError]
+        if warnings is None:
+            self.warnings = []
         else:
-            self.field_name = name + "." + self.field_name
+            self.warnings = warnings
+        if errors is None:
+            self.errors = []
+        else:
+            self.errors = errors
 
+    def with_prefix(self, prefix: str):
+        return Validation(prefix, self.warnings, self.errors)
 
-class ValidationErrors(Exception):
-    def __init__(self, errors: Sequence[ValidationError]):
-        self.errors = errors
+    def add_warning(self, field: Fields, msg: str):
+        if isinstance(field, fields.Field):
+            self.warnings.append(ValidationError(self.prefix, field, msg))
+        else:
+            for f in field:
+                self.warnings.append(ValidationError(self.prefix, f, msg))
 
-    def __str__(self):
-        return "\n".join(str(x) for x in self.errors)
-
-    def add_container_name(self, name):
-        for e in self.errors:
-            e.add_container_name(name)
+    def add_error(self, field: Fields, msg: str):
+        if isinstance(field, fields.Field):
+            self.errors.append(ValidationError(self.prefix, field, msg))
+        else:
+            for f in field:
+                self.errors.append(ValidationError(self.prefix, f, msg))

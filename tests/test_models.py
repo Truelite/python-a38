@@ -1,7 +1,6 @@
 from unittest import TestCase
 from a38 import fields
 from a38 import models
-from a38 import validation
 
 
 class Sample(models.Model):
@@ -30,7 +29,7 @@ class TestModel(TestCase):
         self.assertIsNone(val.value)
 
         self.assertIsNone(Sample.clean_value(None))
-        with self.assertRaises(validation.ValidationError):
+        with self.assertRaises(TypeError):
             Sample.clean_value("foo")
 
     def test_compare(self):
