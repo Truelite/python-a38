@@ -418,13 +418,17 @@ class Fattura(models.Model):
                 for name, field in self._meta.items():
                     field.to_xml(b1, getattr(self, name))
 
-    def build_etree(self):
+    def build_etree(self, lxml=False):
         """
         Build and return an ElementTree with the fattura in XML format
         """
         self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = self.get_versione()
-        from a38.builder import Builder
-        builder = Builder()
+        if lxml:
+            from a38.builder import LXMLBuilder
+            builder = LXMLBuilder()
+        else:
+            from a38.builder import Builder
+            builder = Builder()
         builder.default_namespace = NS
         self.to_xml(builder)
         return builder.get_tree()

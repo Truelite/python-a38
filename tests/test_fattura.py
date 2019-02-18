@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, SkipTest
 import a38.fattura as a38
 from a38 import validation
 from decimal import Decimal
@@ -191,6 +191,20 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
 
         self.assertIn('<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" versione="FPR12">', xml)
         self.assertIn('<FormatoTrasmissione>FPR12</FormatoTrasmissione>', xml)
+
+    def test_serialize_lxml(self):
+        from a38 import builder
+        if not builder.HAVE_LXML:
+            raise SkipTest("lxml is not available")
+
+        f = self.build_sample()
+        tree = f.build_etree(lxml=True)
+        with io.BytesIO() as out:
+            tree.write(out)
+            xml = out.getvalue()
+
+        self.assertIn(b'<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" versione="FPR12">', xml)
+        self.assertIn(b'<FormatoTrasmissione>FPR12</FormatoTrasmissione>', xml)
 
     def test_to_python(self):
         f = self.build_sample()

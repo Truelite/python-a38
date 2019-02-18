@@ -3,6 +3,8 @@ import argparse
 import logging
 import contextlib
 import sys
+import os.path
+import shutil
 import a38.fattura as a38
 import xml.etree.ElementTree as ET
 
@@ -212,6 +214,76 @@ class ExportPython(Exporter):
         return parser
 
 
+class Renderer(App):
+    def __init__(self, args):
+        from a38.render import HAVE_LXML
+        if not HAVE_LXML:
+            raise Fail("python3-lxml is needed for XSLT based rendering")
+
+        super().__init__(args)
+        self.stylesheet = args.stylesheet
+        self.files = args.files
+        self.output = args.output
+        self.force = args.force
+
+        from a38.render import XSLTTransform
+        self.transform = XSLTTransform(self.stylesheet)
+
+    def run(self):
+        for pathname in self.files:
+            dirname = os.path.normpath(os.path.dirname(pathname))
+            basename = os.path.basename(pathname)
+            basename, ext = os.path.splitext(basename)
+            output = self.output.format(dirname=dirname, basename=basename, ext=ext)
+            if not self.force and os.path.exists(output):
+                log.warning("%s: output file %s already exists: skipped", pathname, output)
+            else:
+                log.info("%s: writing %s", pathname, output)
+            f = self.load_fattura(pathname)
+            self.render(f, output)
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("-f", "--force", action="store_true", help="overwrite existing output files")
+        default_output = "{dirname}/{basename}{ext}." + cls.NAME
+        parser.add_argument("-o", "--output",
+                            default=default_output,
+                            help="output file; use {dirname} for the source file path,"
+                                 " {basename} for the source file name"
+                                 " (default: '" + default_output + "'")
+        parser.add_argument("stylesheet", help=".xsl/.xslt stylesheet file to use for rendering")
+        parser.add_argument("files", nargs="+", help="input files (.xml or .xml.p7m)")
+        return parser
+
+
+class RenderHTML(Renderer):
+    """
+    render a Fattura as HTML using a .xslt stylesheet
+    """
+    NAME = "html"
+
+    def render(self, f, output):
+        html = self.transform(f)
+        html.write(output)
+
+
+class RenderPDF(Renderer):
+    """
+    render a Fattura as PDF using a .xslt stylesheet
+    """
+    NAME = "pdf"
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.wkhtmltopdf = shutil.which("wkhtmltopdf")
+        if self.wkhtmltopdf is None:
+            raise Fail("wkhtmltopdf is needed for PDF rendering")
+
+    def render(self, f, output):
+        self.transform.to_pdf(self.wkhtmltopdf, f, output)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Handle fattura elettronica files")
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
@@ -225,6 +297,8 @@ def main():
     ExportPython.add_subparser(subparsers)
     Diff.add_subparser(subparsers)
     Validate.add_subparser(subparsers)
+    RenderHTML.add_subparser(subparsers)
+    RenderPDF.add_subparser(subparsers)
 
     # sp_validate = subparsers.add_parser("validate", help="validate a fattura")
     # sp_validate.set_defaults(app=run_validate)

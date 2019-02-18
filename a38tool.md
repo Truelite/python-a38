@@ -4,18 +4,21 @@ General command line help:
 
 ```text
 $ a38tool --help
-usage: a38tool [-h] [--verbose] [--debug] {json,xml,python,diff,validate} ...
+usage: a38tool [-h] [--verbose] [--debug]
+               {json,xml,python,diff,validate,html,pdf} ...
 
 Handle fattura elettronica files
 
 positional arguments:
-  {json,xml,python,diff,validate}
+  {json,xml,python,diff,validate,html,pdf}
                         actions
     json                output a fattura in JSON
     xml                 output a fattura in XML
     python              output a fattura as Python code
     diff                show the difference between two fatture
     validate            validate the contents of a fattura
+    html                render a Fattura as HTML using a .xslt stylesheet
+    pdf                 render a Fattura as PDF using a .xslt stylesheet
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -166,3 +169,38 @@ a38.fattura.FatturaPrivati12(
             progressivo_invio='00001',
 …
 ```
+
+
+### Render to HTML or PDF
+
+You can use a .xslt file to render e fattura to HTML or PDF.
+
+```text
+$ a38tool html --help
+usage: a38tool html [-h] [-f] [-o OUTPUT] stylesheet files [files ...]
+
+positional arguments:
+  stylesheet            .xsl/.xslt stylesheet file to use for rendering
+  files                 input files (.xml or .xml.p7m)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f, --force           overwrite existing output files
+  -o OUTPUT, --output OUTPUT
+                        output file; use {dirname} for the source file path,
+                        {basename} for the source file name (default:
+                        '{dirname}/{basename}{ext}.html'
+```
+
+Example:
+
+```text
+$ a38tool -v html stylesheet.xslt doc/IT01234567890_FPR02.xml
+2019-02-18 16:43:35,005 INFO doc/IT01234567890_FPR02.xml: writing doc/IT01234567890_FPR02.xml.html
+```
+
+```text
+$ a38tool -v pdf stylesheet.xslt doc/IT01234567890_FPR02.xml
+2019-02-18 16:43:35,088 INFO doc/IT01234567890_FPR02.xml: writing doc/IT01234567890_FPR02.xml.pdf
+```
+

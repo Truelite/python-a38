@@ -20,7 +20,10 @@ parse all the example XML files distributed by
 
 Required: dateutil, pytz, asn1crypto, and the python3 standard library.
 
-Optional: yapf for formatting `a38tool python` output
+Optional:
+ * yapf for formatting `a38tool python` output
+ * lxml for rendering to HTML
+ * the wkhtmltopdf command for rendering to PDF
 
 
 ## `a38tool` script
@@ -29,18 +32,21 @@ A simple command line wrapper to the library functions is available as `a38tool`
 
 ```text
 $ a38tool --help
-usage: a38tool [-h] [--verbose] [--debug] {json,xml,python,diff,validate} ...
+usage: a38tool [-h] [--verbose] [--debug]
+               {json,xml,python,diff,validate,html,pdf} ...
 
 Handle fattura elettronica files
 
 positional arguments:
-  {json,xml,python,diff,validate}
+  {json,xml,python,diff,validate,html,pdf}
                         actions
     json                output a fattura in JSON
     xml                 output a fattura in XML
     python              output a fattura as Python code
     diff                show the difference between two fatture
     validate            validate the contents of a fattura
+    html                render a Fattura as HTML using a .xslt stylesheet
+    pdf                 render a Fattura as PDF using a .xslt stylesheet
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -124,6 +130,18 @@ tree = f.build_etree()
 with open(filename, "wb") as out:
     tree.write(out)
 ```
+
+
+# Useful links
+
+XSLT stylesheets for displaying fatture:
+
+* From fatturapa.gov.it for
+  [privati](https://www.fatturapa.gov.it/export/fatturazione/sdi/fatturapa/v1.2/fatturaordinaria_v1.2.xsl)
+  and
+  [PA](https://www.fatturapa.gov.it/export/fatturazione/sdi/fatturapa/v1.2/fatturapa_v1.2.xsl)
+* From [AssoSoftware](http://www.assosoftware.it/allegati/assoinvoice/FoglioStileAssoSoftware.zip)
+
 
 # Copyright
 

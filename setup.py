@@ -15,5 +15,6 @@ setup(
     test_requires=["dateutil", "pytz", "asn1crypto"],
     extras_require={
         "formatted_python": ["yapf"],
+        "html": ["lxml"],
     },
 )

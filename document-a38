@@ -109,7 +109,7 @@ def main():
         if not fn.endswith(".md"):
             continue
         if process_md(fn):
-            log.warn("%s: updated", fn)
+            log.warning("%s: updated", fn)
         else:
             log.info("%s: unchanged", fn)
 
