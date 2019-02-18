@@ -195,12 +195,12 @@ optional arguments:
 Example:
 
 ```text
-$ a38tool -v html stylesheet.xslt doc/IT01234567890_FPR02.xml
-2019-02-18 16:43:35,005 INFO doc/IT01234567890_FPR02.xml: writing doc/IT01234567890_FPR02.xml.html
+$ a38tool -v html doc/fatturaordinaria_v1.2.1.xsl doc/IT01234567890_FPR02.xml
+2019-02-18 16:51:59,917 INFO doc/IT01234567890_FPR02.xml: writing doc/IT01234567890_FPR02.xml.html
 ```
 
 ```text
-$ a38tool -v pdf stylesheet.xslt doc/IT01234567890_FPR02.xml
-2019-02-18 16:43:35,088 INFO doc/IT01234567890_FPR02.xml: writing doc/IT01234567890_FPR02.xml.pdf
+$ a38tool -v pdf doc/fatturaordinaria_v1.2.1.xsl doc/IT01234567890_FPR02.xml
+2019-02-18 16:52:00,002 INFO doc/IT01234567890_FPR02.xml: writing doc/IT01234567890_FPR02.xml.pdf
 ```
 
