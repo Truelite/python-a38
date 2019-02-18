@@ -98,10 +98,14 @@ class Model(ModelBase, metaclass=ModelMetaclass):
 
     @classmethod
     def clean_value(cls, value: Any) -> Optional["Model"]:
+        """
+        Create a model from the given value.
+
+        Always make a copy even if value is already of the right class, to
+        prevent mutability issues.
+        """
         if value is None:
             return None
-        if isinstance(value, cls):
-            return value
         if not isinstance(value, ModelBase):
             raise TypeError("{} is not a Model instance".format(value.__class__.__name__))
         kw = {}
