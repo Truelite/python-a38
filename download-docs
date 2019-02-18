@@ -10,8 +10,6 @@ from lxml import etree as ET
 
 log = logging.getLogger("download_docs")
 
-INDEX_URL = "https://www.fatturapa.gov.it/export/fatturazione/it/normativa/f-2.htm"
-
 DOCS = [
     r"/Schema_del_file_xml.+\.xsd$",
     r"/Specifiche_tecniche.+\.pdf$",
@@ -22,6 +20,7 @@ DOCS = [
     r"/Suggerimenti_Compilazione.+\.pdf$",
     r"/fatturapa.+\.xsl$",
     r"/fatturaordinaria.+\.xsl$",
+    r"/Elenco_Controlli.+\.pdf$",
 ]
 
 EXAMPLES = [
@@ -29,35 +28,34 @@ EXAMPLES = [
 ]
 
 
-def get_urls():
-    index = requests.get(INDEX_URL)
+def get_urls(index_url):
+    index = requests.get(index_url)
     parser = ET.XMLParser(recover=True)
     root = ET.fromstring(index.text, parser)
     re_docs = [re.compile(r) for r in DOCS]
     re_examples = [re.compile(r) for r in EXAMPLES]
-    for li in root.iter("li"):
-        links = []
-        for a in li.iter("a"):
-            href = a.attrib.get("href")
-            if href is None:
-                continue
-            # There seem to be various wrong links to this file, so we ignore
-            # them
-            if "IT01234567890_11111" in href:
-                continue
-            links.append(href)
-        for l in links:
-            for r in re_docs:
-                if r.search(l):
-                    yield {"type": "doc", "href": l}
-            for r in re_examples:
-                if r.search(l):
-                    yield {"type": "example", "href": l, "title": li.text}
+    links = []
+    for a in root.iter("a"):
+        href = a.attrib.get("href")
+        if href is None:
+            continue
+        # There seem to be various wrong links to this file, so we ignore
+        # them
+        if "IT01234567890_11111" in href:
+            continue
+        links.append(href)
+    for l in links:
+        for r in re_docs:
+            if r.search(l):
+                yield {"type": "doc", "href": l}
+        for r in re_examples:
+            if r.search(l):
+                yield {"type": "example", "href": l}
 
 
-def download():
-    for el in get_urls():
-        url = urllib.parse.urljoin(INDEX_URL, el["href"])
+def download(index_url):
+    for el in get_urls(index_url):
+        url = urllib.parse.urljoin(index_url, el["href"])
         parsed = urllib.parse.urlparse(url)
         filename = os.path.basename(parsed.path)
         if el["type"] == "doc":
@@ -93,7 +91,8 @@ def main():
         level = logging.INFO
     logging.basicConfig(level=level, stream=sys.stderr, format=log_format)
 
-    download()
+    download("https://www.fatturapa.gov.it/export/fatturazione/it/normativa/f-2.htm")
+    download("https://www.fatturapa.gov.it/export/fatturazione/it/b-3.htm")
 
 
 if __name__ == "__main__":
