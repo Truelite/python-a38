@@ -385,9 +385,9 @@ class Fattura(models.Model):
     fattura_elettronica_header = FatturaElettronicaHeader
     fattura_elettronica_body = fields.ModelListField(FatturaElettronicaBody)
 
-    def validate(self):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = self.get_versione()
-        super().validate()
 
     def get_versione(self):
         return None

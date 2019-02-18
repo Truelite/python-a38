@@ -148,9 +148,10 @@ class TestFatturaPrivati12(TestCase):
         )
 
         f = a38.FatturaPrivati12()
-        f.fattura_elettronica_header.dati_trasmissione = a38.DatiTrasmissione(
+        f.fattura_elettronica_header.dati_trasmissione.update(
             a38.IdTrasmittente("IT", "10293847561"),
-            codice_destinatario="FUFUFU")
+            codice_destinatario="FUFUFU",
+        )
         f.fattura_elettronica_header.cedente_prestatore = cedente_prestatore
         f.fattura_elettronica_header.cessionario_committente = cessionario_committente
 
@@ -180,20 +181,13 @@ class TestFatturaPrivati12(TestCase):
 
     def test_validate(self):
         f = self.build_sample()
-
-        # build_etree also fills formato_trasmissione
-        self.assertIsNone(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione)
-        f.validate()
         self.assertEqual(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione, "FPR12")
+        f.validate()
 
     def test_serialize(self):
         f = self.build_sample()
-
-        # build_etree also fills formato_trasmissione
-        self.assertIsNone(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione)
-        tree = f.build_etree()
         self.assertEqual(f.fattura_elettronica_header.dati_trasmissione.formato_trasmissione, "FPR12")
-
+        tree = f.build_etree()
         with io.StringIO() as out:
             tree.write(out, encoding="unicode")
             xml = out.getvalue()

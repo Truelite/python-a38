@@ -77,6 +77,19 @@ class Model(ModelBase, metaclass=ModelMetaclass):
                 value = field.clean_value(value)
             setattr(self, name, value)
 
+    def update(self, *args, **kw):
+        """
+        Set multiple values in the model.
+
+        Arguments are treated in the same way as in the constructor. Any field
+        not mentioned is left untouched.
+        """
+        for name, value in zip(self._meta.keys(), args):
+            setattr(self, name, value)
+
+        for name, value in kw.items():
+            setattr(self, name, value)
+
     def has_value(self):
         for name, field in self._meta.items():
             if field.has_value(getattr(self, name)):
