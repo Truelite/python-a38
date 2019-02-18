@@ -29,20 +29,23 @@ A simple command line wrapper to the library functions is available as `a38tool`
 
 ```text
 $ a38tool --help
-usage: a38tool [-h] [--verbose] [--debug] {json,xml,python} ...
+usage: a38tool [-h] [--verbose] [--debug] {json,xml,python,diff,validate} ...
 
 Handle fattura elettronica files
 
 positional arguments:
-  {json,xml,python}  actions
-    json             Output a fattura in JSON
-    xml              Output a fattura in XML
-    python           Output a fattura as Python code
+  {json,xml,python,diff,validate}
+                        actions
+    json                output a fattura in JSON
+    xml                 output a fattura in XML
+    python              output a fattura as Python code
+    diff                show the difference between two fatture
+    validate            validate the contents of a fattura
 
 optional arguments:
-  -h, --help         show this help message and exit
-  --verbose, -v      verbose output
-  --debug            debug output
+  -h, --help            show this help message and exit
+  --verbose, -v         verbose output
+  --debug               debug output
 ```
 
 See [a38tool.md](a38tool.md) for more details.
