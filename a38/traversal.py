@@ -22,6 +22,9 @@ class Traversal:
     def __init__(self, prefix: Optional[str] = None):
         self.prefix = prefix
 
+    def with_prefix(self, prefix: str) -> "Traversal":
+        raise NotImplementedError("Traversal subclasses must implement with_prefix")
+
     @contextmanager
     def subfield(self, name: str):
         if self.prefix is None:

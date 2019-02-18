@@ -1,7 +1,10 @@
-from typing import Optional
+from typing import Optional, Any, TypeVar, Generic, Sequence, List
 from dateutil.parser import isoparse
 import datetime
 import decimal
+from . import validation
+from . import builder
+from .diff import Diff
 from decimal import Decimal
 import time
 import pytz
@@ -14,7 +17,10 @@ def to_xmltag(name: str, xmlns: Optional[str] = None):
     return "{" + xmlns + "}" + tag
 
 
-class Field:
+T = TypeVar("T")
+
+
+class Field(Generic[T]):
     """
     Description of a value that can be validated and serialized to XML.
 
@@ -23,8 +29,12 @@ class Field:
     # True for fields that can hold a sequence of values
     multivalue = False
 
-    def __init__(self, xmlns=None, xmltag=None, null=False, default=None):
-        self.name = None
+    def __init__(self,
+                 xmlns: Optional[str] = None,
+                 xmltag: Optional[str] = None,
+                 null: bool = False,
+                 default: Optional[T] = None):
+        self.name: Optional[str] = None
         self.xmlns = xmlns
         self.xmltag = xmltag
         self.null = null
@@ -39,20 +49,20 @@ class Field:
         """
         self.name = name
 
-    def get_construct_default(self):
+    def get_construct_default(self) -> Optional[T]:
         """
         Get the default value for when a field is constructed in the Model
         constructor, and no value for it has been passed
         """
         return None
 
-    def has_value(self, value):
+    def has_value(self, value: Optional[T]) -> bool:
         """
         Return True if this value represents a field that has been set
         """
         return value is not None
 
-    def validate(self, validation, value):
+    def validate(self, validation: "validation.Validation", value: Any) -> Optional[T]:
         """
         Raise ValidationError(s) if the given value is not valid for this field.
 
@@ -68,7 +78,7 @@ class Field:
 
         return value
 
-    def clean_value(self, value):
+    def clean_value(self, value: Any) -> Optional[T]:
         """
         Return a cleaned version of the given value
         """
@@ -76,15 +86,18 @@ class Field:
             return self.default
         return value
 
-    def get_xmltag(self):
+    def get_xmltag(self) -> str:
         """
         Return the XML tag to use for this field
         """
         if self.xmltag is not None:
             return self.xmltag
-        return to_xmltag(self.name, self.xmlns)
+        if self.name is None:
+            raise RuntimeError("field with uninitialized name")
+        else:
+            return to_xmltag(self.name, self.xmlns)
 
-    def to_xml(self, builder, value):
+    def to_xml(self, builder: "builder.Builder", value: Optional[T]):
         """
         Add this field to an XML tree
         """
@@ -93,25 +106,25 @@ class Field:
             return
         builder.add(self.get_xmltag(), self.to_str(value))
 
-    def to_jsonable(self, value):
+    def to_jsonable(self, value: Optional[T]) -> Any:
         """
         Return a json-able value for this field
         """
         return self.clean_value(value)
 
-    def to_str(self, value) -> str:
+    def to_str(self, value: Optional[T]) -> str:
         """
         Return this value as a string that can be parsed by clean_value
         """
         return str(value)
 
-    def to_repr(self, value) -> str:
+    def to_repr(self, value: Optional[T]) -> str:
         """
         Return this value formatted for debugging
         """
         return repr(value)
 
-    def to_python(self, value, **kw) -> str:
+    def to_python(self, value: Optional[T], **kw) -> str:
         """
         Return this value as a python expression
         """
@@ -123,7 +136,7 @@ class Field:
         """
         return self.clean_value(el.text)
 
-    def diff(self, res, first, second):
+    def diff(self, res: Diff, first: Optional[T], second: Optional[T]):
         """
         Report to res if there are differences between values first and second
         """
@@ -141,24 +154,26 @@ class Field:
             res.add_different(self, first, second)
 
 
-class ChoicesMixin:
-    def __init__(self, choices=None, **kw):
+class ChoicesField(Field[T]):
+    def __init__(self, choices: Sequence[T] = None, **kw):
         super().__init__(**kw)
+        self.choices: Optional[List[Optional[T]]]
         if choices is not None:
-            choices = [self.clean_value(c) for c in choices]
-        self.choices = choices
+            self.choices = [self.clean_value(c) for c in choices]
+        else:
+            self.choices = None
 
-    def validate(self, validation, value):
+    def validate(self, validation: "validation.Validation", value: Optional[T]):
         value = super().validate(validation, value)
         if value is not None and self.choices is not None and value not in self.choices:
             validation.add_error(self, "{} is not a valid choice for this field".format(self.to_repr(value)))
         return value
 
 
-class ListField(Field):
+class ListField(Field[List[T]]):
     multivalue = True
 
-    def __init__(self, field, **kw):
+    def __init__(self, field: Field[T], **kw):
         super().__init__(**kw)
         self.field = field
 
@@ -214,7 +229,7 @@ class ListField(Field):
             return repr(None)
         return "[" + ", ".join(self.field.to_python(v, **kw) for v in value) + "]"
 
-    def diff(self, res, first, second):
+    def diff(self, res: Diff, first, second):
         first = self.clean_value(first)
         second = self.clean_value(second)
         has_first = self.has_value(first)
@@ -240,7 +255,7 @@ class ListField(Field):
         return values
 
 
-class IntegerField(ChoicesMixin, Field):
+class IntegerField(ChoicesField[int]):
     def __init__(self, max_length=None, **kw):
         super().__init__(**kw)
         self.max_length = max_length
@@ -260,7 +275,7 @@ class IntegerField(ChoicesMixin, Field):
         return value
 
 
-class DecimalField(ChoicesMixin, Field):
+class DecimalField(ChoicesField[Decimal]):
     def __init__(self, max_length=None, decimals=2, **kw):
         super().__init__(**kw)
         self.max_length = max_length
@@ -301,7 +316,7 @@ class DecimalField(ChoicesMixin, Field):
         return value
 
 
-class StringField(ChoicesMixin, Field):
+class StringField(ChoicesField[str]):
     def __init__(self, length=None, min_length=None, max_length=None, **kw):
         super().__init__(**kw)
         if length is not None:
@@ -329,7 +344,7 @@ class StringField(ChoicesMixin, Field):
         return value
 
 
-class DateField(ChoicesMixin, Field):
+class DateField(ChoicesField[datetime.date]):
     def clean_value(self, value):
         value = super().clean_value(value)
         if value is None:
@@ -358,7 +373,7 @@ class DateField(ChoicesMixin, Field):
         return value.strftime("%Y-%m-%d")
 
 
-class DateTimeField(ChoicesMixin, Field):
+class DateTimeField(ChoicesField[datetime.datetime]):
     tz_rome = pytz.timezone("Europe/Rome")
 
     def clean_value(self, value):
@@ -493,7 +508,7 @@ class ModelField(Field):
             return repr(None)
         return value.to_python(**kw)
 
-    def diff(self, res, first, second):
+    def diff(self, res: Diff, first, second):
         first = self.clean_value(first)
         second = self.clean_value(second)
         has_first = self.has_value(first)
@@ -582,7 +597,7 @@ class ModelListField(Field):
             return repr(None)
         return "[" + ", ".join(v.to_python(**kw) for v in value) + "]"
 
-    def diff(self, res, first, second):
+    def diff(self, res: Diff, first, second):
         first = self.clean_value(first)
         second = self.clean_value(second)
         has_first = self.has_value(first)
