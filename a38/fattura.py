@@ -400,7 +400,7 @@ class Fattura(models.Model):
     __xmltag__ = "FatturaElettronica"
 
     fattura_elettronica_header = FatturaElettronicaHeader
-    fattura_elettronica_body = fields.ModelListField(FatturaElettronicaBody)
+    fattura_elettronica_body = fields.ModelListField(FatturaElettronicaBody, min_num=1)
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

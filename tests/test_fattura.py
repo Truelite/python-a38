@@ -152,7 +152,7 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
         f.fattura_elettronica_header.cedente_prestatore = cedente_prestatore
         f.fattura_elettronica_header.cessionario_committente = cessionario_committente
 
-        body = a38.FatturaElettronicaBody()
+        body = f.fattura_elettronica_body[0]
         body.dati_generali.dati_generali_documento = a38.DatiGeneraliDocumento(
             tipo_documento="TD01",
             divisa="EUR",
@@ -175,6 +175,11 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
         f.fattura_elettronica_body.append(body)
 
         return f
+
+    def test_initial_body_exists(self):
+        f = a38.FatturaPrivati12()
+        self.assertEqual(len(f.fattura_elettronica_body), 1)
+        self.assertFalse(f.fattura_elettronica_body[0].has_value())
 
     def test_validate(self):
         f = self.build_sample()

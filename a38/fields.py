@@ -173,23 +173,27 @@ class ChoicesField(Field[T]):
 class ListField(Field[List[T]]):
     multivalue = True
 
-    def __init__(self, field: Field[T], **kw):
+    def __init__(self, field: Field[T], min_num=0, **kw):
         super().__init__(**kw)
         self.field = field
+        self.min_num = min_num
 
     def set_name(self, name: str):
         super().set_name(name)
         self.field.xmltag = self.get_xmltag()
 
     def get_construct_default(self):
-        return []
+        res = []
+        for i in range(self.min_num):
+            res.append(None)
+        return res
 
     def clean_value(self, value):
         value = super().clean_value(value)
         if value is None:
             return value
         res = [self.field.clean_value(val) for val in value]
-        while res and not self.field.has_value(res[-1]):
+        while len(res) > self.min_num and not self.field.has_value(res[-1]):
             res.pop()
         return res
 
@@ -205,6 +209,8 @@ class ListField(Field[List[T]]):
         value = super().validate(validation, value)
         if not self.has_value(value):
             return value
+        if len(value) < self.min_num:
+            validation.add_error(self, "list must have at least {} elements, but has only {}".format(self.min_num, len(value)))
         for idx, val in enumerate(value):
             with validation.subfield(self.name + "." + str(idx)) as sub:
                 self.field.validate(sub, val)
@@ -535,19 +541,23 @@ class ModelListField(Field):
     """
     multivalue = True
 
-    def __init__(self, model, **kw):
+    def __init__(self, model, min_num=0, **kw):
         super().__init__(**kw)
         self.model = model
+        self.min_num = min_num
 
     def get_construct_default(self):
-        return []
+        res = []
+        for i in range(self.min_num):
+            res.append(self.model())
+        return res
 
     def clean_value(self, value):
         value = super().clean_value(value)
         if value is None:
             return value
         res = [self.model.clean_value(val) for val in value]
-        while res and (res[-1] is None or not res[-1].has_value()):
+        while len(res) > self.min_num and (res[-1] is None or not res[-1].has_value()):
             res.pop()
         return res
 
@@ -570,6 +580,9 @@ class ModelListField(Field):
         value = super().validate(validation, value)
         if not self.has_value(value):
             return value
+
+        if len(value) < self.min_num:
+            validation.add_error(self, "list must have at least {} elements, but has only {}".format(self.min_num, len(value)))
 
         for idx, val in enumerate(value):
             with validation.subfield(self.name + "." + str(idx)) as sub:

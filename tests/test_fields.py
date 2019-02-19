@@ -581,6 +581,16 @@ class TestModelListField(FieldTestMixin, TestCase):
         f = self.get_field(null=True)
         self.assert_validates(f, [], result=[])
 
+    def test_min_num(self):
+        f = self.get_field(min_num=2)
+        self.assertEqual(f.get_construct_default(), [Sample(), Sample()])
+        self.assertEqual(f.clean_value([Sample(), Sample(), Sample()]), [Sample(), Sample()])
+
+        self.assert_validates(f, [Sample("test", 7)], result=[Sample("test", 7)], errors=[
+            "sample: list must have at least 2 elements, but has only 1",
+        ])
+        self.assert_validates(f, [Sample("test", 6), Sample("test", 7)], result=[Sample("test", 6), Sample("test", 7)])
+
     def test_default(self):
         f = self.get_field(default=[Sample("test", 7)])
         self.assertEqual(f.clean_value(None), [Sample("test", 7)])
@@ -638,6 +648,16 @@ class TestListField(FieldTestMixin, TestCase):
 
         f = self.get_field(null=True)
         self.assert_validates(f, [], result=[])
+
+    def test_min_num(self):
+        f = self.get_field(min_num=2)
+        self.assertEqual(f.get_construct_default(), [None, None])
+        self.assertEqual(f.clean_value([None, None, None]), [None, None])
+
+        self.assert_validates(f, ["test1"], result=["test1"], errors=[
+            "sample: list must have at least 2 elements, but has only 1",
+        ])
+        self.assert_validates(f, ["test1", "test2"], result=["test1", "test2"])
 
     def test_default(self):
         f = self.get_field(default=["test1", "test2"])
