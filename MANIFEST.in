@@ -1,4 +1,4 @@
-include MANMIFEST.in
+include MANIFEST.in
 include LICENSE
 include README.md
 include doc/README.md
