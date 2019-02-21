@@ -32,6 +32,7 @@ if HAVE_LXML:
             html = self(f)
             with tempfile.NamedTemporaryFile("wb", suffix=".html") as fd:
                 html.write(fd)
+                fd.flush()
                 res = subprocess.run([wkhtmltopdf, fd.name, output_file], stdin=subprocess.DEVNULL, capture_output=True)
                 if res.returncode != 0:
                     raise RuntimeError("%s exited with error %d: stderr: %s", self.wkhtmltopdf, res.returncode, res.stderr)
