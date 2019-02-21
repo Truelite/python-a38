@@ -4,6 +4,6 @@ updated from time to time.
 
 Normativa: <https://www.fatturapa.gov.it/export/fatturazione/it/normativa/f-2.htm>
 
-Assocons validator: <https://fatturazione-elettronica-pa.assocons.it/site/lipa/validazione/upload>
+Assocons validator: <https://fatturazione-elettronica-pa.assocons.it/validazione-fattura-elettronica.html>
 
 Agenzia delle Entrate validator: <https://www.fatturapa.gov.it/export/fatturazione/it/sperimentazione.htm>
