@@ -174,13 +174,48 @@ class FatturaElettronicaHeader(models.Model):
     cessionario_committente = CessionarioCommittente
 
 
+class DatiRitenuta(models.Model):
+    tipo_ritenuta = fields.StringField(length=4, choices=("RT01", "RT02"))
+    importo_ritenuta = fields.DecimalField(max_length=15)
+    aliquota_ritenuta = fields.DecimalField(max_length=6)
+    causale_pagamento = fields.StringField(max_length=2)
+
+
+class DatiBollo(models.Model):
+    bollo_virtuale = fields.StringField(length=2, choices=("SI",))
+    importo_bollo = fields.DecimalField(max_length=15)
+
+
+class DatiCassaPrevidenziale(models.Model):
+    tipo_cassa = fields.StringField(length=4, choices=["TC{:02d}".format(i) for i in range(1, 23)])
+    al_cassa = fields.DecimalField(max_length=6)
+    importo_contributo_cassa = fields.DecimalField(max_length=15)
+    imponibile_cassa = fields.DecimalField(max_length=15)
+    aliquota_iva = fields.DecimalField(max_length=6)
+    ritenuta = fields.StringField(length=2, choices=("SI",), null=True)
+    natura = fields.StringField(length=2, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"), null=True)
+    riferimento_amministrazione = fields.StringField(max_length=20, null=True)
+
+
+class ScontoMaggiorazione(models.Model):
+    tipo = fields.StringField(length=2, choices=("SC", "MG"))
+    percentuale = fields.DecimalField(max_length=6, null=True)
+    importo = fields.DecimalField(max_length=15, null=True)
+
+
 class DatiGeneraliDocumento(models.Model):
     tipo_documento = fields.StringField(length=4, choices=("TD01", "TD02", "TD03", "TD04", "TD05", "TD06"))
     divisa = fields.StringField()
     data = fields.DateField()
     numero = fields.StringField(max_length=20)
+    dati_ritenuta = fields.ModelField(DatiRitenuta, null=True)
+    dati_bollo = fields.ModelField(DatiBollo, null=True)
+    dati_cassa_previdenziale = fields.ModelListField(DatiCassaPrevidenziale, null=True)
+    sconto_maggiorazione = fields.ModelListField(ScontoMaggiorazione, null=True)
     importo_totale_documento = fields.DecimalField(max_length=15, null=True)
-    causale = fields.ListField(fields.StringField(max_length=200))
+    arrotondamento = fields.DecimalField(max_length=15, null=True)
+    causale = fields.ListField(fields.StringField(max_length=200), null=True)
+    art73 = fields.StringField(length=2, choices=("SI",), null=True, xmltag="Art73")
 
 
 class AltriDatiGestionali(models.Model):
