@@ -65,15 +65,25 @@ class TestDatiTrasmissione(TestFatturaMixin, TestCase):
                 "12345", "FPR12")
 
         self.assert_validates(dt, errors=[
-            "codice_destinatario: one of codice_destinatario or pec_destinatario must be set",
-            "pec_destinatario: one of codice_destinatario or pec_destinatario must be set",
+            # "codice_destinatario: one of codice_destinatario or pec_destinatario must be set",
+            # "pec_destinatario: one of codice_destinatario or pec_destinatario must be set",
+            "codice_destinatario: [00426] pec_destinatario has no value while codice_destinatario has value 0000000",
+            "pec_destinatario: [00426] pec_destinatario has no value while codice_destinatario has value 0000000",
         ])
 
         dt.codice_destinatario = "FUFUFU"
+        self.assert_validates(dt, errors=[
+            "codice_destinatario: [00427] codice_destinatario has 6 characters on a Fattura Privati",
+        ])
+
+        dt.codice_destinatario = "FUFUFUF"
         self.assert_validates(dt)
 
         dt.pec_destinatario = "local_part@example.org"
-        self.assert_validates(dt)
+        self.assert_validates(dt, errors=[
+            "codice_destinatario: [00426] pec_destinatario has value while codice_destinatario has value 0000000",
+            "pec_destinatario: [00426] pec_destinatario has value while codice_destinatario has value 0000000",
+        ])
 
         dt.codice_destinatario = None
         self.assert_validates(dt)
@@ -85,8 +95,12 @@ class TestDatiBeniServizi(TestFatturaMixin, TestCase):
         o.add_dettaglio_linee(descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
         o.add_dettaglio_linee(descrizione="Line 2", quantita=1, unita_misura="A", prezzo_unitario="0.4", aliquota_iva=22)
         self.assertEqual(len(o.dettaglio_linee), 2)
-        self.assertEqual(o.dettaglio_linee[0], a38.DettaglioLinee(1, "Line 1", 2, "m²", 7, 14, 22))
-        self.assertEqual(o.dettaglio_linee[1], a38.DettaglioLinee(2, "Line 2", 1, "A", "0.4", "0.4", 22))
+        self.assertEqual(o.dettaglio_linee[0], a38.DettaglioLinee(
+            numero_linea=1, descrizione="Line 1", quantita=2, unita_misura="m²",
+            prezzo_unitario=7, prezzo_totale=14, aliquota_iva=22))
+        self.assertEqual(o.dettaglio_linee[1], a38.DettaglioLinee(
+            numero_linea=2, descrizione="Line 2", quantita=1, unita_misura="A",
+            prezzo_unitario="0.4", prezzo_totale="0.4", aliquota_iva=22))
 
     def test_add_dettaglio_linee_without_quantita(self):
         o = a38.DatiBeniServizi()
@@ -147,7 +161,7 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
         f = a38.FatturaPrivati12()
         f.fattura_elettronica_header.dati_trasmissione.update(
             a38.IdTrasmittente("IT", "10293847561"),
-            codice_destinatario="FUFUFU",
+            codice_destinatario="FUFUFUF",
         )
         f.fattura_elettronica_header.cedente_prestatore = cedente_prestatore
         f.fattura_elettronica_header.cessionario_committente = cessionario_committente

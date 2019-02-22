@@ -1,5 +1,6 @@
 from . import models
 from . import fields
+import re
 
 #
 # This file describes the data model of the Italian Fattura Elettronica.
@@ -39,11 +40,7 @@ class DatiTrasmissione(models.Model):
     id_trasmittente = IdTrasmittente
     progressivo_invio = fields.ProgressivoInvioField()
     formato_trasmissione = fields.StringField(length=5, choices=("FPR12", "FPA12"))
-    # FIXME: se la fattura deve essere recapitata ad un soggetto che intende
-    # ricevere le fatture elettroniche attraverso il canale PEC, il campo deve
-    # essere valorizzato con sette zeri (“0000000”) e deve essere valorizzato
-    # il campo PECDestinatario
-    codice_destinatario = fields.StringField(null=True, min_length=6, max_length=7)
+    codice_destinatario = fields.StringField(null=True, min_length=6, max_length=7, default="0000000")
     contatti_trasmittente = fields.ModelField(ContattiTrasmittente, null=True)
     pec_destinatario = fields.StringField(null=True, min_length=8, max_length=256, xmltag="PECDestinatario")
 
@@ -53,6 +50,35 @@ class DatiTrasmissione(models.Model):
             validation.add_error(
                     (self._meta["codice_destinatario"], self._meta["pec_destinatario"]),
                     "one of codice_destinatario or pec_destinatario must be set")
+
+        # Se la fattura deve essere recapitata ad un soggetto che intende
+        # ricevere le fatture elettroniche attraverso il canale PEC, il campo
+        # deve essere valorizzato con sette zeri (“0000000”) e deve essere
+        # valorizzato il campo PECDestinatario
+
+        if self.pec_destinatario is None and self.codice_destinatario == "0000000":
+            validation.add_error(
+                    (self._meta["codice_destinatario"], self._meta["pec_destinatario"]),
+                    "pec_destinatario has no value while codice_destinatario has value 0000000",
+                    code="00426")
+
+        if self.pec_destinatario is not None and self.codice_destinatario is not None and self.codice_destinatario != "0000000":
+            validation.add_error(
+                    (self._meta["codice_destinatario"], self._meta["pec_destinatario"]),
+                    "pec_destinatario has value while codice_destinatario has value 0000000",
+                    code="00426")
+
+        if self.formato_trasmissione == "FPA12" and len(self.codice_destinatario) == 7:
+            validation.add_error(
+                    self._meta["codice_destinatario"],
+                    "codice_destinatario has 7 characters on a Fattura PA",
+                    code="00427")
+
+        if self.formato_trasmissione == "FPR12" and len(self.codice_destinatario) == 6:
+            validation.add_error(
+                    self._meta["codice_destinatario"],
+                    "codice_destinatario has 6 characters on a Fattura Privati",
+                    code="00427")
 
 
 class Anagrafica(models.Model):
@@ -160,6 +186,14 @@ class DatiAnagraficiCessionarioCommittente(models.Model):
     codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
     anagrafica = Anagrafica
 
+    def validate_model(self, validation):
+        super().validate_model(validation)
+        if self.id_fiscale_iva is None and self.codice_fiscale is None:
+            validation.add_error(
+                    (self._meta["id_fiscale_iva"], self._meta["codice_fiscale"]),
+                    "at least one of id_fiscale_iva and codice_fiscale needs to have a value",
+                    code="00417")
+
 
 class CessionarioCommittente(models.Model):
     dati_anagrafici = DatiAnagraficiCessionarioCommittente
@@ -196,6 +230,15 @@ class DatiCassaPrevidenziale(models.Model):
     natura = fields.StringField(length=2, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"), null=True)
     riferimento_amministrazione = fields.StringField(max_length=20, null=True)
 
+    def validate_model(self, validation):
+        super().validate_model(validation)
+        if self.aliquota_iva == 0 and self.natura is None:
+            validation.add_error(
+                self._meta["natura"], "field is empty while aliquota_iva is zero", code="00413")
+        if self.aliquota_iva != 0 and self.natura is not None:
+            validation.add_error(
+                self._meta["natura"], "field has value while aliquota_iva is not zero", code="00414")
+
 
 class ScontoMaggiorazione(models.Model):
     tipo = fields.StringField(length=2, choices=("SC", "MG"))
@@ -217,6 +260,23 @@ class DatiGeneraliDocumento(models.Model):
     causale = fields.ListField(fields.StringField(max_length=200), null=True)
     art73 = fields.StringField(length=2, choices=("SI",), null=True, xmltag="Art73")
 
+    def validate_model(self, validation):
+        super().validate_model(validation)
+
+        has_dati_cassa_previdenziale_ritenuta = False
+        for dcp in self.dati_cassa_previdenziale:
+            if dcp.ritenuta == "SI":
+                has_dati_cassa_previdenziale_ritenuta = True
+                break
+
+        if has_dati_cassa_previdenziale_ritenuta and not self.dati_ritenuta.has_value():
+            validation.add_error(
+                self._meta["ritenuta"], "field empty when dati_cassa_previdenziale.ritenuta is SI", code="00415")
+
+        if self.numero is None or not re.search(r"\d", self.numero):
+            validation.add_error(
+                self._meta["numero"], "numero must contain at least one number", code="00425")
+
 
 class AltriDatiGestionali(models.Model):
     tipo_dato = fields.StringField(max_length=10)
@@ -225,15 +285,27 @@ class AltriDatiGestionali(models.Model):
     riferimento_data = fields.DateField(null=True)
 
 
+class CodiceArticolo(models.Model):
+    codice_tipo = fields.StringField(max_length=35)
+    codice_valore = fields.StringField(max_length=35)
+
+
 class DettaglioLinee(models.Model):
     numero_linea = fields.IntegerField(max_length=4)
+    tipo_cessione_prestazione = fields.StringField(length=2, choices=("SC", "PR", "AB", "AC"), null=True)
+    codice_articolo = fields.ModelListField(CodiceArticolo, null=True)
     descrizione = fields.StringField(max_length=1000)
     quantita = fields.DecimalField(max_length=21, decimals=2, null=True)
     unita_misura = fields.StringField(max_length=10, null=True)
+    data_inizio_periodo = fields.DateField(null=True)
+    data_fine_periodo = fields.DateField(null=True)
     prezzo_unitario = fields.DecimalField(max_length=21)
+    sconto_maggiorazione = fields.ModelListField(ScontoMaggiorazione, null=True)
     prezzo_totale = fields.DecimalField(max_length=21)
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
+    ritenuta = fields.StringField(length=2, choices=("SI",), null=True)
     natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
+    riferimento_amministrazione = fields.StringField(max_length=20, null=True)
     altri_dati_gestionali = fields.ModelListField(AltriDatiGestionali, null=True)
 
     def validate_model(self, validation):
@@ -242,6 +314,12 @@ class DettaglioLinee(models.Model):
             validation.add_error(self._meta["quantita"], "field must be present when unita_misura is set")
         if self.quantita is not None and self.unita_misura is None:
             validation.add_error(self._meta["unita_misura"], "field must be present when quantita is set")
+        if self.aliquota_iva == 0 and self.natura is None:
+            validation.add_error(
+                self._meta["natura"], "natura non presente a fronte di aliquota_iva pari a zero", code="00400")
+        if self.aliquota_iva != 0 and self.natura is not None:
+            validation.add_error(
+                self._meta["natura"], "natura presente a fronte di aliquota_iva diversa da zero", code="00401")
 
 
 class DatiRiepilogo(models.Model):
@@ -255,6 +333,15 @@ class DatiRiepilogo(models.Model):
     imposta = fields.DecimalField(max_length=15)
     esigibilita_iva = fields.StringField(xmltag="EsigibilitaIVA", length=1, choices=("I", "D", "S"), null=True)
     riferimento_normativo = fields.StringField(max_length=100, null=True)
+
+    def validate_model(self, validation):
+        super().validate_model(validation)
+        if self.aliquota_iva == 0 and self.natura is None:
+            validation.add_error(
+                self._meta["natura"], "field is empty while aliquota_iva is zero", code="00429")
+        if self.aliquota_iva != 0 and self.natura is not None:
+            validation.add_error(
+                self._meta["natura"], "field has value while aliquota_iva is not zero", code="00430")
 
 
 class DatiBeniServizi(models.Model):
@@ -378,6 +465,17 @@ class DatiGenerali(models.Model):
     dati_fatture_collegate = fields.ModelField(DatiFattureCollegate, null=True)
     dati_trasporto = fields.ModelField(DatiTrasporto, null=True)
 
+    def validate_model(self, validation):
+        super().validate_model(validation)
+        if (self.dati_fatture_collegate.has_value()
+                and self.dati_fatture_collegate.data.has_value()
+                and self.dati_fatture_collegate.data < self.dati_generali_documento.data):
+            validation.add_error(
+                (self.dati_fatture_collegate._meta["data"],
+                 self.dati_generali_documento._meta["data"]),
+                "dati_fatture_collegate.data is earlier than dati_generali_documento.data",
+                code="00418")
+
 
 class DettaglioPagamento(models.Model):
     beneficiario = fields.StringField(max_length=200, null=True)
@@ -429,6 +527,34 @@ class FatturaElettronicaBody(models.Model):
         totale = sum(r.imponibile_importo + r.imposta for r in self.dati_beni_servizi.dati_riepilogo)
         self.dati_generali.dati_generali_documento.importo_totale_documento = totale
 
+    def validate_model(self, validation):
+        super().validate_model(validation)
+
+        has_ritenute = False
+        has_aliquote_iva = False
+        for dl in self.dati_beni_servizi.dettaglio_linee:
+            if dl.ritenuta == "SI":
+                has_ritenute = True
+            if dl.aliquota_iva is not None:
+                has_aliquote_iva = True
+
+        if has_ritenute and not self.dati_generali.dati_generali_documento.dati_ritenuta.has_value():
+            validation.add_error(
+                self.dati_generali.dati_generali_documento._meta["dati_ritenuta"],
+                "field empty while at least one of dati_beni_servizi.dettaglio_linee.ritenuta is SI",
+                code="00411",
+            )
+
+        for dcp in self.dati_generali.dati_generali_documento.dati_cassa_previdenziale:
+            if dcp.aliquota_iva is not None:
+                has_aliquote_iva = True
+
+        if not self.dati_beni_servizi.dati_riepilogo and has_aliquote_iva:
+            validation.add_error(
+                    self.dati_beni_servizi._meta["dati_riepilogo"],
+                    "dati_riepilogo is empty while there is at least an aliquota_iva in dettaglio_linee or dati_cassa_previdenziale",
+                    code="00419")
+
 
 class Fattura(models.Model):
     __xmlns__ = NS
@@ -446,6 +572,14 @@ class Fattura(models.Model):
 
     def get_xmlattrs(self):
         return {"versione": self.get_versione()}
+
+    def validate_model(self, validation):
+        super().validate_model(validation)
+        if self.get_versione() != self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione:
+            validation.add_error(
+                    self.fattura_elettronica_header.dati_trasmissione._meta["formato_trasmissione"],
+                    "formato_trasmissione should be {}".format(self.get_versione()),
+                    code="00428")
 
     def to_xml(self, builder):
         with builder.element(self.get_xmltag(), **self.get_xmlattrs()) as b:
