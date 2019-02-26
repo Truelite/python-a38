@@ -24,6 +24,7 @@ Optional:
  * yapf for formatting `a38tool python` output
  * lxml for rendering to HTML
  * the wkhtmltopdf command for rendering to PDF
+ * requests for downloading CA certificates for signature verification
 
 
 ## `a38tool` script
@@ -33,12 +34,12 @@ A simple command line wrapper to the library functions is available as `a38tool`
 ```text
 $ a38tool --help
 usage: a38tool [-h] [--verbose] [--debug]
-               {json,xml,python,diff,validate,html,pdf} ...
+               {json,xml,python,diff,validate,html,pdf,update_ca_certs} ...
 
 Handle fattura elettronica files
 
 positional arguments:
-  {json,xml,python,diff,validate,html,pdf}
+  {json,xml,python,diff,validate,html,pdf,update_ca_certs}
                         actions
     json                output a fattura in JSON
     xml                 output a fattura in XML
@@ -47,6 +48,7 @@ positional arguments:
     validate            validate the contents of a fattura
     html                render a Fattura as HTML using a .xslt stylesheet
     pdf                 render a Fattura as PDF using a .xslt stylesheet
+    update_ca_certs     show the difference between two fatture
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -130,6 +132,37 @@ tree = f.build_etree()
 with open(filename, "wb") as out:
     tree.write(out)
 ```
+
+
+# Digital signatures
+
+Digital signatures on Firma Elettronica are
+[CAdES](https://en.wikipedia.org/wiki/CAdES_(computing)) signatures.
+
+openssl cal verify the signatures, but not yet generate them. A patch to sign
+with CAdES [has been recently merged](https://github.com/openssl/openssl/commit/e85d19c68e7fb3302410bd72d434793e5c0c23a0)
+but not yet released as of 2019-02-26.
+
+## Downloading CA certificates
+
+CA certificates for validating digital certificates are
+[distributed by the EU in XML format](https://ec.europa.eu/cefdigital/wiki/display/cefdigital/esignature).
+See also [the AGID page about it](https://www.agid.gov.it/it/piattaforme/firma-elettronica-qualificata/certificati).
+
+There is a [Trusted List Browser](https://webgate.ec.europa.eu/tl-browser/) but
+apparently no way of getting a simple bundle of certificates useable by
+openssl.
+
+`a38tool` has basic features to download and parse CA certificate information,
+and maintain a CA certificate directory:
+
+```
+a38tool update_ca_certs certdir/ --remove-old
+```
+
+No particular effort is made to validate the downloaded certificates, besides
+the standard HTTPS checks performed by the [requests
+library](http://docs.python-requests.org/en/master/).
 
 
 # Useful links

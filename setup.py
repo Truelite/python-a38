@@ -16,5 +16,6 @@ setup(
     extras_require={
         "formatted_python": ["yapf"],
         "html": ["lxml"],
+        "cacerts": ["requests"],
     },
 )

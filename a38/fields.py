@@ -91,7 +91,10 @@ class Field(Generic[T]):
         Return the XML tag to use for this field
         """
         if self.xmltag is not None:
-            return self.xmltag
+            if self.xmlns is not None:
+                return "{" + self.xmlns + "}" + self.xmltag
+            else:
+                return self.xmltag
         if self.name is None:
             raise RuntimeError("field with uninitialized name")
         else:
@@ -152,6 +155,15 @@ class Field(Generic[T]):
             res.add_only_second(self, second)
         elif first != second:
             res.add_different(self, first, second)
+
+
+class NotImplementedField(Field[None]):
+    """
+    Field acting as a placeholder for a part of the specification that is not
+    yet implemented.
+    """
+    def clean_value(self, value: Any) -> None:
+        return None
 
 
 class ChoicesField(Field[T]):
@@ -482,7 +494,10 @@ class ModelField(Field):
 
     def get_xmltag(self):
         if self.xmltag is not None:
-            return self.xmltag
+            if self.xmlns is not None:
+                return "{" + self.xmlns + "}" + self.xmltag
+            else:
+                return self.xmltag
         return self.model.get_xmltag()
 
     def validate(self, validation, value):
