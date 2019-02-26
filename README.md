@@ -164,6 +164,15 @@ No particular effort is made to validate the downloaded certificates, besides
 the standard HTTPS checks performed by the [requests
 library](http://docs.python-requests.org/en/master/).
 
+## Verifying signed `.p7m` files
+
+Once you have a CA certificate directory, verifying signed p7m files is quite
+straightforward:
+
+```
+openssl cms -verify -in tests/data/test.txt.p7m -inform der -CApath certs/
+```
+
 
 # Useful links
 
