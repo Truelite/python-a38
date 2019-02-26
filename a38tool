@@ -5,6 +5,7 @@ import contextlib
 import sys
 import os.path
 import shutil
+import subprocess
 import a38.fattura as a38
 import xml.etree.ElementTree as ET
 
@@ -392,6 +393,8 @@ class UpdateCACerts(App):
                 pathname = os.path.join(self.destdir, fname)
                 os.unlink(pathname)
                 log.info("%s: removed", pathname)
+
+        subprocess.run(["openssl", "rehash", self.destdir], check=True)
 
 
 def main():
