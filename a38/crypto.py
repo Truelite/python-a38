@@ -36,7 +36,7 @@ class P7M:
 
         self.content_info = ContentInfo.load(self.data)
 
-    def get_xml_data(self):
+    def get_payload(self):
         """
         Return the raw XML data
         """
@@ -54,6 +54,6 @@ class P7M:
         """
         Return the parsed XML data
         """
-        data = io.BytesIO(self.get_xml_data())
+        data = io.BytesIO(self.get_payload())
         tree = ET.parse(data)
         return a38.auto_from_etree(tree.getroot())
