@@ -36,9 +36,9 @@ class P7M:
 
         self.content_info = ContentInfo.load(self.data)
 
-    def get_payload(self):
+    def get_signed_data(self):
         """
-        Return the raw XML data
+        Return the SignedData part of the P7M file
         """
         if self.content_info["content_type"].native != "signed_data":
             raise RuntimeError("p7m data is not an instance of signed_data")
@@ -47,6 +47,13 @@ class P7M:
         if signed_data["version"].native != "v1":
             raise RuntimeError(f"ContentInfo/SignedData.version is {signed_data['version'].native} instead of v1")
 
+        return signed_data
+
+    def get_payload(self):
+        """
+        Return the raw signed data
+        """
+        signed_data = self.get_signed_data()
         encap_content_info = signed_data["encap_content_info"]
         return encap_content_info["content"].native
 
