@@ -1,6 +1,15 @@
+from typing import Dict
+import re
+from collections import defaultdict
+import xml.etree.ElementTree as ET
+import logging
+import base64
+import subprocess
+from pathlib import Path
 from . import models
 from . import fields
-import xml.etree.ElementTree as ET
+
+log = logging.getLogger("__name__")
 
 NS = "http://uri.etsi.org/02231/v2#"
 NS_XMLDSIG = "http://www.w3.org/2000/09/xmldsig#"
@@ -133,9 +142,108 @@ def auto_from_etree(root):
     return res
 
 
-def load_url(url):
+def load_url(url: str):
+    """
+    Return a TrustedServiceStatusList instance from the XML downloaded from the
+    given URL
+    """
     import requests
     res = requests.get(url)
     res.raise_for_status()
     root = ET.fromstring(res.content)
     return auto_from_etree(root)
+
+
+def load_certs() -> Dict[str, "cryptography.x509.Certificate"]:
+    """
+    Download trusted list certificates for Italy, parse them and return a dict
+    mapping certificate names good for use as file names to cryptography.x509
+    certificates
+    """
+    re_clean_fname = re.compile(r"[^A-Za-z0-9_-]")
+
+    eu_url = "https://ec.europa.eu/information_society/policy/esignature/trusted-list/tl-mp.xml"
+    log.info("Downloading EU index from %s", eu_url)
+    eu_tl = load_url(eu_url)
+    it_url = eu_tl.get_tsl_pointer_by_territory("IT")
+    log.info("Downloading IT data from %s", it_url)
+    trust_service_status_list = load_url(it_url)
+
+    by_name = defaultdict(list)
+    for tsp in trust_service_status_list.trust_service_provider_list.trust_service_provider:
+        for tsp_service in tsp.tsp_services.tsp_service:
+            si = tsp_service.service_information
+            if si.service_status not in (
+                    "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/recognisedatnationallevel",
+                    "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/granted"):
+                continue
+            if si.service_type_identifier not in (
+                    "http://uri.etsi.org/TrstSvc/Svctype/CA/QC",):
+                continue
+            # print("identifier", si.service_type_identifier)
+            # print("status", si.service_status)
+            cert = []
+            sn = []
+            for di in si.service_digital_identity.digital_id:
+                if di.x509_subject_name is not None:
+                    sn.append(di.x509_subject_name)
+                # if di.x509_ski is not None:
+                #    print("  SKI:", di.x509_ski)
+                if di.x509_certificate is not None:
+                    from cryptography import x509
+                    from cryptography.hazmat.backends import default_backend
+                    der = base64.b64decode(di.x509_certificate)
+                    cert.append(x509.load_der_x509_certificate(der, default_backend()))
+
+            if len(cert) == 0:
+                raise RuntimeError("{} has no certificates".format(sn))
+            elif len(cert) > 1:
+                raise RuntimeError("{} has {} certificates".format(sn, len(cert)))
+            else:
+                from cryptography.x509.oid import NameOID
+                cert = cert[0]
+                cn = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+                # print("sn", sn)
+                # print(cert)
+                # print("full cn", cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME))
+                # print("cn", cn)
+                fname = re_clean_fname.sub("_", cn)
+                by_name[fname].append(cert)
+
+    res = {}
+    for name, certs in by_name.items():
+        if len(certs) == 1:
+            if name in res:
+                raise RuntimeError("{} already in result".format(name))
+            res[name] = certs[0]
+        else:
+            for idx, cert in enumerate(certs, start=1):
+                idxname = name + "_a38_{}".format(idx)
+                if idxname in res:
+                    raise RuntimeError("{} already in result".format(name))
+                res[idxname] = cert
+    return res
+
+
+def update_capath(destdir: Path, remove_old=False):
+    from cryptography.hazmat.primitives import serialization
+    certs = load_certs()
+    if destdir.is_dir():
+        current = set(c.name for c in destdir.iterdir() if c.name.endswith(".crt"))
+    else:
+        current = set()
+        destdir.mkdir(parents=True)
+    for name, cert in certs.items():
+        fname = name + ".crt"
+        current.discard(fname)
+        pathname = destdir / fname
+        with pathname.open(mode="wb") as fd:
+            fd.write(cert.public_bytes(serialization.Encoding.PEM))
+            log.info("%s: written", pathname)
+    if remove_old:
+        for fname in current:
+            pathname = destdir / fname
+            pathname.unlink()
+            log.info("%s: removed", pathname)
+
+    subprocess.run(["openssl", "rehash", destdir], check=True)
