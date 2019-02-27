@@ -285,11 +285,11 @@ class RenderPDF(Renderer):
         self.transform.to_pdf(self.wkhtmltopdf, f, output)
 
 
-class UpdateCACerts(App):
+class UpdateCAPath(App):
     """
     show the difference between two fatture
     """
-    NAME = "update_ca_certs"
+    NAME = "update_capath"
 
     def __init__(self, args):
         super().__init__(args)
@@ -412,7 +412,7 @@ def main():
     Validate.add_subparser(subparsers)
     RenderHTML.add_subparser(subparsers)
     RenderPDF.add_subparser(subparsers)
-    UpdateCACerts.add_subparser(subparsers)
+    UpdateCAPath.add_subparser(subparsers)
 
     # sp_validate = subparsers.add_parser("validate", help="validate a fattura")
     # sp_validate.set_defaults(app=run_validate)

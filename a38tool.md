@@ -5,12 +5,12 @@ General command line help:
 ```text
 $ a38tool --help
 usage: a38tool [-h] [--verbose] [--debug]
-               {json,xml,python,diff,validate,html,pdf,update_ca_certs} ...
+               {json,xml,python,diff,validate,html,pdf,update_capath} ...
 
 Handle fattura elettronica files
 
 positional arguments:
-  {json,xml,python,diff,validate,html,pdf,update_ca_certs}
+  {json,xml,python,diff,validate,html,pdf,update_capath}
                         actions
     json                output a fattura in JSON
     xml                 output a fattura in XML
@@ -19,7 +19,7 @@ positional arguments:
     validate            validate the contents of a fattura
     html                render a Fattura as HTML using a .xslt stylesheet
     pdf                 render a Fattura as PDF using a .xslt stylesheet
-    update_ca_certs     show the difference between two fatture
+    update_capath       show the difference between two fatture
 
 optional arguments:
   -h, --help            show this help message and exit
