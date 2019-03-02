@@ -9,7 +9,7 @@ from pathlib import Path
 import a38.fattura as a38
 import xml.etree.ElementTree as ET
 
-log = logging.getLogger("test-parse")
+log = logging.getLogger("a38tool")
 
 
 class Fail(Exception):
