@@ -19,7 +19,8 @@ positional arguments:
     validate            validate the contents of a fattura
     html                render a Fattura as HTML using a .xslt stylesheet
     pdf                 render a Fattura as PDF using a .xslt stylesheet
-    update_capath       show the difference between two fatture
+    update_capath       create/update an openssl CApath with CA certificates
+                        that can be used to validate digital signatures
 
 optional arguments:
   -h, --help            show this help message and exit
