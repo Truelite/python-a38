@@ -156,7 +156,8 @@ class ExportJSON(Exporter):
     @classmethod
     def add_subparser(cls, subparsers):
         parser = super().add_subparser(subparsers)
-        parser.add_argument("--indent", default="1", help="indentation space (default: 1, use 'no' for all in one line)")
+        parser.add_argument("--indent", default="1",
+                            help="indentation space (default: 1, use 'no' for all in one line)")
         return parser
 
 
@@ -210,8 +211,10 @@ class ExportPython(Exporter):
     @classmethod
     def add_subparser(cls, subparsers):
         parser = super().add_subparser(subparsers)
-        parser.add_argument("--namespace", default=None, help="namespace to use for the model classes (default: the module fully qualified name)")
-        parser.add_argument("--unformatted", action="store_true", help="disable code formatting, outputting a single-line statement")
+        parser.add_argument("--namespace", default=None,
+                            help="namespace to use for the model classes (default: the module fully qualified name)")
+        parser.add_argument("--unformatted", action="store_true",
+                            help="disable code formatting, outputting a single-line statement")
         return parser
 
 

@@ -62,7 +62,8 @@ class DatiTrasmissione(models.Model):
                     "pec_destinatario has no value while codice_destinatario has value 0000000",
                     code="00426")
 
-        if self.pec_destinatario is not None and self.codice_destinatario is not None and self.codice_destinatario != "0000000":
+        if (self.pec_destinatario is not None and self.codice_destinatario is
+                not None and self.codice_destinatario != "0000000"):
             validation.add_error(
                     (self._meta["codice_destinatario"], self._meta["pec_destinatario"]),
                     "pec_destinatario has value while codice_destinatario has value 0000000",
@@ -126,7 +127,8 @@ class Anagrafica(models.Model):
             if should_not_be_set:
                 validation.add_error(
                         should_not_be_set,
-                        "{} must not be set if denominazione is not empty".format(" and ".join(x.name for x in should_not_be_set)))
+                        "{} must not be set if denominazione is not empty".format(
+                            " and ".join(x.name for x in should_not_be_set)))
 
 
 class DatiAnagraficiCedentePrestatore(models.Model):
@@ -552,7 +554,8 @@ class FatturaElettronicaBody(models.Model):
         if not self.dati_beni_servizi.dati_riepilogo and has_aliquote_iva:
             validation.add_error(
                     self.dati_beni_servizi._meta["dati_riepilogo"],
-                    "dati_riepilogo is empty while there is at least an aliquota_iva in dettaglio_linee or dati_cassa_previdenziale",
+                    "dati_riepilogo is empty while there is at least an aliquota_iva"
+                    " in dettaglio_linee or dati_cassa_previdenziale",
                     code="00419")
 
 

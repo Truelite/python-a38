@@ -263,7 +263,9 @@ class Model(ModelBase, metaclass=ModelMetaclass):
             if field.multivalue:
                 setattr(self, name, field.from_etree(elements))
             elif len(elements) != 1:
-                raise RuntimeError("found {} {} elements in {} instead of just 1".format(len(elements), child.tag, el.tag))
+                raise RuntimeError(
+                        "found {} {} elements in {} instead of just 1".format(
+                            len(elements), child.tag, el.tag))
             else:
                 setattr(self, name, field.from_etree(elements[0]))
 
