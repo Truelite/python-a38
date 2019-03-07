@@ -7,5 +7,4 @@ include stubs/*.pyi
 include stubs/dateutil/*.pyi
 include download-docs
 include document-a38
-include test-parse
 include test-coverage
