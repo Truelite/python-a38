@@ -504,20 +504,29 @@ class DatiTrasporto(models.Model):
     data_ora_consegna = fields.DateTimeField(null=True)
 
 
+class DatiDDT(models.Model):
+    __xmltag__ = "DatiDDT"
+    numero_ddt = fields.StringField(max_length=20, xmltag="NumeroDDT")
+    data_ddt = fields.DateField(xmltag="DataDDT")
+    riferimento_numero_linea = fields.ListField(fields.IntegerField(max_length=4), null=True)
+
+
 class DatiGenerali(models.Model):
     dati_generali_documento = DatiGeneraliDocumento
-    dati_ordine_acquisto = fields.ModelField(DatiOrdineAcquisto, null=True)
-    dati_contratto = fields.ModelField(DatiContratto, null=True)
-    dati_convenzione = fields.ModelField(DatiConvenzione, null=True)
-    dati_ricezione = fields.ModelField(DatiRicezione, null=True)
-    dati_fatture_collegate = fields.ModelField(DatiFattureCollegate, null=True)
+    dati_ordine_acquisto = fields.ModelListField(DatiOrdineAcquisto, null=True)
+    dati_contratto = fields.ModelListField(DatiContratto, null=True)
+    dati_convenzione = fields.ModelListField(DatiConvenzione, null=True)
+    dati_ricezione = fields.ModelListField(DatiRicezione, null=True)
+    dati_fatture_collegate = fields.ModelListField(DatiFattureCollegate, null=True)
+    # dati_sal =
+    dati_ddt = fields.ModelListField(DatiDDT, null=True)
     dati_trasporto = fields.ModelField(DatiTrasporto, null=True)
+    # fattura_principale =
 
     def validate_model(self, validation):
         super().validate_model(validation)
-        if (self.dati_fatture_collegate.has_value()
-                and self.dati_fatture_collegate.data
-                and self.dati_generali_documento.data < self.dati_fatture_collegate.data):
+        dfc_dates = [x.data for x in self.dati_fatture_collegate if x.data is not None]
+        if dfc_dates and self.dati_generali_documento.data < min(dfc_dates):
             validation.add_error(
                 (self.dati_fatture_collegate._meta["data"],
                  self.dati_generali_documento._meta["data"]),

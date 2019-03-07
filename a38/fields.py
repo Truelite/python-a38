@@ -478,6 +478,11 @@ class ModelField(Field):
         super().__init__(**kw)
         self.model = model
 
+    def __str__(self):
+        return "ModelField({})".format(self.model.__name__)
+
+    __repr__ = __str__
+
     def get_construct_default(self):
         return self.model()
 
