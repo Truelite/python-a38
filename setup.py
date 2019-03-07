@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-from distutils.core import setup
+from setuptools import setup
+
+with open("README.md", "r") as fp:
+    long_description = fp.read()
 
 setup(
     name="a38",
     version="0.1.0",
     description="parse and generate Italian Fattura Elettronica",
+    long_description=long_description,
     author="Enrico Zini",
     author_email="enrico@truelite.it",
     url="https://github.com/Truelite/python-a38/blob/master/a38/fattura.py",
