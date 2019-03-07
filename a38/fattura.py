@@ -16,6 +16,7 @@ import re
 
 
 NS = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"
+NS_SIG = "http://www.w3.org/2000/09/xmldsig#"
 
 
 class FullNameMixin:
@@ -630,6 +631,7 @@ class Fattura(models.Model):
 
     fattura_elettronica_header = FatturaElettronicaHeader
     fattura_elettronica_body = fields.ModelListField(FatturaElettronicaBody, min_num=1)
+    signature = fields.NotImplementedField(null=True, xmlns=NS_SIG)
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
