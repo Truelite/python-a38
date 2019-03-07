@@ -372,7 +372,7 @@ class TestDateField(FieldTestMixin, TestCase):
         self.assert_validates(f, "2019-01-02", result=datetime.date(2019, 1, 2))
         self.assert_validates(f, datetime.datetime(2019, 1, 2, 12, 30), result=datetime.date(2019, 1, 2))
         self.assert_validates(f, "foo", result="foo", errors=[
-            "sample: time data 'foo' does not match format '%Y-%m-%d'",
+            "sample: Date 'foo' does not begin with YYYY-mm-dd",
         ])
         self.assert_validates(f, [123], result=[123], errors=[
             "sample: '[123]' is not an instance of str, datetime.date or datetime.datetime",

@@ -2,6 +2,7 @@ from typing import Optional, Any, TypeVar, Generic, Sequence, List
 from dateutil.parser import isoparse
 import datetime
 import decimal
+import re
 from . import validation
 from . import builder
 from .diff import Diff
@@ -404,12 +405,17 @@ class Base64BinaryField(Field[bytes]):
 
 
 class DateField(ChoicesField[datetime.date]):
+    re_clean_date = re.compile(r"^\s*(\d{4}-\d{1,2}-\d{1,2})")
+
     def clean_value(self, value):
         value = super().clean_value(value)
         if value is None:
             return value
         if isinstance(value, str):
-            return datetime.datetime.strptime(value, "%Y-%m-%d").date()
+            mo = self.re_clean_date.match(value)
+            if not mo:
+                raise ValueError("Date '{}' does not begin with YYYY-mm-dd".format(value))
+            return datetime.datetime.strptime(mo.group(1), "%Y-%m-%d").date()
         elif isinstance(value, datetime.datetime):
             return value.date()
         elif isinstance(value, datetime.date):
