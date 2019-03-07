@@ -516,12 +516,12 @@ class DatiGenerali(models.Model):
     def validate_model(self, validation):
         super().validate_model(validation)
         if (self.dati_fatture_collegate.has_value()
-                and self.dati_fatture_collegate.data.has_value()
-                and self.dati_fatture_collegate.data < self.dati_generali_documento.data):
+                and self.dati_fatture_collegate.data
+                and self.dati_generali_documento.data < self.dati_fatture_collegate.data):
             validation.add_error(
                 (self.dati_fatture_collegate._meta["data"],
                  self.dati_generali_documento._meta["data"]),
-                "dati_fatture_collegate.data is earlier than dati_generali_documento.data",
+                "dati_generali_documento.data is earlier than dati_fatture_collegate.data",
                 code="00418")
 
 
