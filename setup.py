@@ -6,7 +6,7 @@ with open("README.md", "r") as fp:
 
 setup(
     name="a38",
-    version="0.1.0",
+    version="0.1.1",
     description="parse and generate Italian Fattura Elettronica",
     long_description=long_description,
     author="Enrico Zini",
