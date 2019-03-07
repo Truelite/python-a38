@@ -254,3 +254,10 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
         with io.StringIO() as out:
             tree.write(out, encoding="unicode")
             xml2 = out.getvalue()
+
+
+class TestSamples(TestFatturaMixin, TestCase):
+    def test_parse_dati_trasporto(self):
+        import xml.etree.ElementTree as ET
+        tree = ET.parse("tests/data/dati_trasporto.xml")
+        a38.auto_from_etree(tree.getroot())

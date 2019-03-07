@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><FatturaElettronica xmlns="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" versione="FPR12">
+  <FatturaElettronicaHeader xmlns="">
+    <DatiTrasmissione>
+      <IdTrasmittente>
+        <IdPaese>IT</IdPaese>
+        <IdCodice>01234567890</IdCodice>
+      </IdTrasmittente>
+      <ProgressivoInvio>00000</ProgressivoInvio>
+      <FormatoTrasmissione>FPR12</FormatoTrasmissione>
+      <CodiceDestinatario>FUFUFUF</CodiceDestinatario>
+      <ContattiTrasmittente>
+        <Email>local_part@domain.it</Email>
+      </ContattiTrasmittente>
+    </DatiTrasmissione>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <IdFiscaleIVA>
+          <IdPaese>IT</IdPaese>
+          <IdCodice>09876543210</IdCodice>
+        </IdFiscaleIVA>
+        <Anagrafica>
+          <Denominazione>Test denominazione</Denominazione>
+        </Anagrafica>
+        <RegimeFiscale>RF01</RegimeFiscale>
+      </DatiAnagrafici>
+      <Sede>
+        <Indirizzo>test Address, 1</Indirizzo>
+        <CAP>12345</CAP>
+        <Comune>Test Comune</Comune>
+        <Provincia>BO</Provincia>
+        <Nazione>IT</Nazione>
+      </Sede>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <IdFiscaleIVA>
+          <IdPaese>IT</IdPaese>
+          <IdCodice>01234567891</IdCodice>
+        </IdFiscaleIVA>
+        <Anagrafica>
+          <Denominazione>Test Denominazione 2</Denominazione>
+        </Anagrafica>
+      </DatiAnagrafici>
+      <Sede>
+        <Indirizzo>test Address, 2</Indirizzo>
+        <CAP>54321</CAP>
+        <Comune>Test Comune 1</Comune>
+        <Provincia>BO</Provincia>
+        <Nazione>IT</Nazione>
+      </Sede>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody xmlns="">
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <TipoDocumento>TD01</TipoDocumento>
+        <Divisa>EUR</Divisa>
+        <Data>2019-01-01</Data>
+        <Numero>1</Numero>
+        <ImportoTotaleDocumento>123.45</ImportoTotaleDocumento>
+        <Causale>Test Causale</Causale>
+      </DatiGeneraliDocumento>
+      <DatiOrdineAcquisto>
+        <RiferimentoNumeroLinea>1</RiferimentoNumeroLinea>
+        <IdDocumento>a1</IdDocumento>
+        <Data>2018-12-31</Data>
+        <NumItem>1</NumItem>
+      </DatiOrdineAcquisto>
+      <DatiOrdineAcquisto>
+        <RiferimentoNumeroLinea>2</RiferimentoNumeroLinea>
+        <IdDocumento>a1</IdDocumento>
+        <Data>2018-12-31</Data>
+        <NumItem>2</NumItem>
+      </DatiOrdineAcquisto>
+      <DatiOrdineAcquisto>
+        <RiferimentoNumeroLinea>3</RiferimentoNumeroLinea>
+        <IdDocumento>a1</IdDocumento>
+        <Data>2018-12-31</Data>
+        <NumItem>3</NumItem>
+      </DatiOrdineAcquisto>
+      <DatiOrdineAcquisto>
+        <RiferimentoNumeroLinea>4</RiferimentoNumeroLinea>
+        <IdDocumento>a1</IdDocumento>
+        <Data>2018-12-31</Data>
+        <NumItem>4</NumItem>
+      </DatiOrdineAcquisto>
+      <DatiOrdineAcquisto>
+        <RiferimentoNumeroLinea>5</RiferimentoNumeroLinea>
+        <IdDocumento>a1</IdDocumento>
+        <Data>2018-12-31</Data>
+        <NumItem>5</NumItem>
+      </DatiOrdineAcquisto>
+      <DatiDDT>
+        <NumeroDDT>123 456</NumeroDDT>
+        <DataDDT>2019-01-02</DataDDT>
+        <RiferimentoNumeroLinea>1</RiferimentoNumeroLinea>
+        <RiferimentoNumeroLinea>2</RiferimentoNumeroLinea>
+        <RiferimentoNumeroLinea>3</RiferimentoNumeroLinea>
+        <RiferimentoNumeroLinea>4</RiferimentoNumeroLinea>
+        <RiferimentoNumeroLinea>5</RiferimentoNumeroLinea>
+      </DatiDDT>
+      <DatiTrasporto>
+        <TipoResa>AAA</TipoResa>
+      </DatiTrasporto>
+    </DatiGenerali>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Linea 1</Descrizione>
+        <Quantita>1</Quantita>
+        <UnitaMisura>NR</UnitaMisura>
+        <PrezzoUnitario>1</PrezzoUnitario>
+        <PrezzoTotale>1</PrezzoTotale>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DettaglioLinee>
+        <NumeroLinea>2</NumeroLinea>
+        <Descrizione>Linea 2</Descrizione>
+        <Quantita>1</Quantita>
+        <UnitaMisura>NR</UnitaMisura>
+        <PrezzoUnitario>1</PrezzoUnitario>
+        <PrezzoTotale>1</PrezzoTotale>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DettaglioLinee>
+        <NumeroLinea>3</NumeroLinea>
+        <Descrizione>Linea 3</Descrizione>
+        <Quantita>1</Quantita>
+        <UnitaMisura>NR</UnitaMisura>
+        <PrezzoUnitario>1</PrezzoUnitario>
+        <PrezzoTotale>1</PrezzoTotale>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DettaglioLinee>
+        <NumeroLinea>4</NumeroLinea>
+        <Descrizione>Linea 4</Descrizione>
+        <Quantita>1</Quantita>
+        <UnitaMisura>NR</UnitaMisura>
+        <PrezzoUnitario>1</PrezzoUnitario>
+        <PrezzoTotale>1</PrezzoTotale>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DettaglioLinee>
+        <NumeroLinea>5</NumeroLinea>
+        <Descrizione>Linea 5</Descrizione>
+        <Quantita>1</Quantita>
+        <UnitaMisura>NR</UnitaMisura>
+        <PrezzoUnitario>1</PrezzoUnitario>
+        <PrezzoTotale>1</PrezzoTotale>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DatiRiepilogo>
+        <AliquotaIVA>22.00</AliquotaIVA>
+        <ImponibileImporto>5</ImponibileImporto>
+        <Imposta>1.1</Imposta>
+        <EsigibilitaIVA>I</EsigibilitaIVA>
+      </DatiRiepilogo>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</FatturaElettronica>
