@@ -16,6 +16,7 @@ import re
 
 
 NS = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"
+NS10 = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.0"
 NS_SIG = "http://www.w3.org/2000/09/xmldsig#"
 
 
@@ -579,10 +580,15 @@ class Allegati(models.Model):
     attachment = fields.Base64BinaryField()
 
 
+class DatiVeicoli(models.Model):
+    data = fields.DateField()
+    totale_percorso = fields.StringField(max_length=15)
+
+
 class FatturaElettronicaBody(models.Model):
     dati_generali = DatiGenerali
     dati_beni_servizi = DatiBeniServizi
-    # dati_veicoli =
+    dati_veicoli = models.ModelField(DatiVeicoli, null=True)
     dati_pagamento = fields.ModelListField(DatiPagamento, null=True)
     allegati = fields.ModelListField(Allegati, null=True)
 
@@ -707,19 +713,31 @@ class FatturaPA12(Fattura):
 
 
 def auto_from_etree(root):
-    expected_tag = "{{{}}}FatturaElettronica".format(NS)
-    if root.tag != expected_tag:
-        raise RuntimeError("Root element {} is not {}".format(root.tag, expected_tag))
-    versione = root.attrib.get("versione", None)
-    if versione is None:
-        raise RuntimeError("root element {} misses attribute 'versione'".format(root.tag))
+    from .fattura_semplificata import NS10, FatturaElettronicaSemplificata
+    tagname_ordinaria = "{{{}}}FatturaElettronica".format(NS)
+    tagname_semplificata = "{{{}}}FatturaElettronicaSemplificata".format(NS10)
 
-    if versione == "FPR12":
-        res = FatturaPrivati12()
-    elif versione == "FPA12":
-        res = FatturaPA12()
+    versione = root.attrib.get("versione", None)
+
+    if root.tag == tagname_ordinaria:
+        if versione is None:
+            raise RuntimeError("root element {} misses attribute 'versione'".format(root.tag))
+        if versione == "FPR12":
+            res = FatturaPrivati12()
+        elif versione == "FPA12":
+            res = FatturaPA12()
+        else:
+            raise RuntimeError("unsupported versione {}".format(versione))
+    elif root.tag == tagname_semplificata:
+        if versione is None:
+            raise RuntimeError("root element {} misses attribute 'versione'".format(root.tag))
+        if versione == "FSM10":
+            res = FatturaElettronicaSemplificata()
+        else:
+            raise RuntimeError("unsupported versione {}".format(versione))
     else:
-        raise RuntimeError("unsupported versione {}".format(versione))
+        raise RuntimeError("Root element {} is neither {} nor {}".format(
+            root.tag, tagname_ordinaria, tagname_semplificata))
 
     res.from_etree(root)
     return res
