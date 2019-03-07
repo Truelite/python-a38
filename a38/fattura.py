@@ -374,6 +374,8 @@ class DettaglioLinee(models.Model):
 class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
     natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
+    spese_accessorie = fields.DecimalField(max_length=15, null=True)
+    arrotondamento = fields.DecimalField(max_length=21, null=True)
     # FIXME: Su questo valore il sistema effettua un controllo per verificare
     # la correttezza del calcolo; per i dettagli sull’algoritmo di calcolo si
     # rimanda al file Elenco controlli versione 1.4 presente sul sito
