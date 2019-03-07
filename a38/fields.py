@@ -6,8 +6,12 @@ from . import validation
 from . import builder
 from .diff import Diff
 from decimal import Decimal
+import base64
 import time
 import pytz
+import logging
+
+log = logging.getLogger("a38.fields")
 
 
 def to_xmltag(name: str, xmlns: Optional[str] = None):
@@ -162,7 +166,13 @@ class NotImplementedField(Field[None]):
     Field acting as a placeholder for a part of the specification that is not
     yet implemented.
     """
+    def __init__(self, warn: bool = False, **kw):
+        super().__init__(**kw)
+        self.warn = warn
+
     def clean_value(self, value: Any) -> None:
+        if self.warn:
+            log.warning("%s: value received: %r", self.name, value)
         return None
 
 
@@ -222,7 +232,10 @@ class ListField(Field[List[T]]):
         if not self.has_value(value):
             return value
         if len(value) < self.min_num:
-            validation.add_error(self, "list must have at least {} elements, but has only {}".format(self.min_num, len(value)))
+            validation.add_error(
+                    self,
+                    "list must have at least {} elements, but has only {}".format(
+                        self.min_num, len(value)))
         for idx, val in enumerate(value):
             with validation.subfield(self.name + "." + str(idx)) as sub:
                 self.field.validate(sub, val)
@@ -330,7 +343,9 @@ class DecimalField(ChoicesField[Decimal]):
         if self.max_length is not None:
             xml_value = self.to_str(value)
             if len(xml_value) > self.max_length:
-                validation.add_error(self, "'{}' should be no more than {} digits long".format(xml_value, self.max_length))
+                validation.add_error(
+                        self,
+                        "'{}' should be no more than {} digits long".format(xml_value, self.max_length))
         return value
 
 
@@ -360,6 +375,32 @@ class StringField(ChoicesField[str]):
         if self.max_length is not None and len(value) > self.max_length:
             validation.add_error(self, "'{}' should be no more than {} characters long".format(value, self.max_length))
         return value
+
+
+class Base64BinaryField(Field[bytes]):
+    def clean_value(self, value):
+        value = super().clean_value(value)
+        if value is None:
+            return value
+        if isinstance(value, bytes):
+            return value
+        if isinstance(value, str):
+            return base64.b64decode(value)
+        raise TypeError("'{}' is not an instance of str, or bytes".format(repr(value)))
+
+    def to_jsonable(self, value: Optional[T]) -> Any:
+        """
+        Return a json-able value for this field
+        """
+        return self.to_str(self.clean_value(value))
+
+    def to_str(self, value: Optional[T]) -> str:
+        """
+        Return this value as a string that can be parsed by clean_value
+        """
+        if value is None:
+            return None
+        return base64.b64encode(value)
 
 
 class DateField(ChoicesField[datetime.date]):
@@ -464,7 +505,8 @@ class ProgressivoInvioField(StringField):
         else:
             self.sequence += 1
             if self.sequence > (64 ** 3):
-                raise OverflowError("Generated more than {} fatture per second, overflowing local counter".format(64 ** 3))
+                raise OverflowError(
+                        "Generated more than {} fatture per second, overflowing local counter".format(64 ** 3))
 
         value = (ts << 16) + self.sequence
         return self._encode_b56(value, 10)
@@ -602,7 +644,9 @@ class ModelListField(Field):
             return value
 
         if len(value) < self.min_num:
-            validation.add_error(self, "list must have at least {} elements, but has only {}".format(self.min_num, len(value)))
+            validation.add_error(
+                    self,
+                    "list must have at least {} elements, but has only {}".format(self.min_num, len(value)))
 
         for idx, val in enumerate(value):
             with validation.subfield(self.name + "." + str(idx)) as sub:

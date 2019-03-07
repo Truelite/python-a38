@@ -563,10 +563,20 @@ class DatiPagamento(models.Model):
     dettaglio_pagamento = fields.ModelListField(DettaglioPagamento)
 
 
+class Allegati(models.Model):
+    nome_attachment = fields.StringField(max_length=60)
+    algorimo_compressione = fields.StringField(max_length=10, null=True)
+    formato_attachment = fields.StringField(max_length=10, null=True)
+    descrizione_attachment = fields.StringField(max_length=100, null=True)
+    attachment = fields.Base64BinaryField()
+
+
 class FatturaElettronicaBody(models.Model):
     dati_generali = DatiGenerali
     dati_beni_servizi = DatiBeniServizi
-    dati_pagamento = fields.ModelField(DatiPagamento, null=True)
+    # dati_veicoli =
+    dati_pagamento = fields.ModelListField(DatiPagamento, null=True)
+    allegati = fields.ModelListField(Allegati, null=True)
 
     def build_importo_totale_documento(self):
         """
