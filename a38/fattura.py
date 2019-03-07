@@ -18,6 +18,56 @@ import re
 NS = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"
 
 
+class FullNameMixin:
+    """
+    Helper for classes that have the nome+cognome/denominazione way of naming.
+
+    Validate that nome+cognome and denominazione are mutually exclusive, and
+    provide a full_name property that returns whichever is set.
+    """
+
+    @property
+    def full_name(self):
+        """
+        Return denominazione or "{nome} {cognome}", whichever is set.
+
+        If none are set, return None
+        """
+        if self.denominazione is not None:
+            return self.denominazione
+        elif self.nome is not None and self.cognome is not None:
+            return self.nome + " " + self.cognome
+        else:
+            return None
+
+    def validate_model(self, validation):
+        super().validate_model(validation)
+        if self.denominazione is None:
+            if self.nome is None and self.cognome is None:
+                validation.add_error(
+                        (self._meta["nome"], self._meta["cognome"], self._meta["denominazione"]),
+                        "nome and cognome, or denominazione, must be set")
+            elif self.nome is None:
+                validation.add_error(
+                        self._meta["nome"],
+                        "nome and cognome must both be set if denominazione is empty")
+            elif self.cognome is None:
+                validation.add_error(
+                        self._meta["cognome"],
+                        "nome and cognome must both be set if denominazione is empty")
+        else:
+            should_not_be_set = []
+            if self.nome is not None:
+                should_not_be_set.append(self._meta["nome"])
+            if self.cognome is not None:
+                should_not_be_set.append(self._meta["cognome"])
+            if should_not_be_set:
+                validation.add_error(
+                        should_not_be_set,
+                        "{} must not be set if denominazione is not empty".format(
+                            " and ".join(x.name for x in should_not_be_set)))
+
+
 class IdFiscale(models.Model):
     id_paese = fields.StringField(length=2)
     id_codice = fields.StringField(max_length=28)
@@ -82,53 +132,12 @@ class DatiTrasmissione(models.Model):
                     code="00427")
 
 
-class Anagrafica(models.Model):
+class Anagrafica(FullNameMixin, models.Model):
     denominazione = fields.StringField(max_length=80, null=True)
     nome = fields.StringField(max_length=60, null=True)
     cognome = fields.StringField(max_length=60, null=True)
     titolo = fields.StringField(min_length=2, max_length=10, null=True)
     cod_eori = fields.StringField(xmltag="CodEORI", min_length=13, max_length=17, null=True)
-
-    @property
-    def full_name(self):
-        """
-        Return denominazione or "{nome} {cognome}", whichever is set.
-
-        If none are set, return None
-        """
-        if self.denominazione is not None:
-            return self.denominazione
-        elif self.nome is not None and self.cognome is not None:
-            return self.nome + " " + self.cognome
-        else:
-            return None
-
-    def validate_model(self, validation):
-        super().validate_model(validation)
-        if self.denominazione is None:
-            if self.nome is None and self.cognome is None:
-                validation.add_error(
-                        (self._meta["nome"], self._meta["cognome"], self._meta["denominazione"]),
-                        "nome and cognome, or denominazione, must be set")
-            elif self.nome is None:
-                validation.add_error(
-                        self._meta["nome"],
-                        "nome and cognome must both be set if denominazione is empty")
-            elif self.cognome is None:
-                validation.add_error(
-                        self._meta["cognome"],
-                        "nome and cognome must both be set if denominazione is empty")
-        else:
-            should_not_be_set = []
-            if self.nome is not None:
-                should_not_be_set.append(self._meta["nome"])
-            if self.cognome is not None:
-                should_not_be_set.append(self._meta["cognome"])
-            if should_not_be_set:
-                validation.add_error(
-                        should_not_be_set,
-                        "{} must not be set if denominazione is not empty".format(
-                            " and ".join(x.name for x in should_not_be_set)))
 
 
 class DatiAnagraficiCedentePrestatore(models.Model):
@@ -173,10 +182,14 @@ class Contatti(models.Model):
     email = fields.StringField(min_length=7, max_length=256, null=True)
 
 
+class StabileOrganizzazione(IndirizzoType):
+    pass
+
+
 class CedentePrestatore(models.Model):
     dati_anagrafici = DatiAnagraficiCedentePrestatore
     sede = Sede
-    # stabile_organizzazione
+    stabile_organizzazione = fields.ModelField(StabileOrganizzazione, null=True)
     iscrizione_rea = fields.ModelField(IscrizioneREA, null=True)
     contatti = fields.ModelField(Contatti, null=True)
     riferimento_amministrazione = fields.StringField(max_length=20, null=True)
