@@ -210,17 +210,50 @@ class DatiAnagraficiCessionarioCommittente(models.Model):
                     code="00417")
 
 
+class RappresentanteFiscale(FullNameMixin, models.Model):
+    id_fiscale_iva = fields.ModelField(IdFiscaleIVA, null=True)
+    denominazione = fields.StringField(max_length=80, null=True)
+    nome = fields.StringField(max_length=60, null=True)
+    cognome = fields.StringField(max_length=60, null=True)
+
+
 class CessionarioCommittente(models.Model):
     dati_anagrafici = DatiAnagraficiCessionarioCommittente
     sede = Sede
-    # stabile_organizzazione
-    # rappresentante_fiscale
+    stabile_organizzazione = fields.ModelField(StabileOrganizzazione, null=True)
+    rappresentante_fiscale = fields.ModelField(RappresentanteFiscale, null=True)
+
+
+class DatiAnagraficiRappresentante(models.Model):
+    __xmltag__ = "DatiAnagrafici"
+    id_fiscale_iva = IdFiscaleIVA
+    codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
+    anagrafica = Anagrafica
+
+
+class RappresentanteFiscaleCedentePrestatore(models.Model):
+    __xmltag__ = "RappresentanteFiscale"
+    dati_anagrafici = DatiAnagraficiRappresentante
+
+
+class DatiAnagraficiTerzoIntermediario(models.Model):
+    __xmltag__ = "DatiAnagrafici"
+    id_fiscale_iva = IdFiscaleIVA
+    codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
+    anagrafica = Anagrafica
+
+
+class TerzoIntermediarioOSoggettoEmittente(models.Model):
+    dati_anagrafici = DatiAnagraficiTerzoIntermediario
 
 
 class FatturaElettronicaHeader(models.Model):
     dati_trasmissione = DatiTrasmissione
     cedente_prestatore = CedentePrestatore
+    rappresentante_fiscale = models.ModelField(RappresentanteFiscaleCedentePrestatore, null=True)
     cessionario_committente = CessionarioCommittente
+    terzo_intermediario_o_soggetto_emittente = models.ModelField(TerzoIntermediarioOSoggettoEmittente, null=True)
+    soggetto_emittente = fields.StringField(length=2, choices=("CC", "TZ"), null=True)
 
 
 class DatiRitenuta(models.Model):
