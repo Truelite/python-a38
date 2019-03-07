@@ -274,7 +274,7 @@ class DatiCassaPrevidenziale(models.Model):
     al_cassa = fields.DecimalField(max_length=6)
     importo_contributo_cassa = fields.DecimalField(max_length=15)
     imponibile_cassa = fields.DecimalField(max_length=15)
-    aliquota_iva = fields.DecimalField(max_length=6)
+    aliquota_iva = fields.DecimalField(max_length=6, xmltag="AliquotaIVA")
     ritenuta = fields.StringField(length=2, choices=("SI",), null=True)
     natura = fields.StringField(length=2, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"), null=True)
     riferimento_amministrazione = fields.StringField(max_length=20, null=True)
@@ -514,6 +514,11 @@ class DatiDDT(models.Model):
     riferimento_numero_linea = fields.ListField(fields.IntegerField(max_length=4), null=True)
 
 
+class FatturaPrincipale(models.Model):
+    numero_fattura_principale = fields.StringField(max_length=20)
+    data_fattura_principale = fields.DateField()
+
+
 class DatiGenerali(models.Model):
     dati_generali_documento = DatiGeneraliDocumento
     dati_ordine_acquisto = fields.ModelListField(DatiOrdineAcquisto, null=True)
@@ -524,7 +529,7 @@ class DatiGenerali(models.Model):
     # dati_sal =
     dati_ddt = fields.ModelListField(DatiDDT, null=True)
     dati_trasporto = fields.ModelField(DatiTrasporto, null=True)
-    # fattura_principale =
+    fattura_principale = fields.ModelField(FatturaPrincipale, null=True)
 
     def validate_model(self, validation):
         super().validate_model(validation)
@@ -547,7 +552,7 @@ class DettaglioPagamento(models.Model):
     cod_ufficio_postale = fields.StringField(max_length=20, null=True)
     cognome_quietanzante = fields.StringField(max_length=60, null=True)
     nome_quietanzante = fields.StringField(max_length=60, null=True)
-    cf_quietanzante = fields.StringField(max_length=16, null=True)
+    cf_quietanzante = fields.StringField(max_length=16, null=True, xmltag="CFQuietanzante")
     titolo_quietanzante = fields.StringField(min_length=2, max_length=10, null=True)
     istituto_finanziario = fields.StringField(max_length=80, null=True)
     iban = fields.StringField(min_length=15, max_length=34, null=True, xmltag="IBAN")
@@ -568,7 +573,7 @@ class DatiPagamento(models.Model):
 
 class Allegati(models.Model):
     nome_attachment = fields.StringField(max_length=60)
-    algorimo_compressione = fields.StringField(max_length=10, null=True)
+    algoritmo_compressione = fields.StringField(max_length=10, null=True)
     formato_attachment = fields.StringField(max_length=10, null=True)
     descrizione_attachment = fields.StringField(max_length=100, null=True)
     attachment = fields.Base64BinaryField()
