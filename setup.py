@@ -11,7 +11,7 @@ setup(
     long_description=long_description,
     author="Enrico Zini",
     author_email="enrico@truelite.it",
-    url="https://github.com/Truelite/python-a38/blob/master/a38/fattura.py",
+    url="https://github.com/Truelite/python-a38/",
     license="https://www.apache.org/licenses/LICENSE-2.0.html",
     packages=["a38"],
     scripts=["a38tool"],
