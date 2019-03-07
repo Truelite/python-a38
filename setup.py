@@ -9,6 +9,7 @@ setup(
     version="0.1.1",
     description="parse and generate Italian Fattura Elettronica",
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author="Enrico Zini",
     author_email="enrico@truelite.it",
     url="https://github.com/Truelite/python-a38/",
