@@ -329,9 +329,6 @@ def main():
     RenderPDF.add_subparser(subparsers)
     UpdateCAPath.add_subparser(subparsers)
 
-    # sp_validate = subparsers.add_parser("validate", help="validate a fattura")
-    # sp_validate.set_defaults(app=run_validate)
-
     args = parser.parse_args()
 
     log_format = "%(levelname)s %(message)s"
