@@ -65,7 +65,9 @@ See [a38tool.md](a38tool.md) for more details.
 
 ```py
 import a38.fattura as a38
+from a38.validation import Validation
 import datetime
+import sys
 
 cedente_prestatore = a38.CedentePrestatore(
     a38.DatiAnagraficiCedentePrestatore(
@@ -94,13 +96,12 @@ cessionario_committente = a38.CessionarioCommittente(
 bill_number = 1
 
 f = a38.FatturaPrivati12()
-f.fattura_elettronica_header.dati_trasmissione = a38.DatiTrasmissione(
-    a38.IdTrasmittente("IT", "10293847561"),
-    codice_destinatario="FUFUFU")
+f.fattura_elettronica_header.dati_trasmissione.id_trasmittente = a38.IdTrasmittente("IT", "10293847561")
+f.fattura_elettronica_header.dati_trasmissione.codice_destinatario = "FUFUFUF"
 f.fattura_elettronica_header.cedente_prestatore = cedente_prestatore
 f.fattura_elettronica_header.cessionario_committente = cessionario_committente
 
-body = a38.FatturaElettronicaBody()
+body = f.fattura_elettronica_body[0]
 body.dati_generali.dati_generali_documento = a38.DatiGeneraliDocumento(
     tipo_documento="TD01",
     divisa="EUR",
@@ -110,19 +111,24 @@ body.dati_generali.dati_generali_documento = a38.DatiGeneraliDocumento(
 )
 
 body.dati_beni_servizi.add_dettaglio_linee(
-	descrizione="Test item", quantita=2, unita_misura="kg",
-	prezzo_unitario="25.50", aliquota_iva="22.00")
+    descrizione="Test item", quantita=2, unita_misura="kg",
+    prezzo_unitario="25.50", aliquota_iva="22.00")
 
 body.dati_beni_servizi.add_dettaglio_linee(
-	descrizione="Other item", quantita=1, unita_misura="kg",
-	prezzo_unitario="15.50", aliquota_iva="22.00")
+    descrizione="Other item", quantita=1, unita_misura="kg",
+    prezzo_unitario="15.50", aliquota_iva="22.00")
 
 body.dati_beni_servizi.build_dati_riepilogo()
 body.build_importo_totale_documento()
 
-f.fattura_elettronica_body.append(body)
-
-f.validate()
+res = Validation()
+f.validate(res)
+if res.warnings:
+    for w in res.warnings:
+        print(str(w), file=sys.stderr)
+if res.errors:
+    for e in res.errors:
+        print(str(e), file=sys.stderr)
 
 filename = "{}{}_{:05d}.xml".format(
     f.fattura_elettronica_header.cedente_prestatore.dati_anagrafici.id_fiscale_iva.id_paese,
