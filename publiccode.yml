@@ -8,9 +8,14 @@ inputTypes:
 outputTypes:
   - text/html
   - text/xml
+  - text/x-python
   - application/pdf
+  - application/json
+  - application/x-x509-ca-cert
 platforms:
   - linux
+  - windows
+  - ios
 categories:
   - billing-and-invoicing
 developmentStatus: beta
@@ -34,7 +39,7 @@ intendedAudience:
 localisation:
   localisationReady: false
   availableLanguages:
-    - it
+    - en 
 description:
   en:
     shortDescription: |
