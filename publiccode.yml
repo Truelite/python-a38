@@ -26,10 +26,10 @@ dependsOn:
       versionMin: '3.5'
       optional: false 
 maintenance:
-  type: community
+  type: internal 
   contacts:
-    - name: Enrico Zini
-      email: enrico@truelite.it
+    - name: Truelite srl 
+      email: a38@truelite.it
 legal:
   license: Apache-2.0
   mainCopyrightOwner: Enrico Zini
