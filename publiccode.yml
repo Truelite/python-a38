@@ -33,6 +33,7 @@ maintenance:
 legal:
   license: Apache-2.0
   mainCopyrightOwner: Enrico Zini
+  repoOwner: Truelite srl
 intendedAudience:
   countries:
     - it
