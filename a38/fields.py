@@ -401,7 +401,7 @@ class Base64BinaryField(Field[bytes]):
         """
         if value is None:
             return None
-        return base64.b64encode(value)
+        return base64.b64encode(value).decode("utf8")
 
 
 class DateField(ChoicesField[datetime.date]):
