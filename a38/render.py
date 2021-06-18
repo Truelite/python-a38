@@ -30,17 +30,21 @@ if HAVE_LXML:
             if output_file is None:
                 output_file = "-"
             html = self(f)
-            with tempfile.NamedTemporaryFile("wb", suffix=".html") as fd:
-                html.write(fd)
-                fd.flush()
-                
-                cmdLine = [wkhtmltopdf, fd.name, output_file]
-                verifyLocalAccessToFileOption = subprocess.run([wkhtmltopdf], stdin=subprocess.DEVNULL, text=True, capture_output=True)
-                if "--enable-local-file-access" in verifyLocalAccessToFileOption.stdout:
-                    cmdLine.insert(1, "--enable-local-file-access")
 
-                res = subprocess.run(cmdLine, stdin=subprocess.DEVNULL, capture_output=True)
-                if res.returncode != 0:
-                    raise RuntimeError("%s exited with error %d: stderr: %s", self.wkhtmltopdf, res.returncode, res.stderr)
+            with tempfile.NamedTemporaryFile("wb", suffix=".html", delete=False) as fd:
+                html.write(fd)
+                tempFilename = fd.name
+            
+            cmdLine = [wkhtmltopdf, tempFilename, output_file]
+            verifyLocalAccessToFileOption = subprocess.run([wkhtmltopdf], stdin=subprocess.DEVNULL, text=True, capture_output=True)
+            if "--enable-local-file-access" in verifyLocalAccessToFileOption.stdout:
+                cmdLine.insert(1, "--enable-local-file-access")
+
+            res = subprocess.run(cmdLine, stdin=subprocess.DEVNULL, capture_output=True)
+            os.remove(tempFilename)
+
+            if res.returncode != 0:
+                raise RuntimeError("%s exited with error %d: stderr: %s", self.wkhtmltopdf, res.returncode, res.stderr)
+            
             if output_file == "-":
                 return res.stdout
