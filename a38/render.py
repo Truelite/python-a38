@@ -1,6 +1,7 @@
 from typing import Optional
 import tempfile
 import subprocess
+import os
 try:
     import lxml.etree
     HAVE_LXML = True
@@ -21,6 +22,16 @@ if HAVE_LXML:
             tree = f.build_etree(lxml=True)
             return self.xslt(tree)
 
+        def _requires_enable_local_file_access(self, wkhtmltopdf: str):
+            """
+            Check if we need to pass --enable-local-file-access to wkhtmltopdf.
+
+            See https://github.com/Truelite/python-a38/issues/6 for details
+            """
+            verifyLocalAccessToFileOption = subprocess.run(
+                    [wkhtmltopdf], stdin=subprocess.DEVNULL, text=True, capture_output=True)
+            return "--enable-local-file-access" in verifyLocalAccessToFileOption.stdout
+
         def to_pdf(self, wkhtmltopdf: str, f, output_file: Optional[str] = None):
             """
             Render a fattura to PDF using the given wkhtmltopdf command.
@@ -34,17 +45,22 @@ if HAVE_LXML:
             with tempfile.NamedTemporaryFile("wb", suffix=".html", delete=False) as fd:
                 html.write(fd)
                 tempFilename = fd.name
-            
-            cmdLine = [wkhtmltopdf, tempFilename, output_file]
-            verifyLocalAccessToFileOption = subprocess.run([wkhtmltopdf], stdin=subprocess.DEVNULL, text=True, capture_output=True)
-            if "--enable-local-file-access" in verifyLocalAccessToFileOption.stdout:
-                cmdLine.insert(1, "--enable-local-file-access")
 
-            res = subprocess.run(cmdLine, stdin=subprocess.DEVNULL, capture_output=True)
-            os.remove(tempFilename)
+            try:
+                cmdLine = [wkhtmltopdf, tempFilename, output_file]
+                if self._requires_enable_local_file_access(wkhtmltopdf):
+                    cmdLine.insert(1, "--enable-local-file-access")
 
-            if res.returncode != 0:
-                raise RuntimeError("%s exited with error %d: stderr: %s", self.wkhtmltopdf, res.returncode, res.stderr)
-            
-            if output_file == "-":
-                return res.stdout
+                res = subprocess.run(cmdLine, stdin=subprocess.DEVNULL, capture_output=True)
+
+                if res.returncode != 0:
+                    raise RuntimeError(
+                            "{0} exited with error {1}: stderr: {2!r}".format(
+                                wkhtmltopdf, res.returncode, res.stderr))
+
+                if output_file == "-":
+                    return res.stdout
+                else:
+                    return None
+            finally:
+                os.remove(tempFilename)
