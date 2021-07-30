@@ -4,43 +4,62 @@ from contextlib import contextmanager
 import os
 from a38.crypto import P7M, InvalidSignatureError, SignerCertificateError
 
+# This is the CA certificate used to validate tests/data/test.txt.p7m
+#
+# The signature on the test file will expire (next expiration date: May  6 23:59:59 2024 GMT)
+#
+# To refresh it:
+#
+# 1. Sign tests/data/test.txt with a CAdES envelope
+# 2. Extract the signature:
+#      openssl smime -verify -in tests/data/test.txt.p7m -inform der -noverify -signer /tmp/cert.pem -out /dev/null
+# 3. Get signature information:
+#      openssl x509 -inform pem -in /tmp/cert.pem -text
+# 4. Compute the issuer hash to find the CA certificate:
+#      openssl x509 -inform pem -in /tmp/cert.pem -issuer_hash
+# 5. Download/refresh the CA certificate database:
+#      ./a38tool update_capath certs
+# 6. Find the file named with the issuer hash in certs/
+# 7. Update the CA_CERT_HASH variable below with the name of the file you just
+#    found in certs/
+# 8. Replace the value of CA_CERT with its contents
+#
 CA_CERT = """
 -----BEGIN CERTIFICATE-----
-MIIFJjCCBA6gAwIBAgIBATANBgkqhkiG9w0BAQsFADCBhTELMAkGA1UEBhMCSVQx
-FTATBgNVBAoMDElORk9DRVJUIFNQQTEiMCAGA1UECwwZQ2VydGlmaWNhdG9yZSBB
-Y2NyZWRpdGF0bzEUMBIGA1UEBRMLMDc5NDUyMTEwMDYxJTAjBgNVBAMMHEluZm9D
-ZXJ0IEZpcm1hIFF1YWxpZmljYXRhIDIwHhcNMTMwNDE5MTQyNjE1WhcNMjkwNDE5
-MTUyNjE1WjCBhTELMAkGA1UEBhMCSVQxFTATBgNVBAoMDElORk9DRVJUIFNQQTEi
-MCAGA1UECwwZQ2VydGlmaWNhdG9yZSBBY2NyZWRpdGF0bzEUMBIGA1UEBRMLMDc5
-NDUyMTEwMDYxJTAjBgNVBAMMHEluZm9DZXJ0IEZpcm1hIFF1YWxpZmljYXRhIDIw
-ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDFoW5eA0k3AcU+/v2uKclE
-hGrxXlqOUptAQJLSjysP7IaKKtGxIeX8HNavxRaDkLkQNElql+t4GgIPyJk4lzHb
-H72c1Ls2SH06X7uCo5iGRH3+FU1ScbcrzviAPB+yeqUZ1cKkGyyGQ1wBsorxpREU
-eajkW2wsDiY/DYyeTG1I3ECOk/2sZW1U/xGWeVIlNCg9lkqrjvwu6swKVg3LPRiD
-L4Cqzsh4w9VZzJeDvKfer6lp/fRRduY5fSajtttgCoERrw0hZH/PkkmDCcnbLSjx
-59Knu3jHip5prgGVU29MKANf573VZAAZfau/lAxf1K91DEXxtPWknEUULt3beGef
-AgMBAAGjggGdMIIBmTAPBgNVHRMBAf8EBTADAQH/MFgGA1UdIARRME8wTQYEVR0g
-ADBFMEMGCCsGAQUFBwIBFjdodHRwOi8vd3d3LmZpcm1hLmluZm9jZXJ0Lml0L2Rv
-Y3VtZW50YXppb25lL21hbnVhbGkucGhwMCUGA1UdEgQeMByBGmZpcm1hLmRpZ2l0
-YWxlQGluZm9jZXJ0Lml0MIHVBgNVHR8Egc0wgcowgceggcSggcGGKmh0dHA6Ly9j
-cmwuaW5mb2NlcnQuaXQvY3Jscy9maXJtYTIvQVJMLmNybIaBkmxkYXA6Ly9sZGFw
-LmluZm9jZXJ0Lml0L2NuJTNESW5mb0NlcnQlMjBGaXJtYSUyMFF1YWxpZmljYXRh
-JTIwMixvdSUzRENlcnRpZmljYXRvcmUlMjBBY2NyZWRpdGF0byxvJTNESU5GT0NF
-UlQlMjBTUEEsYyUzRElUP2F1dGhvcml0eVJldm9jYXRpb25MaXN0MA4GA1UdDwEB
-/wQEAwIBBjAdBgNVHQ4EFgQUk90h/APQFQpyraPM1ZoJnTiLnekwDQYJKoZIhvcN
-AQELBQADggEBAJYdIAO8JCHr9dTT/kpy5AZpgo8XoIQW/q9tNQPwZkdd/bAfgLib
-olvbk7ZTsiVlVv35Bb9rhM58SKP1Xa9c26Cf8y4zhoplVbhfKRGVCLj1u1EXdPhC
-UQb8WWcM0AyLOXj3qhbMh77UL0K9eaRrwTAENbl43Jy65HPHubNnk9U9wIUUtLgR
-Hl5Oog1ZUSV5oLEkeSwzHyk5ZQnv24BzU9UXJ/amAt2ff1Krr3/PsY4Juwgtpg1N
-qq8tid5L+lN7qJ8xXfxMuUX2aWkWftCBL8H75U7NnYm/Zx6XyRaULFzCDw0RBSHa
-WGPH+t5X7ZMMERXn8Z/2LTYWuj9w1+WeieY=
+MIIE+jCCA+KgAwIBAgIQbK2AXjA4PMWG8x+rL26V9zANBgkqhkiG9w0BAQsFADBs
+MQswCQYDVQQGEwJJVDEYMBYGA1UECgwPQXJ1YmFQRUMgUy5wLkEuMSEwHwYDVQQL
+DBhDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eUMxIDAeBgNVBAMMF0FydWJhUEVDIFMu
+cC5BLiBORyBDQSAzMB4XDTEwMTAyMjAwMDAwMFoXDTMwMTAyMjIzNTk1OVowbDEL
+MAkGA1UEBhMCSVQxGDAWBgNVBAoMD0FydWJhUEVDIFMucC5BLjEhMB8GA1UECwwY
+Q2VydGlmaWNhdGlvbiBBdXRob3JpdHlDMSAwHgYDVQQDDBdBcnViYVBFQyBTLnAu
+QS4gTkcgQ0EgMzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKtkY4EH
+G+Nh4VYLL4R5tvmX6J+AYlL2BPDUCLN92+zi9QMbsh84zbRE+om9KE8P67mST2my
+bhGTz6dzeK1BrQfSdKJ8AGxePzqUq+uGHGULoy4A6ey4EyqTfxY+pGzjB7OVcuiw
+y7iV6k1YjshIsmNjTmYOAQepZMgBmxHPnR6IW9MsAOFBBQH/vJFQDeBts/rA6lbM
+/VsURwzr6XOqCzwJK/csKvuE/rAaRKY+IPzah8mou//yEi4V401J1JYfPanbCJOW
+nIty9HaioUe5Fu2jw4UP7T5Cbw4lND1sP7HVhsVRDuTj3gF9ulJ7EBmcR/2THDZC
+ozD76uwuTmkm4VsCAwEAAaOCAZYwggGSMD8GCCsGAQUFBwEBBDMwMTAvBggrBgEF
+BQcwAYYjaHR0cDovL29jc3AuYXJ1YmFwZWMudHJ1c3RpdGFsaWEuaXQwEgYDVR0T
+AQH/BAgwBgEB/wIBADBGBgNVHSAEPzA9MDsGCisGAQQBgegtAQEwLTArBggrBgEF
+BQcCARYfaHR0cHM6Ly9jYS5hcnViYXBlYy5pdC9jcHMuaHRtbDBqBgNVHR8EYzBh
+MF+gXaBbhllodHRwOi8vb25zaXRlY3JsLmFydWJhcGVjLnRydXN0aXRhbGlhLml0
+L0FydWJhUEVDU3BBQ2VydGlmaWNhdGlvbkF1dGhvcml0eUMvTGF0ZXN0Q1JMLmNy
+bDArBgNVHRIEJDAipCAwHjEcMBoGA1UEAxMTR09WVlNQLUMxLTIwNDgtMS0xMDAO
+BgNVHQ8BAf8EBAMCAQYwKwYDVR0RBCQwIqQgMB4xHDAaBgNVBAMTE0dPVlZTUC1D
+MS0yMDQ4LTEtMTAwHQYDVR0OBBYEFPDARbG2NbTqXyn6gwNK3C/1s33oMA0GCSqG
+SIb3DQEBCwUAA4IBAQBRGwGypquxMawPV6ZN5l/2eJdaaqgnYolin1PGXJUFRQy3
+k5FK0Fwk/90U/j/ue83cYdsRpPVpo17LOk7hCNSFk/W2SRVGvqaM77/cVpgFwm25
+Ab2x5sMxwJ9Uoouba00CDl2SiYgn9KN+Bd3LHrwtpO8IkzwSE7k0kKmDLdCZTyUO
+ZPR8RKpwedjLJoiyXCtq9PKA3avI1R6N8yOxbK954+nSOsHfmGDP4wQi8PUJIWBm
+dlpHNM669BLdLwj6lpCjNI6AuP4K5Jw1qkOmcccnVWxkk0r2qNu87AlVosHpKf6G
+jkJbJNWfBsgjRHGg6Pq3enAf8/7DfkoCyKUzI8zZ
 -----END CERTIFICATE-----
 """
 
-CA_CERT_HASH = "af603d58.0"
+CA_CERT_HASH = "b72ed47c.0"
 
 
-class TestAnagrafica(TestCase):
+class TestSignature(TestCase):
     @contextmanager
     def capath(self):
         with tempfile.TemporaryDirectory() as td:
