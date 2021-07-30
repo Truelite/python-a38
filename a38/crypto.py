@@ -4,6 +4,7 @@ import io
 import base64
 import binascii
 import subprocess
+import datetime
 import xml.etree.ElementTree as ET
 from . import fattura as a38
 
@@ -48,6 +49,21 @@ class P7M:
             pass
 
         self.content_info = ContentInfo.load(self.data)
+
+    def is_expired(self) -> bool:
+        """
+        Check if the signature has expired
+        """
+        now = datetime.datetime.utcnow()
+        signed_data = self.get_signed_data()
+        for c in signed_data["certificates"]:
+            if c.name != "certificate":
+                # The signatures I've seen so far use 'certificate' only
+                continue
+            expiration_date = c.chosen["tbs_certificate"]["validity"]["not_after"].chosen.native.replace(tzinfo=None)
+            if expiration_date <= now:
+                return True
+        return False
 
     def get_signed_data(self):
         """
