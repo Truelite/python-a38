@@ -44,6 +44,9 @@ if HAVE_LXML:
                 output_file = "-"
             html = self(f)
 
+            # TODO: pass html data as stdin, using '-' as input for
+            #       wkhtmltopdf: that currently removes the requirement for
+            #       --enable-local-file-access
             with tempfile.NamedTemporaryFile("wb", suffix=".html", delete=False) as fd:
                 html.write(fd)
                 tempFilename = fd.name
