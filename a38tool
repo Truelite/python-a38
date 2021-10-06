@@ -219,6 +219,10 @@ class ExportPython(Exporter):
 
 
 class Renderer(App):
+    """
+    Base class for CLI commands that render a Fattura
+    """
+
     def __init__(self, args):
         from a38.render import HAVE_LXML
         if not HAVE_LXML:
@@ -232,6 +236,12 @@ class Renderer(App):
 
         from a38.render import XSLTTransform
         self.transform = XSLTTransform(self.stylesheet)
+
+    def render(self, f, output: str):
+        """
+        Render the Fattura to the given destination file
+        """
+        raise NotImplementedError(self.__class__.__name__ + ".render is not implemented")
 
     def run(self):
         for pathname in self.files:
@@ -284,7 +294,7 @@ class RenderPDF(Renderer):
         if self.wkhtmltopdf is None:
             raise Fail("wkhtmltopdf is needed for PDF rendering")
 
-    def render(self, f, output):
+    def render(self, f, output: str):
         self.transform.to_pdf(self.wkhtmltopdf, f, output)
 
 
