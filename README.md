@@ -185,10 +185,8 @@ openssl cms -verify -in tests/data/test.txt.p7m -inform der -CApath certs/
 
 XSLT stylesheets for displaying fatture:
 
-* From fatturapa.gov.it for
-  [privati](https://www.fatturapa.gov.it/export/fatturazione/sdi/fatturapa/v1.2/fatturaordinaria_v1.2.xsl)
-  and
-  [PA](https://www.fatturapa.gov.it/export/fatturazione/sdi/fatturapa/v1.2/fatturapa_v1.2.xsl)
+* From [fatturapa.gov.it](https://www.fatturapa.gov.it/),
+  among the [FatturaPA resources](https://www.fatturapa.gov.it/it/norme-e-regole/documentazione-fattura-elettronica/formato-fatturapa/index.html)
 * From [AssoSoftware](http://www.assosoftware.it/allegati/assoinvoice/FoglioStileAssoSoftware.zip)
 
 
