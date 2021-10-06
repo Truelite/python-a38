@@ -28,8 +28,10 @@ if HAVE_LXML:
 
             See https://github.com/Truelite/python-a38/issues/6 for details
             """
+            # We need to specifically use --extended-help, because --help does
+            # not always document --enable-local-file-access
             verifyLocalAccessToFileOption = subprocess.run(
-                    [wkhtmltopdf], stdin=subprocess.DEVNULL, text=True, capture_output=True)
+                    [wkhtmltopdf, "--extended-help"], stdin=subprocess.DEVNULL, text=True, capture_output=True)
             return "--enable-local-file-access" in verifyLocalAccessToFileOption.stdout
 
         def to_pdf(self, wkhtmltopdf: str, f, output_file: Optional[str] = None):
