@@ -13,7 +13,7 @@ billing in Italy with Python easier for everyone.
 
 The library can generate various kinds of fatture that pass validation, and can
 parse all the example XML files distributed by
-[fatturapa.gov.it](https://www.fatturapa.gov.it/export/fatturazione/it/normativa/f-2.htm)
+[fatturapa.gov.it](https://www.fatturapa.gov.it/it/lafatturapa/esempi/)
 
 
 ## Dependencies
