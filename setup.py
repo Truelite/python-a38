@@ -4,6 +4,10 @@ from setuptools import setup
 with open("README.md", "r") as fp:
     long_description = fp.read()
 
+def parse_requirements(filename):
+    lineiter = (line.strip() for line in open(filename))
+    return [line for line in lineiter if line and not line.startswith("#")]
+
 setup(
     name="a38",
     version="0.1.3",
@@ -16,8 +20,8 @@ setup(
     license="https://www.apache.org/licenses/LICENSE-2.0.html",
     packages=["a38"],
     scripts=["a38tool"],
-    install_requires=["python-dateutil", "pytz", "asn1crypto"],
-    test_requires=["python-dateutil", "pytz", "asn1crypto"],
+    install_requires=parse_requirements("requirements-lib.txt"),
+    test_requires=parse_requirements("requirements-lib.txt"),
     extras_require={
         "formatted_python": ["yapf"],
         "html": ["lxml"],

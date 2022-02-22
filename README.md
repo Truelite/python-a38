@@ -1,5 +1,7 @@
 # Python A38
 
+![full workflow](https://github.com/tappoz/python-a38.git/actions/workflows/py.yml/badge.svg)
+
 Library to generate Italian Fattura Elettronica from Python.
 
 This library implements a declarative data model similar to Django models, that

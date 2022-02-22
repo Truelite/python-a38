@@ -3,8 +3,8 @@ set -u
 if [ $# -eq 0 ]
 then
 	set -x
-   eatmydata nose2-3 -C --coverage-report html
+   eatmydata nose2 -C --coverage-report html
 else
 	set -x
-	eatmydata nose2-3 "$@"
+	eatmydata nose2 "$@"
 fi
