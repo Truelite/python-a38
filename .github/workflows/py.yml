@@ -1,0 +1,19 @@
+---
+name: Python A38
+
+# only manual and pull requests
+on: [workflow_dispatch, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install OS packages
+        run: make install-os
+      - name: Install Pip packages
+        run: make install-py
+      - name: Run the tests
+        run: make test
+      - name: Install the package
+        run: make install-package
