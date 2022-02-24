@@ -1,6 +1,6 @@
 # Python A38
 
-![full workflow](https://github.com/tappoz/python-a38.git/actions/workflows/py.yml/badge.svg)
+![full workflow](https://github.com/Truelite/python-a38/actions/workflows/py.yml/badge.svg)
 
 Library to generate Italian Fattura Elettronica from Python.
 
