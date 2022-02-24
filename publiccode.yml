@@ -1,8 +1,12 @@
+# This repository adheres to the publiccode.yml standard by including this
+# metadata file that makes public software easily discoverable.
+# More info at https://github.com/italia/publiccode.yml
+
 publiccodeYmlVersion: '0.2'
 name: A38
 url: 'https://github.com/Truelite/python-a38.git'
 softwareVersion: 0.1.3
-releaseDate: '2019-03-07'
+releaseDate: '2020-12-21'
 inputTypes:
   - text/xml
 outputTypes:
@@ -32,7 +36,7 @@ maintenance:
       email: a38@truelite.it
 legal:
   license: Apache-2.0
-  mainCopyrightOwner: Enrico Zini
+  mainCopyrightOwner: Truelite srl
   repoOwner: Truelite srl
 intendedAudience:
   countries:
