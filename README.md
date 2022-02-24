@@ -194,6 +194,6 @@ XSLT stylesheets for displaying fatture:
 
 # Copyright
 
-Copyright 2019 Truelite S.r.l.
+Copyright 2019-2022 Truelite S.r.l.
 
 This software is released under the Apache License 2.0
