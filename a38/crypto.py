@@ -27,6 +27,7 @@ class P7M:
     """
     Parse a Fattura Elettronica encoded as a .p7m file
     """
+
     def __init__(self, data: Union[str, bytes, BinaryIO]):
         """
         If data is a string, it is taken as a file name.
@@ -62,7 +63,9 @@ class P7M:
             if c.name != "certificate":
                 # The signatures I've seen so far use 'certificate' only
                 continue
-            expiration_date = c.chosen["tbs_certificate"]["validity"]["not_after"].chosen.native.replace(tzinfo=None)
+            expiration_date = c.chosen["tbs_certificate"]["validity"][
+                "not_after"
+            ].chosen.native.replace(tzinfo=None)
             if expiration_date <= now:
                 return True
         return False
@@ -76,7 +79,9 @@ class P7M:
 
         signed_data = self.content_info["content"]
         if signed_data["version"].native != "v1":
-            raise RuntimeError(f"ContentInfo/SignedData.version is {signed_data['version'].native} instead of v1")
+            raise RuntimeError(
+                f"ContentInfo/SignedData.version is {signed_data['version'].native} instead of v1"
+            )
 
         return signed_data
 
@@ -100,11 +105,21 @@ class P7M:
         """
         Verify the signature on the file
         """
-        res = subprocess.run([
-            "openssl", "cms", "-verify", "-inform", "DER", "-CApath", certdir, "-noout"],
+        res = subprocess.run(
+            [
+                "openssl",
+                "cms",
+                "-verify",
+                "-inform",
+                "DER",
+                "-CApath",
+                certdir,
+                "-noout",
+            ],
             input=self.data,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+        )
 
         # From openssl cms manpage:
         # 0   The operation was completely successfully.

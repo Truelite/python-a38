@@ -5,7 +5,9 @@ from .traversal import Annotation, Traversal
 
 
 class ValidationError(Annotation):
-    def __init__(self, prefix: Optional[str], field: "fields.Field", msg: str, code: str = None):
+    def __init__(
+        self, prefix: Optional[str], field: "fields.Field", msg: str, code: str = None
+    ):
         self.prefix = prefix
         self.field = field
         self.msg = msg
@@ -22,10 +24,12 @@ Fields = Union["fields.Field", Sequence["fields.Field"]]
 
 
 class Validation(Traversal):
-    def __init__(self,
-                 prefix: Optional[str] = None,
-                 warnings: Optional[List[ValidationError]] = None,
-                 errors: Optional[List[ValidationError]] = None):
+    def __init__(
+        self,
+        prefix: Optional[str] = None,
+        warnings: Optional[List[ValidationError]] = None,
+        errors: Optional[List[ValidationError]] = None,
+    ):
         super().__init__(prefix)
         self.warnings: List[ValidationError]
         self.errors: List[ValidationError]

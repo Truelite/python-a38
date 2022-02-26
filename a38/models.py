@@ -65,6 +65,7 @@ class Model(ModelBase, metaclass=ModelMetaclass):
     Declarative description of a data structure that can be validated and
     serialized to XML.
     """
+
     def __init__(self, *args, **kw):
         super().__init__()
         for name, value in zip(self._meta.keys(), args):
@@ -108,7 +109,9 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         if value is None:
             return None
         if not isinstance(value, ModelBase):
-            raise TypeError("{} is not a Model instance".format(value.__class__.__name__))
+            raise TypeError(
+                "{} is not a Model instance".format(value.__class__.__name__)
+            )
         kw = {}
         for name, field in cls._meta.items():
             kw[name] = getattr(value, name, None)
@@ -245,9 +248,13 @@ class Model(ModelBase, metaclass=ModelMetaclass):
 
     def from_etree(self, el):
         if el.tag != self.get_xmltag():
-            raise RuntimeError("element is {} instead of {}".format(el.tag, self.get_xmltag()))
+            raise RuntimeError(
+                "element is {} instead of {}".format(el.tag, self.get_xmltag())
+            )
 
-        tag_map = {field.get_xmltag(): (name, field) for name, field in self._meta.items()}
+        tag_map = {
+            field.get_xmltag(): (name, field) for name, field in self._meta.items()
+        }
 
         # Group values by tag
         by_name = defaultdict(list)
@@ -255,7 +262,9 @@ class Model(ModelBase, metaclass=ModelMetaclass):
             try:
                 name, field = tag_map[child.tag]
             except KeyError:
-                raise RuntimeError("found unexpected element {} in {}".format(child.tag, el.tag))
+                raise RuntimeError(
+                    "found unexpected element {} in {}".format(child.tag, el.tag)
+                )
 
             by_name[name].append(child)
 
@@ -265,8 +274,10 @@ class Model(ModelBase, metaclass=ModelMetaclass):
                 setattr(self, name, field.from_etree(elements))
             elif len(elements) != 1:
                 raise RuntimeError(
-                        "found {} {} elements in {} instead of just 1".format(
-                            len(elements), child.tag, el.tag))
+                    "found {} {} elements in {} instead of just 1".format(
+                        len(elements), child.tag, el.tag
+                    )
+                )
             else:
                 setattr(self, name, field.from_etree(elements[0]))
 

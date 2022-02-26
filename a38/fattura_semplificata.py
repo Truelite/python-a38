@@ -1,6 +1,13 @@
 from . import fields, models
-from .fattura import (Allegati, FullNameMixin, IdFiscaleIVA, IdTrasmittente,
-                      IscrizioneREA, Sede, StabileOrganizzazione)
+from .fattura import (
+    Allegati,
+    FullNameMixin,
+    IdFiscaleIVA,
+    IdTrasmittente,
+    IscrizioneREA,
+    Sede,
+    StabileOrganizzazione,
+)
 
 NS10 = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.0"
 
@@ -9,8 +16,12 @@ class DatiTrasmissione(models.Model):
     id_trasmittente = IdTrasmittente
     progressivo_invio = fields.ProgressivoInvioField()
     formato_trasmissione = fields.StringField(length=5, choices=("FSM10",))
-    codice_destinatario = fields.StringField(null=True, min_length=6, max_length=7, default="0000000")
-    pec_destinatario = fields.StringField(null=True, min_length=8, max_length=256, xmltag="PECDestinatario")
+    codice_destinatario = fields.StringField(
+        null=True, min_length=6, max_length=7, default="0000000"
+    )
+    pec_destinatario = fields.StringField(
+        null=True, min_length=8, max_length=256, xmltag="PECDestinatario"
+    )
 
 
 class RappresentanteFiscale(FullNameMixin, models.Model):
@@ -31,9 +42,28 @@ class CedentePrestatore(FullNameMixin, models.Model):
     rappresentante_fiscale = models.ModelField(RappresentanteFiscale, null=True)
     iscrizione_rea = fields.ModelField(IscrizioneREA, null=True)
     regime_fiscale = fields.StringField(
-            length=4, choices=("RF01", "RF02", "RF04", "RF05", "RF06", "RF07",
-                               "RF08", "RF09", "RF10", "RF11", "RF12", "RF13",
-                               "RF14", "RF15", "RF16", "RF17", "RF18", "RF19"))
+        length=4,
+        choices=(
+            "RF01",
+            "RF02",
+            "RF04",
+            "RF05",
+            "RF06",
+            "RF07",
+            "RF08",
+            "RF09",
+            "RF10",
+            "RF11",
+            "RF12",
+            "RF13",
+            "RF14",
+            "RF15",
+            "RF16",
+            "RF17",
+            "RF18",
+            "RF19",
+        ),
+    )
 
 
 class IdentificativiFiscali(models.Model):
@@ -89,7 +119,9 @@ class DatiBeniServizi(models.Model):
     descrizione = fields.StringField(max_length=1000)
     importo = fields.DecimalField(max_length=15)
     dati_iva = DatiIVA
-    natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
+    natura = fields.StringField(
+        length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7")
+    )
     riferimento_normativo = fields.StringField(max_length=100, null=True)
 
 
@@ -103,13 +135,16 @@ class FatturaElettronicaSemplificata(models.Model):
     """
     Fattura elettronica semplificata
     """
+
     __xmlns__ = NS10
     fattura_elettronica_header = FatturaElettronicaHeader
     fattura_elettronica_body = fields.ModelListField(FatturaElettronicaBody, min_num=1)
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = self.get_versione()
+        self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = (
+            self.get_versione()
+        )
 
     def get_versione(self):
         return "FSM10"
@@ -119,11 +154,17 @@ class FatturaElettronicaSemplificata(models.Model):
 
     def validate_model(self, validation):
         super().validate_model(validation)
-        if self.get_versione() != self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione:
+        if (
+            self.get_versione()
+            != self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione
+        ):
             validation.add_error(
-                    self.fattura_elettronica_header.dati_trasmissione._meta["formato_trasmissione"],
-                    "formato_trasmissione should be {}".format(self.get_versione()),
-                    code="00428")
+                self.fattura_elettronica_header.dati_trasmissione._meta[
+                    "formato_trasmissione"
+                ],
+                "formato_trasmissione should be {}".format(self.get_versione()),
+                code="00428",
+            )
 
     def to_xml(self, builder):
         with builder.element(self.get_xmltag(), **self.get_xmlattrs()) as b:
@@ -135,12 +176,16 @@ class FatturaElettronicaSemplificata(models.Model):
         """
         Build and return an ElementTree with the fattura in XML format
         """
-        self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = self.get_versione()
+        self.fattura_elettronica_header.dati_trasmissione.formato_trasmissione = (
+            self.get_versione()
+        )
         if lxml:
             from a38.builder import LXMLBuilder
+
             builder = LXMLBuilder()
         else:
             from a38.builder import Builder
+
             builder = Builder()
         builder.default_namespace = NS10
         self.to_xml(builder)
@@ -149,9 +194,15 @@ class FatturaElettronicaSemplificata(models.Model):
     def from_etree(self, el):
         versione = el.attrib.get("versione", None)
         if versione is None:
-            raise RuntimeError("root element {} misses attribute 'versione'".format(el.tag))
+            raise RuntimeError(
+                "root element {} misses attribute 'versione'".format(el.tag)
+            )
 
         if versione != self.get_versione():
-            raise RuntimeError("root element versione is {} instead of {}".format(versione, self.get_versione()))
+            raise RuntimeError(
+                "root element versione is {} instead of {}".format(
+                    versione, self.get_versione()
+                )
+            )
 
         return super().from_etree(el)

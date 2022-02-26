@@ -5,12 +5,14 @@ from typing import Optional
 
 try:
     import lxml.etree
+
     HAVE_LXML = True
 except ModuleNotFoundError:
     HAVE_LXML = False
 
 
 if HAVE_LXML:
+
     class XSLTTransform:
         def __init__(self, xslt):
             parsed_xslt = lxml.etree.parse(xslt)
@@ -32,7 +34,11 @@ if HAVE_LXML:
             # We need to specifically use --extended-help, because --help does
             # not always document --enable-local-file-access
             verifyLocalAccessToFileOption = subprocess.run(
-                    [wkhtmltopdf, "--extended-help"], stdin=subprocess.DEVNULL, text=True, capture_output=True)
+                [wkhtmltopdf, "--extended-help"],
+                stdin=subprocess.DEVNULL,
+                text=True,
+                capture_output=True,
+            )
             return "--enable-local-file-access" in verifyLocalAccessToFileOption.stdout
 
         def to_pdf(self, wkhtmltopdf: str, f, output_file: Optional[str] = None):
@@ -57,12 +63,16 @@ if HAVE_LXML:
                 if self._requires_enable_local_file_access(wkhtmltopdf):
                     cmdLine.insert(1, "--enable-local-file-access")
 
-                res = subprocess.run(cmdLine, stdin=subprocess.DEVNULL, capture_output=True)
+                res = subprocess.run(
+                    cmdLine, stdin=subprocess.DEVNULL, capture_output=True
+                )
 
                 if res.returncode != 0:
                     raise RuntimeError(
-                            "{0} exited with error {1}: stderr: {2!r}".format(
-                                wkhtmltopdf, res.returncode, res.stderr))
+                        "{0} exited with error {1}: stderr: {2!r}".format(
+                            wkhtmltopdf, res.returncode, res.stderr
+                        )
+                    )
 
                 if output_file == "-":
                     return res.stdout

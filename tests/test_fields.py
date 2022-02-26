@@ -31,9 +31,14 @@ class FieldTestMixin:
         f = self.get_field()
 
         # Validating a field with null=False raises an error
-        self.assert_validates(f, None, result=None, errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f,
+            None,
+            result=None,
+            errors=[
+                "sample: missing value",
+            ],
+        )
 
         # But null values are tolerated outside validation, while structures
         # are being filled
@@ -96,7 +101,9 @@ class FieldTestMixin:
         res = Diff()
         field.diff(res, first, second)
         if res.differences:
-            self.assertEqual([(d.prefix, d.field, d.first, d.second) for d in res.differences], [])
+            self.assertEqual(
+                [(d.prefix, d.field, d.first, d.second) for d in res.differences], []
+            )
 
     def assert_diff(self, field, first, second, expected):
         """
@@ -116,9 +123,17 @@ class FieldTestMixin:
         self.assert_diff(field, None, first, ["sample: first is not set"])
         self.assert_diff(field, second, None, ["sample: second is not set"])
         self.assert_diff(field, None, second, ["sample: first is not set"])
-        self.assert_diff(field, first, second, ["sample: first: {}, second: {}".format(
-            field.to_str(field.clean_value(first)),
-            field.to_str(field.clean_value(second)))])
+        self.assert_diff(
+            field,
+            first,
+            second,
+            [
+                "sample: first: {}, second: {}".format(
+                    field.to_str(field.clean_value(first)),
+                    field.to_str(field.clean_value(second)),
+                )
+            ],
+        )
 
     def to_xml(self, field, value):
         """
@@ -161,23 +176,43 @@ class TestStringField(FieldTestMixin, TestCase):
 
     def test_length(self):
         f = self.get_field(length=3)
-        self.assert_validates(f, "va", result="va", errors=[
-            "sample: 'va' should be at least 3 characters long",
-        ])
-        self.assert_validates(f, "valu", result="valu", errors=[
-            "sample: 'valu' should be no more than 3 characters long",
-        ])
-        self.assert_validates(f, 1.15, result="1.15", errors=[
-            "sample: '1.15' should be no more than 3 characters long",
-        ])
+        self.assert_validates(
+            f,
+            "va",
+            result="va",
+            errors=[
+                "sample: 'va' should be at least 3 characters long",
+            ],
+        )
+        self.assert_validates(
+            f,
+            "valu",
+            result="valu",
+            errors=[
+                "sample: 'valu' should be no more than 3 characters long",
+            ],
+        )
+        self.assert_validates(
+            f,
+            1.15,
+            result="1.15",
+            errors=[
+                "sample: '1.15' should be no more than 3 characters long",
+            ],
+        )
         self.assert_validates(f, "val", result="val")
         self.assert_validates(f, 1.2, result="1.2")
 
     def test_min_length(self):
         f = self.get_field(min_length=3)
-        self.assert_validates(f, "va", result="va", errors=[
-            "sample: 'va' should be at least 3 characters long",
-        ])
+        self.assert_validates(
+            f,
+            "va",
+            result="va",
+            errors=[
+                "sample: 'va' should be at least 3 characters long",
+            ],
+        )
         self.assert_validates(f, "valu", result="valu")
         self.assert_validates(f, "val", result="val")
         self.assert_validates(f, 1.2, result="1.2")
@@ -188,35 +223,65 @@ class TestStringField(FieldTestMixin, TestCase):
         self.assert_validates(f, "v", result="v")
         self.assert_validates(f, "va", result="va")
         self.assert_validates(f, "val", result="val")
-        self.assert_validates(f, "valu", result="valu", errors=[
-            "sample: 'valu' should be no more than 3 characters long",
-        ])
+        self.assert_validates(
+            f,
+            "valu",
+            result="valu",
+            errors=[
+                "sample: 'valu' should be no more than 3 characters long",
+            ],
+        )
 
     def test_choices(self):
         f = self.get_field(choices=("A", "B"))
         self.assert_validates(f, "A", result="A")
         self.assert_validates(f, "B", result="B")
-        self.assert_validates(f, "C", result="C", errors=[
-            "sample: 'C' is not a valid choice for this field",
-        ])
-        self.assert_validates(f, "a", result="a", errors=[
-            "sample: 'a' is not a valid choice for this field",
-        ])
-        self.assert_validates(f, None, result=None, errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f,
+            "C",
+            result="C",
+            errors=[
+                "sample: 'C' is not a valid choice for this field",
+            ],
+        )
+        self.assert_validates(
+            f,
+            "a",
+            result="a",
+            errors=[
+                "sample: 'a' is not a valid choice for this field",
+            ],
+        )
+        self.assert_validates(
+            f,
+            None,
+            result=None,
+            errors=[
+                "sample: missing value",
+            ],
+        )
 
     def test_choices_nullable(self):
         f = self.get_field(choices=("A", "B"), null=True)
         self.assert_validates(f, "A", result="A")
         self.assert_validates(f, "B", result="B")
         self.assert_validates(f, None, result=None)
-        self.assert_validates(f, "C", result="C", errors=[
-            "sample: 'C' is not a valid choice for this field",
-        ])
-        self.assert_validates(f, "a", result="a", errors=[
-            "sample: 'a' is not a valid choice for this field",
-        ])
+        self.assert_validates(
+            f,
+            "C",
+            result="C",
+            errors=[
+                "sample: 'C' is not a valid choice for this field",
+            ],
+        )
+        self.assert_validates(
+            f,
+            "a",
+            result="a",
+            errors=[
+                "sample: 'a' is not a valid choice for this field",
+            ],
+        )
 
     def test_to_python(self):
         f = self.get_field()
@@ -244,9 +309,14 @@ class TestIntegerField(FieldTestMixin, TestCase):
         self.assert_validates(f, 12, result=12)
         self.assert_validates(f, "12", result=12)
         self.assert_validates(f, 12.3, result=12)
-        self.assert_validates(f, "foo", result="foo", errors=[
-            "sample: invalid literal for int() with base 10: 'foo'",
-        ])
+        self.assert_validates(
+            f,
+            "foo",
+            result="foo",
+            errors=[
+                "sample: invalid literal for int() with base 10: 'foo'",
+            ],
+        )
 
     def test_default(self):
         f = self.get_field(default=7)
@@ -258,28 +328,48 @@ class TestIntegerField(FieldTestMixin, TestCase):
         self.assert_validates(f, 1, result=1)
         self.assert_validates(f, 12, result=12)
         self.assert_validates(f, 123, result=123)
-        self.assert_validates(f, 1234, result=1234, errors=[
-            "sample: '1234' should be no more than 3 digits long",
-        ])
+        self.assert_validates(
+            f,
+            1234,
+            result=1234,
+            errors=[
+                "sample: '1234' should be no more than 3 digits long",
+            ],
+        )
 
     def test_choices(self):
         f = self.get_field(choices=(1, 2))
         self.assert_validates(f, 1, result=1)
         self.assert_validates(f, 2, result=2)
-        self.assert_validates(f, 3, result=3, errors=[
-            "sample: 3 is not a valid choice for this field",
-        ])
-        self.assert_validates(f, None, result=None, errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f,
+            3,
+            result=3,
+            errors=[
+                "sample: 3 is not a valid choice for this field",
+            ],
+        )
+        self.assert_validates(
+            f,
+            None,
+            result=None,
+            errors=[
+                "sample: missing value",
+            ],
+        )
 
     def test_choices_nullable(self):
         f = self.get_field(choices=(1, 2), null=True)
         self.assert_validates(f, 1, result=1)
         self.assert_validates(f, 2, result=2)
-        self.assert_validates(f, 3, result=3, errors=[
-            "sample: 3 is not a valid choice for this field",
-        ])
+        self.assert_validates(
+            f,
+            3,
+            result=3,
+            errors=[
+                "sample: 3 is not a valid choice for this field",
+            ],
+        )
         self.assert_validates(f, None, result=None)
 
     def test_to_python(self):
@@ -306,9 +396,14 @@ class TestDecimalField(FieldTestMixin, TestCase):
         self.assert_validates(f, 12, result=Decimal("12.00"))
         self.assert_validates(f, "12", result=Decimal("12.00"))
         self.assert_validates(f, "12.345", result=Decimal("12.345"))
-        self.assert_validates(f, "foo", result="foo", errors=[
-            "sample: 'foo' cannot be converted to Decimal",
-        ])
+        self.assert_validates(
+            f,
+            "foo",
+            result="foo",
+            errors=[
+                "sample: 'foo' cannot be converted to Decimal",
+            ],
+        )
 
     def test_default(self):
         f = self.get_field(default="7.0")
@@ -319,21 +414,36 @@ class TestDecimalField(FieldTestMixin, TestCase):
         f = self.get_field(max_length=4)
         self.assert_validates(f, 1, result=Decimal("1.00"))
         # 12 becomes 12.00 which is 5 characters long on a max_length of 4
-        self.assert_validates(f, 12, result=Decimal("12.00"), errors=[
-            "sample: '12.00' should be no more than 4 digits long",
-        ])
+        self.assert_validates(
+            f,
+            12,
+            result=Decimal("12.00"),
+            errors=[
+                "sample: '12.00' should be no more than 4 digits long",
+            ],
+        )
 
     def test_choices(self):
         f = self.get_field(choices=("1.1", "2.2"))
         self.assert_validates(f, "1.1", result=Decimal("1.1"))
         self.assert_validates(f, Decimal("2.2"), result=Decimal("2.2"))
         # 1.1 does not have an exact decimal representation
-        self.assert_validates(f, 1.1, result=Decimal("1.100000000000000088817841970012523233890533447265625"), errors=[
-            "sample: Decimal('1.100000000000000088817841970012523233890533447265625') is not a valid choice for this field",
-        ])
-        self.assert_validates(f, None, result=None, errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f,
+            1.1,
+            result=Decimal("1.100000000000000088817841970012523233890533447265625"),
+            errors=[
+                "sample: Decimal('1.100000000000000088817841970012523233890533447265625') is not a valid choice for this field",
+            ],
+        )
+        self.assert_validates(
+            f,
+            None,
+            result=None,
+            errors=[
+                "sample: missing value",
+            ],
+        )
 
     def test_choices_nullable(self):
         f = self.get_field(choices=("1.1", "2.2"), null=True)
@@ -342,9 +452,14 @@ class TestDecimalField(FieldTestMixin, TestCase):
         self.assert_validates(f, None, result=None)
         # 1.1 does not have an exact decimal representation
         dec11 = Decimal(1.1)
-        self.assert_validates(f, 1.1, result=dec11, errors=[
-            "sample: {!r} is not a valid choice for this field".format(dec11),
-        ])
+        self.assert_validates(
+            f,
+            1.1,
+            result=dec11,
+            errors=[
+                "sample: {!r} is not a valid choice for this field".format(dec11),
+            ],
+        )
 
     def test_to_python(self):
         f = self.get_field()
@@ -367,15 +482,29 @@ class TestDateField(FieldTestMixin, TestCase):
 
     def test_value(self):
         f = self.get_field()
-        self.assert_validates(f, datetime.date(2019, 1, 2), result=datetime.date(2019, 1, 2))
+        self.assert_validates(
+            f, datetime.date(2019, 1, 2), result=datetime.date(2019, 1, 2)
+        )
         self.assert_validates(f, "2019-01-02", result=datetime.date(2019, 1, 2))
-        self.assert_validates(f, datetime.datetime(2019, 1, 2, 12, 30), result=datetime.date(2019, 1, 2))
-        self.assert_validates(f, "foo", result="foo", errors=[
-            "sample: Date 'foo' does not begin with YYYY-mm-dd",
-        ])
-        self.assert_validates(f, [123], result=[123], errors=[
-            "sample: '[123]' is not an instance of str, datetime.date or datetime.datetime",
-        ])
+        self.assert_validates(
+            f, datetime.datetime(2019, 1, 2, 12, 30), result=datetime.date(2019, 1, 2)
+        )
+        self.assert_validates(
+            f,
+            "foo",
+            result="foo",
+            errors=[
+                "sample: Date 'foo' does not begin with YYYY-mm-dd",
+            ],
+        )
+        self.assert_validates(
+            f,
+            [123],
+            result=[123],
+            errors=[
+                "sample: '[123]' is not an instance of str, datetime.date or datetime.datetime",
+            ],
+        )
 
     def test_default(self):
         f = self.get_field(default="2019-01-02")
@@ -386,20 +515,35 @@ class TestDateField(FieldTestMixin, TestCase):
         f = self.get_field(choices=("2019-01-01", "2019-01-02"))
         self.assert_validates(f, "2019-01-01", result=datetime.date(2019, 1, 1))
         self.assert_validates(f, "2019-01-02", result=datetime.date(2019, 1, 2))
-        self.assert_validates(f, "2019-01-03", result=datetime.date(2019, 1, 3), errors=[
-            "sample: datetime.date(2019, 1, 3) is not a valid choice for this field",
-        ])
-        self.assert_validates(f, None, result=None, errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f,
+            "2019-01-03",
+            result=datetime.date(2019, 1, 3),
+            errors=[
+                "sample: datetime.date(2019, 1, 3) is not a valid choice for this field",
+            ],
+        )
+        self.assert_validates(
+            f,
+            None,
+            result=None,
+            errors=[
+                "sample: missing value",
+            ],
+        )
 
     def test_choices_nullable(self):
         f = self.get_field(choices=("2019-01-01", "2019-01-02"), null=True)
         self.assert_validates(f, "2019-01-01", result=datetime.date(2019, 1, 1))
         self.assert_validates(f, "2019-01-02", result=datetime.date(2019, 1, 2))
-        self.assert_validates(f, "2019-01-03", result=datetime.date(2019, 1, 3), errors=[
-            "sample: datetime.date(2019, 1, 3) is not a valid choice for this field",
-        ])
+        self.assert_validates(
+            f,
+            "2019-01-03",
+            result=datetime.date(2019, 1, 3),
+            errors=[
+                "sample: datetime.date(2019, 1, 3) is not a valid choice for this field",
+            ],
+        )
         self.assert_validates(f, None, result=None)
 
     def test_to_python(self):
@@ -415,8 +559,13 @@ class TestDateField(FieldTestMixin, TestCase):
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, datetime.date(2019, 1, 2)), "<T><Sample>2019-01-02</Sample></T>")
-        self.assertEqual(self.to_xml(f, "2019-01-02"), "<T><Sample>2019-01-02</Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, datetime.date(2019, 1, 2)),
+            "<T><Sample>2019-01-02</Sample></T>",
+        )
+        self.assertEqual(
+            self.to_xml(f, "2019-01-02"), "<T><Sample>2019-01-02</Sample></T>"
+        )
 
 
 class TestDateTimeField(FieldTestMixin, TestCase):
@@ -424,40 +573,87 @@ class TestDateTimeField(FieldTestMixin, TestCase):
 
     def test_value(self):
         f = self.get_field()
-        self.assert_validates(f, datetime.datetime(2019, 1, 2, 12, 30), result=self.mkdt(2019, 1, 2, 12, 30))
-        self.assert_validates(f, "2019-01-02T12:30:00", result=self.mkdt(2019, 1, 2, 12, 30))
-        self.assert_validates(f, datetime.datetime(2019, 1, 2, 12, 30), result=self.mkdt(2019, 1, 2, 12, 30))
-        self.assert_validates(f, "foo", result="foo", errors=[
-            "sample: ISO string too short",
-        ])
-        self.assert_validates(f, [123], result=[123], errors=[
-            "sample: '[123]' is not an instance of str, datetime.date or datetime.datetime",
-        ])
+        self.assert_validates(
+            f,
+            datetime.datetime(2019, 1, 2, 12, 30),
+            result=self.mkdt(2019, 1, 2, 12, 30),
+        )
+        self.assert_validates(
+            f, "2019-01-02T12:30:00", result=self.mkdt(2019, 1, 2, 12, 30)
+        )
+        self.assert_validates(
+            f,
+            datetime.datetime(2019, 1, 2, 12, 30),
+            result=self.mkdt(2019, 1, 2, 12, 30),
+        )
+        self.assert_validates(
+            f,
+            "foo",
+            result="foo",
+            errors=[
+                "sample: ISO string too short",
+            ],
+        )
+        self.assert_validates(
+            f,
+            [123],
+            result=[123],
+            errors=[
+                "sample: '[123]' is not an instance of str, datetime.date or datetime.datetime",
+            ],
+        )
 
     def test_default(self):
         f = self.get_field(default="2019-01-02T12:30:00")
         self.assertEqual(f.clean_value(None), self.mkdt(2019, 1, 2, 12, 30))
-        self.assertEqual(self.to_xml(f, None), "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, None), "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>"
+        )
 
     def test_choices(self):
         f = self.get_field(choices=("2019-01-01T12:00:00", "2019-01-02T12:30:00"))
-        self.assert_validates(f, "2019-01-01T12:00:00", result=self.mkdt(2019, 1, 1, 12, 00))
-        self.assert_validates(f, "2019-01-02T12:30:00", result=self.mkdt(2019, 1, 2, 12, 30))
-        self.assert_validates(f, self.mkdt(2019, 1, 2, 12, 15), result=self.mkdt(2019, 1, 2, 12, 15), errors=[
-            "sample: 2019-01-02T12:15:00+01:00 is not a valid choice for this field",
-        ])
-        self.assert_validates(f, None, result=None, errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f, "2019-01-01T12:00:00", result=self.mkdt(2019, 1, 1, 12, 00)
+        )
+        self.assert_validates(
+            f, "2019-01-02T12:30:00", result=self.mkdt(2019, 1, 2, 12, 30)
+        )
+        self.assert_validates(
+            f,
+            self.mkdt(2019, 1, 2, 12, 15),
+            result=self.mkdt(2019, 1, 2, 12, 15),
+            errors=[
+                "sample: 2019-01-02T12:15:00+01:00 is not a valid choice for this field",
+            ],
+        )
+        self.assert_validates(
+            f,
+            None,
+            result=None,
+            errors=[
+                "sample: missing value",
+            ],
+        )
 
     def test_choices_nullable(self):
-        f = self.get_field(choices=("2019-01-01T12:00:00", "2019-01-02T12:30:00"), null=True)
-        self.assert_validates(f, "2019-01-01T12:00:00", result=self.mkdt(2019, 1, 1, 12, 00))
-        self.assert_validates(f, "2019-01-02T12:30:00", result=self.mkdt(2019, 1, 2, 12, 30))
+        f = self.get_field(
+            choices=("2019-01-01T12:00:00", "2019-01-02T12:30:00"), null=True
+        )
+        self.assert_validates(
+            f, "2019-01-01T12:00:00", result=self.mkdt(2019, 1, 1, 12, 00)
+        )
+        self.assert_validates(
+            f, "2019-01-02T12:30:00", result=self.mkdt(2019, 1, 2, 12, 30)
+        )
         self.assert_validates(f, None, result=None)
-        self.assert_validates(f, self.mkdt(2019, 1, 2, 12, 15), result=self.mkdt(2019, 1, 2, 12, 15), errors=[
-            "sample: 2019-01-02T12:15:00+01:00 is not a valid choice for this field",
-        ])
+        self.assert_validates(
+            f,
+            self.mkdt(2019, 1, 2, 12, 15),
+            result=self.mkdt(2019, 1, 2, 12, 15),
+            errors=[
+                "sample: 2019-01-02T12:15:00+01:00 is not a valid choice for this field",
+            ],
+        )
 
     def test_to_python(self):
         f = self.get_field()
@@ -466,14 +662,26 @@ class TestDateTimeField(FieldTestMixin, TestCase):
 
     def test_diff(self):
         f = self.get_field()
-        self.assert_diff_empty(f, self.mkdt(2019, 1, 2, 3, 4, 5), "2019-01-02T03:04:05+01:00")
-        self.assert_field_diff(f, self.mkdt(2019, 1, 2, 3, 4, 5), self.mkdt(2019, 1, 2, 3, 4, 6))
-        self.assert_field_diff(f, self.mkdt(2019, 1, 2, 3, 4, 5), "2019-01-02T03:04:05+02:00")
+        self.assert_diff_empty(
+            f, self.mkdt(2019, 1, 2, 3, 4, 5), "2019-01-02T03:04:05+01:00"
+        )
+        self.assert_field_diff(
+            f, self.mkdt(2019, 1, 2, 3, 4, 5), self.mkdt(2019, 1, 2, 3, 4, 6)
+        )
+        self.assert_field_diff(
+            f, self.mkdt(2019, 1, 2, 3, 4, 5), "2019-01-02T03:04:05+02:00"
+        )
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, self.mkdt(2019, 1, 2, 12, 30)), "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>")
-        self.assertEqual(self.to_xml(f, "2019-01-02T12:13:14"), "<T><Sample>2019-01-02T12:13:14+01:00</Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, self.mkdt(2019, 1, 2, 12, 30)),
+            "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>",
+        )
+        self.assertEqual(
+            self.to_xml(f, "2019-01-02T12:13:14"),
+            "<T><Sample>2019-01-02T12:13:14+01:00</Sample></T>",
+        )
 
 
 class TestProgressivoInvioField(FieldTestMixin, TestCase):
@@ -534,7 +742,10 @@ class TestModelField(FieldTestMixin, TestCase):
     def test_default(self):
         f = self.get_field(default=Sample("test", 7))
         self.assertEqual(f.clean_value(None), Sample("test", 7))
-        self.assertEqual(self.to_xml(f, None), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, None),
+            "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>",
+        )
 
     def test_to_python(self):
         f = self.get_field()
@@ -543,20 +754,38 @@ class TestModelField(FieldTestMixin, TestCase):
     def test_diff(self):
         f = self.get_field()
         self.assert_diff_empty(f, Sample("test", 7), Sample("test", "7"))
-        self.assert_diff(f, Sample("test", 6), None, [
-            "sample: second is not set",
-        ])
-        self.assert_diff(f, Sample("test", 6), Sample("test", 7), [
-            "sample.value: first: 6, second: 7",
-        ])
-        self.assert_diff(f, Sample("test1", 6), Sample("test2", 7), [
-            "sample.name: first: test1, second: test2",
-            "sample.value: first: 6, second: 7",
-        ])
+        self.assert_diff(
+            f,
+            Sample("test", 6),
+            None,
+            [
+                "sample: second is not set",
+            ],
+        )
+        self.assert_diff(
+            f,
+            Sample("test", 6),
+            Sample("test", 7),
+            [
+                "sample.value: first: 6, second: 7",
+            ],
+        )
+        self.assert_diff(
+            f,
+            Sample("test1", 6),
+            Sample("test2", 7),
+            [
+                "sample.name: first: test1, second: test2",
+                "sample.value: first: 6, second: 7",
+            ],
+        )
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, Sample("test", 7)), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, Sample("test", 7)),
+            "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>",
+        )
 
 
 class TestModelListField(FieldTestMixin, TestCase):
@@ -572,9 +801,14 @@ class TestModelListField(FieldTestMixin, TestCase):
 
     def test_value(self):
         f = self.get_field()
-        self.assert_validates(f, [], result=[], errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f,
+            [],
+            result=[],
+            errors=[
+                "sample: missing value",
+            ],
+        )
         self.assert_validates(f, [Sample("test", 7)], result=[Sample("test", 7)])
 
         f = self.get_field(null=True)
@@ -583,17 +817,31 @@ class TestModelListField(FieldTestMixin, TestCase):
     def test_min_num(self):
         f = self.get_field(min_num=2)
         self.assertEqual(f.get_construct_default(), [Sample(), Sample()])
-        self.assertEqual(f.clean_value([Sample(), Sample(), Sample()]), [Sample(), Sample()])
+        self.assertEqual(
+            f.clean_value([Sample(), Sample(), Sample()]), [Sample(), Sample()]
+        )
 
-        self.assert_validates(f, [Sample("test", 7)], result=[Sample("test", 7)], errors=[
-            "sample: list must have at least 2 elements, but has only 1",
-        ])
-        self.assert_validates(f, [Sample("test", 6), Sample("test", 7)], result=[Sample("test", 6), Sample("test", 7)])
+        self.assert_validates(
+            f,
+            [Sample("test", 7)],
+            result=[Sample("test", 7)],
+            errors=[
+                "sample: list must have at least 2 elements, but has only 1",
+            ],
+        )
+        self.assert_validates(
+            f,
+            [Sample("test", 6), Sample("test", 7)],
+            result=[Sample("test", 6), Sample("test", 7)],
+        )
 
     def test_default(self):
         f = self.get_field(default=[Sample("test", 7)])
         self.assertEqual(f.clean_value(None), [Sample("test", 7)])
-        self.assertEqual(self.to_xml(f, None), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, None),
+            "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>",
+        )
 
     def test_to_python(self):
         f = self.get_field()
@@ -604,27 +852,55 @@ class TestModelListField(FieldTestMixin, TestCase):
         self.assert_diff_empty(f, [], None)
         self.assert_diff_empty(f, [Sample("test", 7)], [Sample("test", "7")])
         self.assert_diff_empty(f, [Sample("test", 6)], [Sample("test", 6), None])
-        self.assert_diff(f, [Sample("test", 6)], None, [
-            "sample: second is not set",
-        ])
-        self.assert_diff(f, [Sample("test", 6)], [], [
-            "sample: second is not set",
-        ])
-        self.assert_diff(f, [Sample("test", 6)], [Sample("test", 7)], [
-            "sample.0.value: first: 6, second: 7",
-        ])
-        self.assert_diff(f, [Sample("test", 6)], [Sample("test", 6), Sample("test", 7)], [
-            "sample: second has 1 extra element",
-        ])
-        self.assert_diff(f, [Sample("test", 6)], [Sample("test", 5), Sample("test", 7)], [
-            "sample.0.value: first: 6, second: 5",
-            "sample: second has 1 extra element",
-        ])
+        self.assert_diff(
+            f,
+            [Sample("test", 6)],
+            None,
+            [
+                "sample: second is not set",
+            ],
+        )
+        self.assert_diff(
+            f,
+            [Sample("test", 6)],
+            [],
+            [
+                "sample: second is not set",
+            ],
+        )
+        self.assert_diff(
+            f,
+            [Sample("test", 6)],
+            [Sample("test", 7)],
+            [
+                "sample.0.value: first: 6, second: 7",
+            ],
+        )
+        self.assert_diff(
+            f,
+            [Sample("test", 6)],
+            [Sample("test", 6), Sample("test", 7)],
+            [
+                "sample: second has 1 extra element",
+            ],
+        )
+        self.assert_diff(
+            f,
+            [Sample("test", 6)],
+            [Sample("test", 5), Sample("test", 7)],
+            [
+                "sample.0.value: first: 6, second: 5",
+                "sample: second has 1 extra element",
+            ],
+        )
 
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertIsNone(self.to_xml(f, []))
-        self.assertEqual(self.to_xml(f, [Sample("test", 7)]), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, [Sample("test", 7)]),
+            "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>",
+        )
 
 
 class TestListField(FieldTestMixin, TestCase):
@@ -640,9 +916,14 @@ class TestListField(FieldTestMixin, TestCase):
 
     def test_value(self):
         f = self.get_field()
-        self.assert_validates(f, [], result=[], errors=[
-            "sample: missing value",
-        ])
+        self.assert_validates(
+            f,
+            [],
+            result=[],
+            errors=[
+                "sample: missing value",
+            ],
+        )
         self.assert_validates(f, ["test1", "test2"], result=["test1", "test2"])
 
         f = self.get_field(null=True)
@@ -653,40 +934,67 @@ class TestListField(FieldTestMixin, TestCase):
         self.assertEqual(f.get_construct_default(), [None, None])
         self.assertEqual(f.clean_value([None, None, None]), [None, None])
 
-        self.assert_validates(f, ["test1"], result=["test1"], errors=[
-            "sample: list must have at least 2 elements, but has only 1",
-        ])
+        self.assert_validates(
+            f,
+            ["test1"],
+            result=["test1"],
+            errors=[
+                "sample: list must have at least 2 elements, but has only 1",
+            ],
+        )
         self.assert_validates(f, ["test1", "test2"], result=["test1", "test2"])
 
     def test_default(self):
         f = self.get_field(default=["test1", "test2"])
         self.assertEqual(f.clean_value(None), ["test1", "test2"])
-        self.assertEqual(self.to_xml(f, None), "<T><Sample>test1</Sample><Sample>test2</Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, None), "<T><Sample>test1</Sample><Sample>test2</Sample></T>"
+        )
 
     def test_to_python(self):
         f = self.get_field()
         self.assert_to_python_works(f, ["test1", "foo"])
 
         f = super().get_field(fields.DateTimeField())
-        self.assert_to_python_works(f, [self.mkdt(2019, 1, 2, 3, 4), self.mkdt(2019, 2, 3, 4, 5)])
+        self.assert_to_python_works(
+            f, [self.mkdt(2019, 1, 2, 3, 4), self.mkdt(2019, 2, 3, 4, 5)]
+        )
 
     def test_diff(self):
         f = self.get_field()
         self.assert_diff_empty(f, [], None)
         self.assert_diff_empty(f, ["test"], ["test"])
         self.assert_diff_empty(f, ["test"], ["test", None])
-        self.assert_diff(f, ["test"], ["test1"], [
-            "sample.0: first: test, second: test1",
-        ])
-        self.assert_diff(f, ["test"], ["test", "test"], [
-            "sample: second has 1 extra element",
-        ])
-        self.assert_diff(f, ["test"], ["test1", "test2"], [
-            "sample.0: first: test, second: test1",
-            "sample: second has 1 extra element",
-        ])
+        self.assert_diff(
+            f,
+            ["test"],
+            ["test1"],
+            [
+                "sample.0: first: test, second: test1",
+            ],
+        )
+        self.assert_diff(
+            f,
+            ["test"],
+            ["test", "test"],
+            [
+                "sample: second has 1 extra element",
+            ],
+        )
+        self.assert_diff(
+            f,
+            ["test"],
+            ["test1", "test2"],
+            [
+                "sample.0: first: test, second: test1",
+                "sample: second has 1 extra element",
+            ],
+        )
 
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertIsNone(self.to_xml(f, []))
-        self.assertEqual(self.to_xml(f, ["test", "foo"]), "<T><Sample>test</Sample><Sample>foo</Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, ["test", "foo"]),
+            "<T><Sample>test</Sample><Sample>foo</Sample></T>",
+        )

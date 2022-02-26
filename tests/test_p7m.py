@@ -72,10 +72,11 @@ class TestSignature(TestCase):
         p7m = P7M("tests/data/test.txt.p7m")
         data = p7m.get_payload()
         self.assertEqual(
-                data,
-                "This is only a test payload.\n"
-                "\n"
-                "Questo è solo un payload di test.\n".encode("utf8"))
+            data,
+            "This is only a test payload.\n"
+            "\n"
+            "Questo è solo un payload di test.\n".encode("utf8"),
+        )
 
     def test_verify(self):
         p7m = P7M("tests/data/test.txt.p7m")
@@ -89,7 +90,11 @@ class TestSignature(TestCase):
         if p7m.is_expired():
             self.skipTest("test signature has expired and needs to be regenerated")
         data_mid = len(p7m.data) // 2
-        p7m.data = p7m.data[:data_mid] + bytes([p7m.data[data_mid] + 1]) + p7m.data[data_mid + 1:]
+        p7m.data = (
+            p7m.data[:data_mid]
+            + bytes([p7m.data[data_mid] + 1])
+            + p7m.data[data_mid + 1 :]
+        )
         with self.capath() as capath:
             with self.assertRaises(InvalidSignatureError):
                 p7m.verify_signature(capath)
@@ -103,7 +108,9 @@ class TestSignature(TestCase):
         encap_content_info["content"] = b"All your base are belong to us"
         p7m.data = p7m.content_info.dump()
         with self.capath() as capath:
-            with self.assertRaisesRegexp(InvalidSignatureError, r"routines:CMS_verify:content verify error"):
+            with self.assertRaisesRegexp(
+                InvalidSignatureError, r"routines:CMS_verify:content verify error"
+            ):
                 p7m.verify_signature(capath)
 
     def test_verify_noca(self):
@@ -111,5 +118,8 @@ class TestSignature(TestCase):
         if p7m.is_expired():
             self.skipTest("test signature has expired and needs to be regenerated")
         with tempfile.TemporaryDirectory() as capath:
-            with self.assertRaisesRegexp(InvalidSignatureError, r"Verify error:unable to get local issuer certificate"):
+            with self.assertRaisesRegexp(
+                InvalidSignatureError,
+                r"Verify error:unable to get local issuer certificate",
+            ):
                 p7m.verify_signature(capath)

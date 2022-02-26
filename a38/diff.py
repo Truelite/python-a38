@@ -5,16 +5,19 @@ from .traversal import Annotation, Traversal
 
 
 class Difference(Annotation):
-    def __init__(self, prefix: Optional[str], field: "fields.Field", first: Any, second: Any):
+    def __init__(
+        self, prefix: Optional[str], field: "fields.Field", first: Any, second: Any
+    ):
         super().__init__(prefix, field)
         self.first = first
         self.second = second
 
     def __str__(self):
         return "{}: first: {}, second: {}".format(
-                self.qualified_field,
-                self.field.to_str(self.first),
-                self.field.to_str(self.second))
+            self.qualified_field,
+            self.field.to_str(self.first),
+            self.field.to_str(self.second),
+        )
 
 
 class MissingOne(Difference):
@@ -37,11 +40,17 @@ class ExtraItems(Difference):
         if diff == 1:
             return "{}: {} has 1 extra element".format(self.qualified_field, longer)
         else:
-            return "{}: {} has {} extra elements".format(self.qualified_field, longer, diff)
+            return "{}: {} has {} extra elements".format(
+                self.qualified_field, longer, diff
+            )
 
 
 class Diff(Traversal):
-    def __init__(self, prefix: Optional[str] = None, differences: Optional[List[Difference]] = None):
+    def __init__(
+        self,
+        prefix: Optional[str] = None,
+        differences: Optional[List[Difference]] = None,
+    ):
         super().__init__(prefix)
         self.differences: List[Difference]
         if differences is None:

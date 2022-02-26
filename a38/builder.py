@@ -3,6 +3,7 @@ from contextlib import contextmanager
 
 try:
     import lxml.etree
+
     HAVE_LXML = True
 except ModuleNotFoundError:
     HAVE_LXML = False
@@ -46,6 +47,7 @@ class Builder:
 
 
 if HAVE_LXML:
+
     class LXMLBuilder:
         def __init__(self, etreebuilder=None):
             if etreebuilder is None:

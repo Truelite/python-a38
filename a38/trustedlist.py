@@ -45,12 +45,18 @@ class PointersToOtherTSL(models.Model):
 class SchemeInformation(models.Model):
     __xmlns__ = NS
     pointers_to_other_tsl = fields.ModelField(PointersToOtherTSL)
-    tsl_version_identifier = fields.NotImplementedField(xmltag="TSLVersionIdentifier", xmlns=NS)
-    tsl_sequence_number = fields.NotImplementedField(xmltag="TSLSequenceNumber", xmlns=NS)
+    tsl_version_identifier = fields.NotImplementedField(
+        xmltag="TSLVersionIdentifier", xmlns=NS
+    )
+    tsl_sequence_number = fields.NotImplementedField(
+        xmltag="TSLSequenceNumber", xmlns=NS
+    )
     tsl_type = fields.NotImplementedField(xmltag="TSLType", xmlns=NS)
     scheme_operator_name = fields.NotImplementedField(xmlns=NS)
     scheme_operator_address = fields.NotImplementedField(xmlns=NS)
-    scheme_information_uri = fields.NotImplementedField(xmltag="SchemeInformationURI", xmlns=NS)
+    scheme_information_uri = fields.NotImplementedField(
+        xmltag="SchemeInformationURI", xmlns=NS
+    )
     scheme_name = fields.NotImplementedField(xmlns=NS)
     status_determination_approach = fields.NotImplementedField(xmlns=NS)
     scheme_type_community_rules = fields.NotImplementedField(xmlns=NS)
@@ -67,12 +73,16 @@ class TSPInformation(models.Model):
     tsp_name = fields.NotImplementedField(xmltag="TSPName", xmlns=NS)
     tsp_trade_name = fields.NotImplementedField(xmltag="TSPTradeName", xmlns=NS)
     tsp_address = fields.NotImplementedField(xmltag="TSPAddress", xmlns=NS)
-    tsp_information_url = fields.NotImplementedField(xmltag="TSPInformationURI", xmlns=NS)
+    tsp_information_url = fields.NotImplementedField(
+        xmltag="TSPInformationURI", xmlns=NS
+    )
 
 
 class DigitalId(models.Model):
     __xmlns__ = NS
-    x509_subject_name = fields.StringField(xmltag="X509SubjectName", xmlns=NS, null=True)
+    x509_subject_name = fields.StringField(
+        xmltag="X509SubjectName", xmlns=NS, null=True
+    )
     x509_ski = fields.StringField(xmltag="X509SKI", xmlns=NS, null=True)
     x509_certificate = fields.StringField(xmltag="X509Certificate", xmlns=NS, null=True)
 
@@ -121,7 +131,9 @@ class TrustServiceStatusList(models.Model):
     trust_service_provider_list = TrustServiceProviderList
 
     def get_tsl_pointer_by_territory(self, territory):
-        for other_tsl_pointer in self.scheme_information.pointers_to_other_tsl.other_tsl_pointer:
+        for (
+            other_tsl_pointer
+        ) in self.scheme_information.pointers_to_other_tsl.other_tsl_pointer:
             territory = None
             for oi in other_tsl_pointer.additional_information.other_information:
                 if oi.scheme_territory is not None:
@@ -148,6 +160,7 @@ def load_url(url: str):
     given URL
     """
     import requests
+
     res = requests.get(url)
     res.raise_for_status()
     root = ET.fromstring(res.content)
@@ -170,15 +183,19 @@ def load_certs() -> Dict[str, "cryptography.x509.Certificate"]:
     trust_service_status_list = load_url(it_url)
 
     by_name = defaultdict(list)
-    for tsp in trust_service_status_list.trust_service_provider_list.trust_service_provider:
+    for (
+        tsp
+    ) in trust_service_status_list.trust_service_provider_list.trust_service_provider:
         for tsp_service in tsp.tsp_services.tsp_service:
             si = tsp_service.service_information
             if si.service_status not in (
-                    "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/recognisedatnationallevel",
-                    "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/granted"):
+                "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/recognisedatnationallevel",
+                "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/granted",
+            ):
                 continue
             if si.service_type_identifier not in (
-                    "http://uri.etsi.org/TrstSvc/Svctype/CA/QC",):
+                "http://uri.etsi.org/TrstSvc/Svctype/CA/QC",
+            ):
                 continue
             # print("identifier", si.service_type_identifier)
             # print("status", si.service_status)
@@ -192,6 +209,7 @@ def load_certs() -> Dict[str, "cryptography.x509.Certificate"]:
                 if di.x509_certificate is not None:
                     from cryptography import x509
                     from cryptography.hazmat.backends import default_backend
+
                     der = base64.b64decode(di.x509_certificate)
                     cert.append(x509.load_der_x509_certificate(der, default_backend()))
 
@@ -201,6 +219,7 @@ def load_certs() -> Dict[str, "cryptography.x509.Certificate"]:
                 raise RuntimeError("{} has {} certificates".format(sn, len(cert)))
             else:
                 from cryptography.x509.oid import NameOID
+
                 cert = cert[0]
                 cn = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
                 # print("sn", sn)
@@ -227,6 +246,7 @@ def load_certs() -> Dict[str, "cryptography.x509.Certificate"]:
 
 def update_capath(destdir: Path, remove_old=False):
     from cryptography.hazmat.primitives import serialization
+
     certs = load_certs()
     if destdir.is_dir():
         current = set(c.name for c in destdir.iterdir() if c.name.endswith(".crt"))

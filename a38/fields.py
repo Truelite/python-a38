@@ -32,14 +32,17 @@ class Field(Generic[T]):
 
     It does not contain the value itself.
     """
+
     # True for fields that can hold a sequence of values
     multivalue = False
 
-    def __init__(self,
-                 xmlns: Optional[str] = None,
-                 xmltag: Optional[str] = None,
-                 null: bool = False,
-                 default: Optional[T] = None):
+    def __init__(
+        self,
+        xmlns: Optional[str] = None,
+        xmltag: Optional[str] = None,
+        null: bool = False,
+        default: Optional[T] = None,
+    ):
         self.name: Optional[str] = None
         self.xmlns = xmlns
         self.xmltag = xmltag
@@ -168,6 +171,7 @@ class NotImplementedField(Field[None]):
     Field acting as a placeholder for a part of the specification that is not
     yet implemented.
     """
+
     def __init__(self, warn: bool = False, **kw):
         super().__init__(**kw)
         self.warn = warn
@@ -190,7 +194,10 @@ class ChoicesField(Field[T]):
     def validate(self, validation: "validation.Validation", value: Optional[T]):
         value = super().validate(validation, value)
         if value is not None and self.choices is not None and value not in self.choices:
-            validation.add_error(self, "{} is not a valid choice for this field".format(self.to_repr(value)))
+            validation.add_error(
+                self,
+                "{} is not a valid choice for this field".format(self.to_repr(value)),
+            )
         return value
 
 
@@ -235,9 +242,11 @@ class ListField(Field[List[T]]):
             return value
         if len(value) < self.min_num:
             validation.add_error(
-                    self,
-                    "list must have at least {} elements, but has only {}".format(
-                        self.min_num, len(value)))
+                self,
+                "list must have at least {} elements, but has only {}".format(
+                    self.min_num, len(value)
+                ),
+            )
         for idx, val in enumerate(value):
             with validation.subfield(self.name + "." + str(idx)) as sub:
                 self.field.validate(sub, val)
@@ -304,7 +313,12 @@ class IntegerField(ChoicesField[int]):
         if not self.has_value(value):
             return value
         if self.max_length is not None and len(str(value)) > self.max_length:
-            validation.add_error(self, "'{}' should be no more than {} digits long".format(value, self.max_length))
+            validation.add_error(
+                self,
+                "'{}' should be no more than {} digits long".format(
+                    value, self.max_length
+                ),
+            )
         return value
 
 
@@ -346,8 +360,11 @@ class DecimalField(ChoicesField[Decimal]):
             xml_value = self.to_str(value)
             if len(xml_value) > self.max_length:
                 validation.add_error(
-                        self,
-                        "'{}' should be no more than {} digits long".format(xml_value, self.max_length))
+                    self,
+                    "'{}' should be no more than {} digits long".format(
+                        xml_value, self.max_length
+                    ),
+                )
         return value
 
 
@@ -373,9 +390,19 @@ class StringField(ChoicesField[str]):
         if not self.has_value(value):
             return value
         if self.min_length is not None and len(value) < self.min_length:
-            validation.add_error(self, "'{}' should be at least {} characters long".format(value, self.min_length))
+            validation.add_error(
+                self,
+                "'{}' should be at least {} characters long".format(
+                    value, self.min_length
+                ),
+            )
         if self.max_length is not None and len(value) > self.max_length:
-            validation.add_error(self, "'{}' should be no more than {} characters long".format(value, self.max_length))
+            validation.add_error(
+                self,
+                "'{}' should be no more than {} characters long".format(
+                    value, self.max_length
+                ),
+            )
         return value
 
 
@@ -415,14 +442,20 @@ class DateField(ChoicesField[datetime.date]):
         if isinstance(value, str):
             mo = self.re_clean_date.match(value)
             if not mo:
-                raise ValueError("Date '{}' does not begin with YYYY-mm-dd".format(value))
+                raise ValueError(
+                    "Date '{}' does not begin with YYYY-mm-dd".format(value)
+                )
             return datetime.datetime.strptime(mo.group(1), "%Y-%m-%d").date()
         elif isinstance(value, datetime.datetime):
             return value.date()
         elif isinstance(value, datetime.date):
             return value
         else:
-            raise TypeError("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
+            raise TypeError(
+                "'{}' is not an instance of str, datetime.date or datetime.datetime".format(
+                    repr(value)
+                )
+            )
 
     def to_jsonable(self, value):
         """
@@ -456,9 +489,15 @@ class DateTimeField(ChoicesField[datetime.datetime]):
                 return self.tz_rome.localize(value)
             return value
         elif isinstance(value, datetime.date):
-            return datetime.datetime.combine(value, datetime.time(0, 0, 0, tzinfo=self.tz_rome))
+            return datetime.datetime.combine(
+                value, datetime.time(0, 0, 0, tzinfo=self.tz_rome)
+            )
         else:
-            raise TypeError("'{}' is not an instance of str, datetime.date or datetime.datetime".format(repr(value)))
+            raise TypeError(
+                "'{}' is not an instance of str, datetime.date or datetime.datetime".format(
+                    repr(value)
+                )
+            )
 
     def to_jsonable(self, value):
         """
@@ -513,7 +552,10 @@ class ProgressivoInvioField(StringField):
             self.sequence += 1
             if self.sequence > (64 ** 3):
                 raise OverflowError(
-                        "Generated more than {} fatture per second, overflowing local counter".format(64 ** 3))
+                    "Generated more than {} fatture per second, overflowing local counter".format(
+                        64 ** 3
+                    )
+                )
 
         value = (ts << 16) + self.sequence
         return self._encode_b56(value, 10)
@@ -523,6 +565,7 @@ class ModelField(Field):
     """
     Field containing the structure from a Model
     """
+
     def __init__(self, model, **kw):
         super().__init__(**kw)
         self.model = model
@@ -608,6 +651,7 @@ class ModelListField(Field):
     """
     Field containing a list of model instances
     """
+
     multivalue = True
 
     def __init__(self, model, min_num=0, **kw):
@@ -652,8 +696,11 @@ class ModelListField(Field):
 
         if len(value) < self.min_num:
             validation.add_error(
-                    self,
-                    "list must have at least {} elements, but has only {}".format(self.min_num, len(value)))
+                self,
+                "list must have at least {} elements, but has only {}".format(
+                    self.min_num, len(value)
+                ),
+            )
 
         for idx, val in enumerate(value):
             with validation.subfield(self.name + "." + str(idx)) as sub:
