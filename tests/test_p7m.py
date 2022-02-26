@@ -1,7 +1,8 @@
-from unittest import TestCase
+import os
 import tempfile
 from contextlib import contextmanager
-import os
+from unittest import TestCase
+
 from a38.crypto import P7M, InvalidSignatureError
 
 # This is the CA certificate used to validate tests/data/test.txt.p7m

@@ -1,9 +1,10 @@
-from unittest import TestCase, SkipTest
-import a38.fattura as a38
-from a38 import validation
-from decimal import Decimal
 import datetime
 import io
+from decimal import Decimal
+from unittest import SkipTest, TestCase
+
+import a38.fattura as a38
+from a38 import validation
 
 
 class TestFatturaMixin:
