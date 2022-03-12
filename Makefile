@@ -46,3 +46,14 @@ lint-dev:
 		--atomic \
 		$(PWD)/a38 \
 		$(PWD)/tests
+	$(eval PIP_DEPS=$(shell awk '{printf("%s,",$$1)}' requirements-lib.txt | sed '$$s/,$$//'))
+	autoflake \
+		--imports=$(PIP_DEPS) \
+		--recursive \
+		--in-place \
+		--remove-unused-variables \
+		$(PWD)/a38 \
+		$(PWD)/tests
+
+
+
