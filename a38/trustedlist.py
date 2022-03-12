@@ -1,13 +1,13 @@
-from typing import Dict
-import re
-from collections import defaultdict
-import xml.etree.ElementTree as ET
-import logging
 import base64
+import logging
+import re
 import subprocess
+import xml.etree.ElementTree as ET
+from collections import defaultdict
 from pathlib import Path
-from . import models
-from . import fields
+from typing import Dict
+
+from . import fields, models
 
 log = logging.getLogger("__name__")
 

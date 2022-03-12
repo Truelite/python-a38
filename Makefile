@@ -40,3 +40,9 @@ lint:
 		-iii \
 		$(PWD)/a38 \
 		$(PWD)/tests
+
+lint-dev:
+	isort \
+		--atomic \
+		$(PWD)/a38 \
+		$(PWD)/tests

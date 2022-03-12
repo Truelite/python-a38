@@ -1,6 +1,6 @@
-from . import models
-from . import fields
 import re
+
+from . import fields, models
 
 #
 # This file describes the data model of the Italian Fattura Elettronica.

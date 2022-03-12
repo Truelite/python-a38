@@ -1,12 +1,11 @@
-from unittest import TestCase
-from a38 import fields
-from a38 import models
-from a38 import validation
-from a38.builder import Builder
-from a38.diff import Diff
-from decimal import Decimal
 import datetime
 import io
+from decimal import Decimal
+from unittest import TestCase
+
+from a38 import fields, models, validation
+from a38.builder import Builder
+from a38.diff import Diff
 
 NS = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"
 

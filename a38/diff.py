@@ -1,6 +1,7 @@
-from typing import Optional, Any, List
-from .traversal import Annotation, Traversal
+from typing import Any, List, Optional
+
 from . import fields
+from .traversal import Annotation, Traversal
 
 
 class Difference(Annotation):

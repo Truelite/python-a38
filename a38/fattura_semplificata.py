@@ -1,9 +1,6 @@
-from .fattura import (
-    IdTrasmittente, IdFiscaleIVA, Sede, StabileOrganizzazione, IscrizioneREA,
-    FullNameMixin, Allegati
-)
-from . import models
-from . import fields
+from . import fields, models
+from .fattura import (Allegati, FullNameMixin, IdFiscaleIVA, IdTrasmittente,
+                      IscrizioneREA, Sede, StabileOrganizzazione)
 
 NS10 = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.0"
 
