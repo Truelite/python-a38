@@ -23,3 +23,20 @@ clean:
 		$(PWD)/a38.egg-info \
 		$(PWD)/.coverage
 
+lint:
+	isort \
+		--check \
+		$(PWD)/a38 \
+		$(PWD)/tests
+	flake8 \
+		--ignore=E203,E501,W503 \
+		--jobs=8 \
+		$(PWD)/a38 \
+		$(PWD)/tests
+	bandit \
+		--recursive \
+		--number=3 \
+		-lll \
+		-iii \
+		$(PWD)/a38 \
+		$(PWD)/tests
