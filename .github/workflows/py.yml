@@ -13,6 +13,8 @@ jobs:
         run: make install-os
       - name: Install Pip packages
         run: make install-py
+      - name: Lint
+        run: make lint
       - name: Run the tests
         run: make test
       - name: Install the package
