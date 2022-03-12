@@ -29,7 +29,9 @@ lint:
 		$(PWD)/a38 \
 		$(PWD)/tests
 	flake8 \
-		--ignore=E203,E501,W503 \
+		--ignore=E126,E203,E501,W503 \
+		--max-line-length 120 \
+		--indent-size 4 \
 		--jobs=8 \
 		$(PWD)/a38 \
 		$(PWD)/tests
