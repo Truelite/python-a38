@@ -1,3 +1,7 @@
+ci-workaround:
+	sudo sed -i 's/azure\.//' /etc/apt/sources.list
+	sudo apt-get -o Acquire::Retries=5 update
+
 install-os:
 	sudo apt-get -o Acquire::Retries=5 install \
 		openssl \
