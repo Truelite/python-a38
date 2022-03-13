@@ -1,5 +1,5 @@
 install-os:
-	sudo apt-get install \
+	sudo apt-get -o Acquire::Retries=5 install \
 		openssl \
 		wkhtmltopdf \
 		eatmydata \
