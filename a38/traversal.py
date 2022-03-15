@@ -1,5 +1,6 @@
-from typing import Optional
 from contextlib import contextmanager
+from typing import Optional
+
 from . import fields
 
 

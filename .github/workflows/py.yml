@@ -9,10 +9,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+      - name: Work around Apt caching issues
+        run: make ci-workaround
       - name: Install OS packages
         run: make install-os
       - name: Install Pip packages
         run: make install-py
+      - name: Lint
+        run: make lint
       - name: Run the tests
         run: make test
       - name: Install the package

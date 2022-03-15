@@ -1,13 +1,15 @@
-from typing import Dict
-import re
-from collections import defaultdict
-import xml.etree.ElementTree as ET
-import logging
 import base64
+import logging
+import re
 import subprocess
+import xml.etree.ElementTree as ET
+from collections import defaultdict
 from pathlib import Path
-from . import models
-from . import fields
+from typing import Dict
+
+from cryptography import x509
+
+from . import fields, models
 
 log = logging.getLogger("__name__")
 
@@ -154,7 +156,7 @@ def load_url(url: str):
     return auto_from_etree(root)
 
 
-def load_certs() -> Dict[str, "cryptography.x509.Certificate"]:
+def load_certs() -> Dict[str, x509.Certificate]:
     """
     Download trusted list certificates for Italy, parse them and return a dict
     mapping certificate names good for use as file names to cryptography.x509

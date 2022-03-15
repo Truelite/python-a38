@@ -1,7 +1,8 @@
-from typing import Optional
-import tempfile
-import subprocess
 import os
+import subprocess
+import tempfile
+from typing import Optional
+
 try:
     import lxml.etree
     HAVE_LXML = True

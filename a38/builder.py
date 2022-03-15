@@ -1,5 +1,6 @@
-from contextlib import contextmanager
 import xml.etree.ElementTree as ET
+from contextlib import contextmanager
+
 try:
     import lxml.etree
     HAVE_LXML = True

@@ -1,11 +1,13 @@
-from typing import Union, BinaryIO
-from asn1crypto.cms import ContentInfo
-import io
 import base64
 import binascii
-import subprocess
 import datetime
+import io
+import subprocess
 import xml.etree.ElementTree as ET
+from typing import BinaryIO, Union
+
+from asn1crypto.cms import ContentInfo
+
 from . import fattura as a38
 
 

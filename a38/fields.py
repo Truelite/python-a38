@@ -1,16 +1,17 @@
-from typing import Optional, Any, TypeVar, Generic, Sequence, List
-from dateutil.parser import isoparse
+import base64
 import datetime
 import decimal
-import re
-from . import validation
-from . import builder
-from .diff import Diff
-from decimal import Decimal
-import base64
-import time
-import pytz
 import logging
+import re
+import time
+from decimal import Decimal
+from typing import Any, Generic, List, Optional, Sequence, TypeVar
+
+import pytz
+from dateutil.parser import isoparse
+
+from . import builder, validation
+from .diff import Diff
 
 log = logging.getLogger("a38.fields")
 

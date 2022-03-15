@@ -1,6 +1,6 @@
-from . import models
-from . import fields
 import re
+
+from . import fields, models
 
 #
 # This file describes the data model of the Italian Fattura Elettronica.
@@ -443,7 +443,7 @@ class DatiBeniServizi(models.Model):
 
         self.dati_riepilogo = []
         for aliquota, linee in sorted(by_aliquota.items()):
-            imponibile = sum(l.prezzo_totale for l in linee)
+            imponibile = sum(linea.prezzo_totale for linea in linee)
             imposta = imponibile * aliquota / 100
             self.dati_riepilogo.append(
                     DatiRiepilogo(
