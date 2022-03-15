@@ -1,9 +1,10 @@
-from unittest import TestCase, SkipTest
-import a38.fattura as a38
-from a38 import validation
-from decimal import Decimal
 import datetime
 import io
+from decimal import Decimal
+from unittest import SkipTest, TestCase
+
+import a38.fattura as a38
+from a38 import validation
 
 
 class TestFatturaMixin:
@@ -116,7 +117,7 @@ class TestDatiBeniServizi(TestFatturaMixin, TestCase):
         o.build_dati_riepilogo()
 
         self.assertEqual(len(o.dati_riepilogo), 2)
-        self.assertEqual(o.dati_riepilogo[0], a38.DatiRiepilogo(aliquota_iva="10", imponibile_importo="1.75",  imposta="0.175", esigibilita_iva="I"))
+        self.assertEqual(o.dati_riepilogo[0], a38.DatiRiepilogo(aliquota_iva="10", imponibile_importo="1.75", imposta="0.175", esigibilita_iva="I"))
         self.assertEqual(o.dati_riepilogo[1], a38.DatiRiepilogo(aliquota_iva="22", imponibile_importo="14.40", imposta="3.168", esigibilita_iva="I"))
 
 

@@ -1,7 +1,8 @@
-from typing import Dict, Any, Optional, Tuple
+from collections import OrderedDict, defaultdict
+from typing import Any, Dict, Optional, Tuple
+
 from .fields import Field, ModelField
 from .validation import Validation
-from collections import OrderedDict, defaultdict
 
 
 class ModelBase:

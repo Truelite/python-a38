@@ -4,9 +4,11 @@ from setuptools import setup
 with open("README.md", "r") as fp:
     long_description = fp.read()
 
+
 def parse_requirements(filename):
-    lineiter = (line.strip() for line in open(filename))
-    return [line for line in lineiter if line and not line.startswith("#")]
+    line_iter = (line.strip() for line in open(filename))
+    return [line for line in line_iter if line and not line.startswith("#")]
+
 
 setup(
     name="a38",

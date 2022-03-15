@@ -1,6 +1,7 @@
-from typing import Optional, List, Sequence, Union
-from .traversal import Annotation, Traversal
+from typing import List, Optional, Sequence, Union
+
 from . import fields
+from .traversal import Annotation, Traversal
 
 
 class ValidationError(Annotation):

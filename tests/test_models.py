@@ -1,6 +1,6 @@
 from unittest import TestCase
-from a38 import fields
-from a38 import models
+
+from a38 import fields, models
 
 
 class Sample(models.Model):
