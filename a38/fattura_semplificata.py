@@ -1,4 +1,4 @@
-from . import fields, models
+from . import consts, fields, models
 from .fattura import (Allegati, FullNameMixin, IdFiscaleIVA, IdTrasmittente,
                       IscrizioneREA, Sede, StabileOrganizzazione)
 
@@ -89,7 +89,7 @@ class DatiBeniServizi(models.Model):
     descrizione = fields.StringField(max_length=1000)
     importo = fields.DecimalField(max_length=15)
     dati_iva = DatiIVA
-    natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
+    natura = fields.StringField(length=2, null=True, choices=consts.NATURA_IVA)
     riferimento_normativo = fields.StringField(max_length=100, null=True)
 
 

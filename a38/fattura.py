@@ -1,6 +1,6 @@
 import re
 
-from . import fields, models
+from . import consts, fields, models
 
 #
 # This file describes the data model of the Italian Fattura Elettronica.
@@ -277,7 +277,7 @@ class DatiCassaPrevidenziale(models.Model):
     imponibile_cassa = fields.DecimalField(max_length=15)
     aliquota_iva = fields.DecimalField(max_length=6, xmltag="AliquotaIVA")
     ritenuta = fields.StringField(length=2, choices=("SI",), null=True)
-    natura = fields.StringField(length=2, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"), null=True)
+    natura = fields.StringField(length=2, choices=consts.NATURA_IVA, null=True)
     riferimento_amministrazione = fields.StringField(max_length=20, null=True)
 
     def validate_model(self, validation):
@@ -297,7 +297,7 @@ class ScontoMaggiorazione(models.Model):
 
 
 class DatiGeneraliDocumento(models.Model):
-    tipo_documento = fields.StringField(length=4, choices=("TD01", "TD02", "TD03", "TD04", "TD05", "TD06"))
+    tipo_documento = fields.StringField(length=4, choices=consts.TIPO_DOCUMENTO)
     divisa = fields.StringField()
     data = fields.DateField()
     numero = fields.StringField(max_length=20)
@@ -354,7 +354,7 @@ class DettaglioLinee(models.Model):
     prezzo_totale = fields.DecimalField(max_length=21)
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
     ritenuta = fields.StringField(length=2, choices=("SI",), null=True)
-    natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
+    natura = fields.StringField(length=2, null=True, choices=consts.NATURA_IVA)
     riferimento_amministrazione = fields.StringField(max_length=20, null=True)
     altri_dati_gestionali = fields.ModelListField(AltriDatiGestionali, null=True)
 
@@ -374,7 +374,7 @@ class DettaglioLinee(models.Model):
 
 class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
-    natura = fields.StringField(length=2, null=True, choices=("N1", "N2", "N3", "N4", "N5", "N6", "N7"))
+    natura = fields.StringField(length=2, null=True, choices=consts.NATURA_IVA)
     spese_accessorie = fields.DecimalField(max_length=15, null=True)
     arrotondamento = fields.DecimalField(max_length=21, null=True)
     # FIXME: Su questo valore il sistema effettua un controllo per verificare
