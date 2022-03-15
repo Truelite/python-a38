@@ -3,8 +3,8 @@
 # from AdE (Agenzia Delle Entrate), version 1.6 - 2022/02/04
 # https://www.agenziaentrate.gov.it/portale/documents/20143/451259/Guida_compilazione-FE_2021_07_07.pdf/e6fcdd04-a7bd-e6f2-ced4-cac04403a768
 # see also:
-# - https://agenziaentrate.gov.it/portale/documents/20143/296703/Variazioni+alle+specifiche+tecniche+fatture+elettroniche2021-07-02.pdf
-# - https://www.agenziaentrate.gov.it/portale/web/guest/schede/comunicazioni/fatture-e-corrispettivi/faq-fe/risposte-alle-domande-piu-frequenti-categoria/compilazione-della-fattura-elettronica
+# - https://agenziaentrate.gov.it/portale/documents/20143/296703/Variazioni+alle+specifiche+tecniche+fatture+elettroniche2021-07-02.pdf  # noqa
+# - https://www.agenziaentrate.gov.it/portale/web/guest/schede/comunicazioni/fatture-e-corrispettivi/faq-fe/risposte-alle-domande-piu-frequenti-categoria/compilazione-della-fattura-elettronica  # noqa
 NATURA_IVA = (
     "N1",
     "N2",
@@ -21,7 +21,8 @@ NATURA_IVA = (
     "N5",
     "N6",
     "N6.1",  # inversione contabile - cessione di rottami e altri materiali di recupero
-    "N6.2",  # inversione contabile – cessione di oro e argento ai sensi della legge 7/2000 nonché di oreficeria usata ad OPO
+    "N6.2",  # inversione contabile – cessione di oro e argento ai sensi della
+             #                        legge 7/2000 nonché di oreficeria usata ad OPO
     "N6.3",  # inversione contabile - subappalto nel settore edile
     "N6.4",  # inversione contabile - cessione di fabbricati
     "N6.5",  # inversione contabile - cessione di telefoni cellulari
