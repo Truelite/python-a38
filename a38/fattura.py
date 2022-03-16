@@ -152,9 +152,7 @@ class DatiAnagraficiCedentePrestatore(models.Model):
     numero_iscrizione_albo = fields.StringField(max_length=60, null=True)
     data_iscrizione_albo = fields.DateField(null=True)
     regime_fiscale = fields.StringField(
-            length=4, choices=("RF01", "RF02", "RF04", "RF05", "RF06", "RF07",
-                               "RF08", "RF09", "RF10", "RF11", "RF12", "RF13",
-                               "RF14", "RF15", "RF16", "RF17", "RF18", "RF19"))
+            length=4, choices=consts.REGIME_FISCALE)
 
 
 class IndirizzoType(models.Model):
@@ -259,7 +257,7 @@ class FatturaElettronicaHeader(models.Model):
 
 
 class DatiRitenuta(models.Model):
-    tipo_ritenuta = fields.StringField(length=4, choices=("RT01", "RT02"))
+    tipo_ritenuta = fields.StringField(length=4, choices=consts.TIPO_RITENUTA)
     importo_ritenuta = fields.DecimalField(max_length=15)
     aliquota_ritenuta = fields.DecimalField(max_length=6)
     causale_pagamento = fields.StringField(max_length=2)
@@ -271,7 +269,7 @@ class DatiBollo(models.Model):
 
 
 class DatiCassaPrevidenziale(models.Model):
-    tipo_cassa = fields.StringField(length=4, choices=["TC{:02d}".format(i) for i in range(1, 23)])
+    tipo_cassa = fields.StringField(length=4, choices=consts.TIPO_CASSA)
     al_cassa = fields.DecimalField(max_length=6)
     importo_contributo_cassa = fields.DecimalField(max_length=15)
     imponibile_cassa = fields.DecimalField(max_length=15)
@@ -545,7 +543,7 @@ class DatiGenerali(models.Model):
 
 class DettaglioPagamento(models.Model):
     beneficiario = fields.StringField(max_length=200, null=True)
-    modalita_pagamento = fields.StringField(length=4, choices=["MP{:02d}".format(i) for i in range(1, 23)])
+    modalita_pagamento = fields.StringField(length=4, choices=consts.MODALITA_PAGAMENTO)
     data_riferimento_termini_pagamento = fields.DateField(null=True)
     giorni_termini_pagamento = fields.IntegerField(max_length=3, null=True)
     data_scadenza_pagamento = fields.DateField(null=True)
