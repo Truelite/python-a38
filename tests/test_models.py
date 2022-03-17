@@ -23,7 +23,14 @@ class TestModel(TestCase):
         self.assertEqual(o.value, 42)
 
     def test_clean_value(self):
+        # Assign from a model
         val = Sample.clean_value(Sample1("foo", "A"))
+        self.assertIsInstance(val, Sample)
+        self.assertEqual(val.name, "foo")
+        self.assertIsNone(val.value)
+
+        # Assign from a dict
+        val = Sample.clean_value({"name": "foo", "type": "A"})
         self.assertIsInstance(val, Sample)
         self.assertEqual(val.name, "foo")
         self.assertIsNone(val.value)

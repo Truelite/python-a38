@@ -107,12 +107,16 @@ class Model(ModelBase, metaclass=ModelMetaclass):
         """
         if value is None:
             return None
-        if not isinstance(value, ModelBase):
-            raise TypeError("{} is not a Model instance".format(value.__class__.__name__))
-        kw = {}
-        for name, field in cls._meta.items():
-            kw[name] = getattr(value, name, None)
-        return cls(**kw)
+        if isinstance(value, dict):
+            return cls(**value)
+        elif isinstance(value, ModelBase):
+            kw = {}
+            for name, field in cls._meta.items():
+                kw[name] = getattr(value, name, None)
+            return cls(**kw)
+        else:
+            raise TypeError(f"{cls.__name__}: {value!r} is {type(value).__name__}"
+                            " instead of a Model or dict instance")
 
     def validate_fields(self, validation: Validation):
         for name, field in self._meta.items():
