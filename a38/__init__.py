@@ -1,0 +1,1 @@
+from .fattura import *  # noqa

@@ -14,6 +14,17 @@ from . import consts, fields, models
 # class as a field, automatically wraps it in a `ModelField`.
 #
 
+__all__ = []
+
+
+def export(el):
+    """
+    Add a symbol to __all__ for export
+    """
+    global __all__
+    __all__.append(el.__name__)
+    return el
+
 
 NS = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"
 NS10 = "http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.0"
@@ -70,24 +81,29 @@ class FullNameMixin:
                             " and ".join(x.name for x in should_not_be_set)))
 
 
+@export
 class IdFiscale(models.Model):
     id_paese = fields.StringField(length=2)
     id_codice = fields.StringField(max_length=28)
 
 
+@export
 class IdTrasmittente(IdFiscale):
     pass
 
 
+@export
 class IdFiscaleIVA(IdFiscale):
     pass
 
 
+@export
 class ContattiTrasmittente(models.Model):
     telefono = fields.StringField(min_length=5, max_length=12, null=True)
     email = fields.StringField(min_length=7, max_length=256, null=True)
 
 
+@export
 class DatiTrasmissione(models.Model):
     id_trasmittente = IdTrasmittente
     progressivo_invio = fields.ProgressivoInvioField()
@@ -134,6 +150,7 @@ class DatiTrasmissione(models.Model):
                     code="00427")
 
 
+@export
 class Anagrafica(FullNameMixin, models.Model):
     denominazione = fields.StringField(max_length=80, null=True)
     nome = fields.StringField(max_length=60, null=True)
@@ -142,6 +159,7 @@ class Anagrafica(FullNameMixin, models.Model):
     cod_eori = fields.StringField(xmltag="CodEORI", min_length=13, max_length=17, null=True)
 
 
+@export
 class DatiAnagraficiCedentePrestatore(models.Model):
     __xmltag__ = "DatiAnagrafici"
     id_fiscale_iva = IdFiscaleIVA
@@ -155,6 +173,7 @@ class DatiAnagraficiCedentePrestatore(models.Model):
             length=4, choices=consts.REGIME_FISCALE)
 
 
+@export
 class IndirizzoType(models.Model):
     indirizzo = fields.StringField(max_length=60)
     numero_civico = fields.StringField(max_length=8, null=True)
@@ -164,10 +183,12 @@ class IndirizzoType(models.Model):
     nazione = fields.StringField(length=2)
 
 
+@export
 class Sede(IndirizzoType):
     pass
 
 
+@export
 class IscrizioneREA(models.Model):
     ufficio = fields.StringField(length=2)
     numero_rea = fields.StringField(xmltag="NumeroREA", max_length=20)
@@ -176,16 +197,19 @@ class IscrizioneREA(models.Model):
     stato_liquidazione = fields.StringField(length=2, choices=("LS", "LN"))
 
 
+@export
 class Contatti(models.Model):
     telefono = fields.StringField(min_length=5, max_length=12, null=True)
     fax = fields.StringField(min_length=5, max_length=12, null=True)
     email = fields.StringField(min_length=7, max_length=256, null=True)
 
 
+@export
 class StabileOrganizzazione(IndirizzoType):
     pass
 
 
+@export
 class CedentePrestatore(models.Model):
     dati_anagrafici = DatiAnagraficiCedentePrestatore
     sede = Sede
@@ -195,6 +219,7 @@ class CedentePrestatore(models.Model):
     riferimento_amministrazione = fields.StringField(max_length=20, null=True)
 
 
+@export
 class DatiAnagraficiCessionarioCommittente(models.Model):
     __xmltag__ = "DatiAnagrafici"
     id_fiscale_iva = fields.ModelField(IdFiscaleIVA, null=True)
@@ -210,6 +235,7 @@ class DatiAnagraficiCessionarioCommittente(models.Model):
                     code="00417")
 
 
+@export
 class RappresentanteFiscale(FullNameMixin, models.Model):
     id_fiscale_iva = fields.ModelField(IdFiscaleIVA, null=True)
     denominazione = fields.StringField(max_length=80, null=True)
@@ -217,6 +243,7 @@ class RappresentanteFiscale(FullNameMixin, models.Model):
     cognome = fields.StringField(max_length=60, null=True)
 
 
+@export
 class CessionarioCommittente(models.Model):
     dati_anagrafici = DatiAnagraficiCessionarioCommittente
     sede = Sede
@@ -224,6 +251,7 @@ class CessionarioCommittente(models.Model):
     rappresentante_fiscale = fields.ModelField(RappresentanteFiscale, null=True)
 
 
+@export
 class DatiAnagraficiRappresentante(models.Model):
     __xmltag__ = "DatiAnagrafici"
     id_fiscale_iva = IdFiscaleIVA
@@ -231,11 +259,13 @@ class DatiAnagraficiRappresentante(models.Model):
     anagrafica = Anagrafica
 
 
+@export
 class RappresentanteFiscaleCedentePrestatore(models.Model):
     __xmltag__ = "RappresentanteFiscale"
     dati_anagrafici = DatiAnagraficiRappresentante
 
 
+@export
 class DatiAnagraficiTerzoIntermediario(models.Model):
     __xmltag__ = "DatiAnagrafici"
     id_fiscale_iva = IdFiscaleIVA
@@ -243,10 +273,12 @@ class DatiAnagraficiTerzoIntermediario(models.Model):
     anagrafica = Anagrafica
 
 
+@export
 class TerzoIntermediarioOSoggettoEmittente(models.Model):
     dati_anagrafici = DatiAnagraficiTerzoIntermediario
 
 
+@export
 class FatturaElettronicaHeader(models.Model):
     dati_trasmissione = DatiTrasmissione
     cedente_prestatore = CedentePrestatore
@@ -256,6 +288,7 @@ class FatturaElettronicaHeader(models.Model):
     soggetto_emittente = fields.StringField(length=2, choices=("CC", "TZ"), null=True)
 
 
+@export
 class DatiRitenuta(models.Model):
     tipo_ritenuta = fields.StringField(length=4, choices=consts.TIPO_RITENUTA)
     importo_ritenuta = fields.DecimalField(max_length=15)
@@ -263,11 +296,13 @@ class DatiRitenuta(models.Model):
     causale_pagamento = fields.StringField(max_length=2)
 
 
+@export
 class DatiBollo(models.Model):
     bollo_virtuale = fields.StringField(length=2, choices=("SI",))
     importo_bollo = fields.DecimalField(max_length=15)
 
 
+@export
 class DatiCassaPrevidenziale(models.Model):
     tipo_cassa = fields.StringField(length=4, choices=consts.TIPO_CASSA)
     al_cassa = fields.DecimalField(max_length=6)
@@ -288,12 +323,14 @@ class DatiCassaPrevidenziale(models.Model):
                 self._meta["natura"], "field has value while aliquota_iva is not zero", code="00414")
 
 
+@export
 class ScontoMaggiorazione(models.Model):
     tipo = fields.StringField(length=2, choices=("SC", "MG"))
     percentuale = fields.DecimalField(max_length=6, null=True)
     importo = fields.DecimalField(max_length=15, null=True)
 
 
+@export
 class DatiGeneraliDocumento(models.Model):
     tipo_documento = fields.StringField(length=4, choices=consts.TIPO_DOCUMENTO)
     divisa = fields.StringField()
@@ -326,6 +363,7 @@ class DatiGeneraliDocumento(models.Model):
                 self._meta["numero"], "numero must contain at least one number", code="00425")
 
 
+@export
 class AltriDatiGestionali(models.Model):
     tipo_dato = fields.StringField(max_length=10)
     riferimento_testo = fields.StringField(max_length=60, null=True)
@@ -333,11 +371,13 @@ class AltriDatiGestionali(models.Model):
     riferimento_data = fields.DateField(null=True)
 
 
+@export
 class CodiceArticolo(models.Model):
     codice_tipo = fields.StringField(max_length=35)
     codice_valore = fields.StringField(max_length=35)
 
 
+@export
 class DettaglioLinee(models.Model):
     numero_linea = fields.IntegerField(max_length=4)
     tipo_cessione_prestazione = fields.StringField(length=2, choices=("SC", "PR", "AB", "AC"), null=True)
@@ -381,6 +421,7 @@ class DettaglioLinee(models.Model):
             self.prezzo_totale = self.prezzo_unitario * self.quantita
 
 
+@export
 class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
     natura = fields.StringField(min_length=2, max_length=4, null=True, choices=consts.NATURA_IVA)
@@ -405,6 +446,7 @@ class DatiRiepilogo(models.Model):
                 self._meta["natura"], "field has value while aliquota_iva is not zero", code="00430")
 
 
+@export
 class DatiBeniServizi(models.Model):
     dettaglio_linee = fields.ModelListField(DettaglioLinee)
     dati_riepilogo = fields.ModelListField(DatiRiepilogo)
@@ -453,6 +495,7 @@ class DatiBeniServizi(models.Model):
                         imposta=imposta, esigibilita_iva="I"))
 
 
+@export
 class DatiDocumentiCorrelati(models.Model):
     riferimento_numero_linea = fields.ListField(fields.IntegerField(max_length=4), null=True)
     id_documento = fields.StringField(max_length=20)
@@ -463,26 +506,32 @@ class DatiDocumentiCorrelati(models.Model):
     codice_cig = fields.StringField(max_length=15, xmltag="CodiceCIG", null=True)
 
 
+@export
 class DatiOrdineAcquisto(DatiDocumentiCorrelati):
     pass
 
 
+@export
 class DatiContratto(DatiDocumentiCorrelati):
     pass
 
 
+@export
 class DatiConvenzione(DatiDocumentiCorrelati):
     pass
 
 
+@export
 class DatiRicezione(DatiDocumentiCorrelati):
     pass
 
 
+@export
 class DatiFattureCollegate(DatiDocumentiCorrelati):
     pass
 
 
+@export
 class DatiAnagraficiVettore(models.Model):
     id_fiscale_iva = IdFiscaleIVA
     codice_fiscale = fields.StringField(min_length=11, max_length=16, null=True)
@@ -490,10 +539,12 @@ class DatiAnagraficiVettore(models.Model):
     numero_licenza_guida = fields.StringField(max_length=20, null=True)
 
 
+@export
 class IndirizzoResa(IndirizzoType):
     pass
 
 
+@export
 class DatiTrasporto(models.Model):
     dati_anagrafici_vettore = fields.ModelField(DatiAnagraficiVettore, null=True)
     mezzo_trasporto = fields.StringField(max_length=80, null=True)
@@ -510,6 +561,7 @@ class DatiTrasporto(models.Model):
     data_ora_consegna = fields.DateTimeField(null=True)
 
 
+@export
 class DatiDDT(models.Model):
     __xmltag__ = "DatiDDT"
     numero_ddt = fields.StringField(max_length=20, xmltag="NumeroDDT")
@@ -517,11 +569,13 @@ class DatiDDT(models.Model):
     riferimento_numero_linea = fields.ListField(fields.IntegerField(max_length=4), null=True)
 
 
+@export
 class FatturaPrincipale(models.Model):
     numero_fattura_principale = fields.StringField(max_length=20)
     data_fattura_principale = fields.DateField()
 
 
+@export
 class DatiGenerali(models.Model):
     dati_generali_documento = DatiGeneraliDocumento
     dati_ordine_acquisto = fields.ModelListField(DatiOrdineAcquisto, null=True)
@@ -545,6 +599,7 @@ class DatiGenerali(models.Model):
                 code="00418")
 
 
+@export
 class DettaglioPagamento(models.Model):
     beneficiario = fields.StringField(max_length=200, null=True)
     modalita_pagamento = fields.StringField(length=4, choices=consts.MODALITA_PAGAMENTO)
@@ -569,11 +624,13 @@ class DettaglioPagamento(models.Model):
     codice_pagamento = fields.StringField(max_length=60, null=True)
 
 
+@export
 class DatiPagamento(models.Model):
     condizioni_pagamento = fields.StringField(length=4, choices=("TP01", "TP02", "TP03"))
     dettaglio_pagamento = fields.ModelListField(DettaglioPagamento)
 
 
+@export
 class Allegati(models.Model):
     nome_attachment = fields.StringField(max_length=60)
     algoritmo_compressione = fields.StringField(max_length=10, null=True)
@@ -582,11 +639,13 @@ class Allegati(models.Model):
     attachment = fields.Base64BinaryField()
 
 
+@export
 class DatiVeicoli(models.Model):
     data = fields.DateField()
     totale_percorso = fields.StringField(max_length=15)
 
 
+@export
 class FatturaElettronicaBody(models.Model):
     dati_generali = DatiGenerali
     dati_beni_servizi = DatiBeniServizi
@@ -640,6 +699,7 @@ class FatturaElettronicaBody(models.Model):
                     code="00419")
 
 
+@export
 class Fattura(models.Model):
     __xmlns__ = NS
     __xmltag__ = "FatturaElettronica"
@@ -698,6 +758,7 @@ class Fattura(models.Model):
         return super().from_etree(el)
 
 
+@export
 class FatturaPrivati12(Fattura):
     """
     Fattura privati 1.2
@@ -706,6 +767,7 @@ class FatturaPrivati12(Fattura):
         return "FPR12"
 
 
+@export
 class FatturaPA12(Fattura):
     """
     Fattura PA 1.2
@@ -714,6 +776,7 @@ class FatturaPA12(Fattura):
         return "FPA12"
 
 
+@export
 def auto_from_etree(root):
     from .fattura_semplificata import NS10, FatturaElettronicaSemplificata
     tagname_ordinaria = "{{{}}}FatturaElettronica".format(NS)

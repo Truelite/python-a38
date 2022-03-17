@@ -6,7 +6,7 @@ import sys
 import os.path
 import shutil
 from pathlib import Path
-import a38.fattura as a38
+import a38
 import xml.etree.ElementTree as ET
 
 log = logging.getLogger("a38tool")
