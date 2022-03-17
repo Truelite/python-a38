@@ -66,7 +66,7 @@ See [a38tool.md](a38tool.md) for more details.
 ## Example code
 
 ```py
-import a38.fattura as a38
+import a38
 from a38.validation import Validation
 import datetime
 import sys

@@ -3,7 +3,7 @@ import io
 from decimal import Decimal
 from unittest import SkipTest, TestCase
 
-import a38.fattura as a38
+import a38
 from a38 import validation
 
 
