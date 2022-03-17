@@ -369,6 +369,17 @@ class DettaglioLinee(models.Model):
             validation.add_error(
                 self._meta["natura"], "natura presente a fronte di aliquota_iva diversa da zero", code="00401")
 
+    def autofill_prezzo_totale(self):
+        """
+        Compute prezzo_totale if it was not set
+        """
+        if self.prezzo_totale is not None:
+            return
+        if self.quantita is None:
+            self.prezzo_totale = self.prezzo_unitario
+        else:
+            self.prezzo_totale = self.prezzo_unitario * self.quantita
+
 
 class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
@@ -410,16 +421,9 @@ class DatiBeniServizi(models.Model):
         submit a pull request.
         """
         kw.setdefault("numero_linea", len(self.dettaglio_linee) + 1)
-        self.dettaglio_linee.append(DettaglioLinee(**kw))
-
-        # Compute prezzo_totale where not set
-        for d in self.dettaglio_linee:
-            if d.prezzo_totale is not None:
-                continue
-            if d.quantita is None:
-                d.prezzo_totale = d.prezzo_unitario
-            else:
-                d.prezzo_totale = d.prezzo_unitario * d.quantita
+        d = DettaglioLinee(**kw)
+        d.autofill_prezzo_totale()
+        self.dettaglio_linee.append(d)
 
     def build_dati_riepilogo(self):
         """
