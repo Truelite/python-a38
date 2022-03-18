@@ -30,6 +30,10 @@ class App:
             from a38.crypto import P7M
             p7m = P7M(pathname)
             return p7m.get_fattura()
+        elif pathname.endswith(".json"):
+            with open(pathname, "rt") as fd:
+                data = json.load(fd)
+            return a38.FatturaPrivati12(**data)
         else:
             tree = ET.parse(pathname)
             return a38.auto_from_etree(tree.getroot())
@@ -162,6 +166,32 @@ class ExportJSON(Exporter):
         parser.add_argument("--indent", default="1",
                             help="indentation space (default: 1, use 'no' for all in one line)")
         return parser
+
+
+class ExportYAML(Exporter):
+    """
+    output a fattura in JSON
+    """
+    NAME = "yaml"
+    WRITE_MODE = "wt"
+
+    def write(self, f, out):
+        try:
+            from ruamel.yaml import YAML
+
+            def write_yaml(data: Dict[str, Any]):
+                yaml = YAML(typ="safe")
+                yaml.default_flow_style = False
+                yaml.dump(data, out)
+        except ModuleNotFoundError:
+            import yaml
+
+            def write_yaml(data: Dict[str, Any]):
+                yaml.dump(
+                    data, stream=out, default_flow_style=False,
+                    allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
+
+        write_yaml(f.to_jsonable())
 
 
 class ExportXML(Exporter):
@@ -334,6 +364,7 @@ def main():
     subparsers.dest = "command"
 
     ExportJSON.add_subparser(subparsers)
+    ExportYAML.add_subparser(subparsers)
     ExportXML.add_subparser(subparsers)
     ExportPython.add_subparser(subparsers)
     Diff.add_subparser(subparsers)
