@@ -1,13 +1,16 @@
 #!/usr/bin/python3
 import argparse
-import logging
 import contextlib
-import sys
+import json
+import logging
 import os.path
 import shutil
-from pathlib import Path
-import a38
+import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
+from typing import Any, Dict
+
+import a38
 
 log = logging.getLogger("a38tool")
 
