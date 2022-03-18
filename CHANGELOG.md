@@ -7,3 +7,4 @@
 * Added `DettaglioLinee.autofill_prezzo_totale`
 * Export `a38.fattura.$MODEL` models as `a38.$MODEL`
 * Implemented `a38tool yaml` to export in YAML format
+* Implemented loading from YAML and JSON as if they were XML

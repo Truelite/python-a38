@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 import a38
+import a38.models
+import a38.fattura_semplificata
 
 log = logging.getLogger("a38tool")
 
@@ -33,10 +35,45 @@ class App:
         elif pathname.endswith(".json"):
             with open(pathname, "rt") as fd:
                 data = json.load(fd)
-            return a38.FatturaPrivati12(**data)
+            return self.fattura_from_data(data)
+        elif pathname.endswith(".yaml"):
+            try:
+                import ruamel.yaml
+
+                def load_yaml(fd):
+                    yaml_loader = ruamel.yaml.YAML(typ="safe", pure=True)
+                    return yaml_loader.load(fd)
+            except ModuleNotFoundError:
+                import yaml
+
+                def load_yaml(fd):
+                    return yaml.load(fd, Loader=yaml.CLoader)
+
+            with open(pathname, "rt") as fd:
+                data = load_yaml(fd)
+            return self.fattura_from_data(data)
         else:
             tree = ET.parse(pathname)
             return a38.auto_from_etree(tree.getroot())
+
+    def fattura_from_data(self, data: Dict[str, Any]) -> a38.models.Model:
+        """
+        Given the equivalent of a Fattura.to_jsonable() data structure,
+        reconstruct the fattura
+        """
+        try:
+            formato = data["fattura_elettronica_header"]["dati_trasmissione"]["formato_trasmissione"]
+        except KeyError:
+            raise Fail("fattura_elettronica_header.dati_trasmissione.formato_trasmissione not found in input")
+
+        if formato == "FPR12":
+            return a38.FatturaPrivati12(**data)
+        elif formato == "FPA12":
+            return a38.FatturaPA12(**data)
+        elif formato == "FSM10":
+            return a38.fattura_semplificata.FatturaElettronicaSemplificata(**data)
+        else:
+            raise Fail(f"Unsupported formato_trasmissione: {formato!r}")
 
     @classmethod
     def add_subparser(cls, subparsers):
