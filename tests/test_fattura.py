@@ -1,10 +1,11 @@
 import datetime
 import io
+import tempfile
 from decimal import Decimal
 from unittest import SkipTest, TestCase
 
 import a38
-from a38 import validation
+from a38 import codec, validation
 
 
 class TestFatturaMixin:
@@ -258,12 +259,33 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
 
 
 class TestSamples(TestFatturaMixin, TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.codecs = [
+            # No p7m because it cannot write
+            codec.XML(),
+            codec.JSON(),
+            codec.YAML(),
+            codec.Python(loadable=True),
+        ]
+
+    def assertCodecsCanCope(self, f):
+        for cod in self.codecs:
+            with self.subTest(codec=cod.__class__.__name__):
+                with tempfile.NamedTemporaryFile() as tf:
+                    cod.save(f, tf.name)
+                    f1 = cod.load(tf.name)
+                self.assertEqual(f, f1)
+
     def test_parse_dati_trasporto(self):
         import xml.etree.ElementTree as ET
         tree = ET.parse("tests/data/dati_trasporto.xml")
-        a38.auto_from_etree(tree.getroot())
+        f = a38.auto_from_etree(tree.getroot())
+        self.assertCodecsCanCope(f)
 
     def test_parse_unicode(self):
         import xml.etree.ElementTree as ET
         tree = ET.parse("tests/data/unicode.xml")
-        a38.auto_from_etree(tree.getroot())
+        f = a38.auto_from_etree(tree.getroot())
+        self.assertCodecsCanCope(f)

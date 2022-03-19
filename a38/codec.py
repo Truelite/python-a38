@@ -58,10 +58,23 @@ class Codec:
     binary = False
 
     def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+        """
+        Load a fattura from a file
+        """
         raise NotImplementedError(f"{self.__class__.__name__}.load is not implemented")
 
     def write_file(self, f: Model, file: Union[TextIO, BinaryIO]):
+        """
+        Write a fattura to the given file deescriptor.
+        """
         raise NotImplementedError(f"{self.__class__.__name__}.write_file is not implemented")
+
+    def save(self, f: Model, pathname: str):
+        """
+        Write a fattura to the given file
+        """
+        with open(pathname, "wb" if self.binary else "wt") as fd:
+            self.write_file(f, fd)
 
 
 class P7M(Codec):
