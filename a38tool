@@ -84,7 +84,7 @@ class App:
 
     def write_xml(self, f, out):
         tree = f.build_etree()
-        tree.write(out)
+        tree.write(out, encoding="utf-8", xml_declaration=True)
         out.write(b"\n")
 
     def write_json(self, f, out):

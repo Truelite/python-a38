@@ -10,3 +10,5 @@
 * Implemented loading from YAML and JSON as if they were XML
 * Implemented `a38tool edit` to open a fattura in a text editor using YAML or
   Python formats (#22)
+* Use UTF-8 encoding and include xml declaration when writing XML from a38tool
+  (#19)

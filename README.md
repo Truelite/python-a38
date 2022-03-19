@@ -139,7 +139,7 @@ filename = "{}{}_{:05d}.xml".format(
 
 tree = f.build_etree()
 with open(filename, "wb") as out:
-    tree.write(out)
+    tree.write(out, encoding="utf-8", xml_declaration=True)
 ```
 
 
