@@ -262,3 +262,8 @@ class TestSamples(TestFatturaMixin, TestCase):
         import xml.etree.ElementTree as ET
         tree = ET.parse("tests/data/dati_trasporto.xml")
         a38.auto_from_etree(tree.getroot())
+
+    def test_parse_unicode(self):
+        import xml.etree.ElementTree as ET
+        tree = ET.parse("tests/data/unicode.xml")
+        a38.auto_from_etree(tree.getroot())
