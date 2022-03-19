@@ -56,9 +56,11 @@ class App:
             return self.fattura_from_data(data)
         elif pathname.endswith(".py"):
             with open(pathname, "rt") as fd:
-                code = compile(fd.read(), pathname, 'eval')
+                code = compile(fd.read(), pathname, 'exec')
 
-            return exec(code, {"a38": a38}, {})
+            loc = {}
+            exec(code, {}, loc)
+            return loc["fattura"]
         else:
             tree = ET.parse(pathname)
             return a38.auto_from_etree(tree.getroot())
@@ -111,9 +113,9 @@ class App:
 
         write_yaml(f.to_jsonable())
 
-    def write_python(self, f, out):
-        code = f.to_python(namespace=self.namespace)
-        if self.unformatted:
+    def write_python(self, f, out, namespace: str = "a38", unformatted=False):
+        code = f.to_python(namespace=namespace)
+        if unformatted:
             return code
 
         try:
@@ -291,7 +293,7 @@ class ExportPython(Exporter):
         self.unformatted = args.unformatted
 
     def write(self, f, out):
-        self.write_python(f, out)
+        self.write_python(f, out, namespace=self.args.namespace, unformatted=self.args.unformatted)
 
     @classmethod
     def add_subparser(cls, subparsers):
@@ -345,8 +347,13 @@ class Edit(App):
     def edit_python(self):
         f = self.load_fattura(self.args.file)
         with tempfile.NamedTemporaryFile(mode="wt", suffix=".py") as tf:
+            print("import datetime", file=tf)
+            print("from decimal import Decimal", file=tf)
+            print("import a38", file=tf)
+            print(file=tf)
+            print("fattura = ", file=tf, end="")
             self.write_python(f, tf)
-            tf.sync()
+            tf.flush()
             self.edit(tf.name)
             f = self.load_fattura(tf.name)
 
