@@ -248,7 +248,7 @@ class Edit(App):
             codec.YAML().write_file(f, tf)
             tf.flush()
             self.edit(tf.name)
-            f = self.load_fattura(tf.name)
+            f = codec.YAML().load(tf.name)
 
         self.write_out(f)
 
@@ -263,7 +263,7 @@ class Edit(App):
             codec.Python().write_file(f, tf)
             tf.flush()
             self.edit(tf.name)
-            f = self.load_fattura(tf.name)
+            f = codec.Python().load(tf.name)
 
         self.write_out(f)
 
