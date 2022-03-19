@@ -130,9 +130,9 @@ class Python(Codec):
 
     The code assumes `import datetime` and `from decimal import Decimal`.
 
-    If fullscript is True, the file is written as a Python source that
+    If loadable is True, the file is written as a Python source that
     creates a `fattura` variable with the fattura, with all the imports that
-    are needed.
+    are needed. This generates a python file that can be loaded with load().
 
     Note that loading Python fatture executes arbitrary Python code!
     """
@@ -141,10 +141,10 @@ class Python(Codec):
     def __init__(
             self, namespace: Union[None, bool, str] = "a38",
             unformatted: bool = False,
-            fullscript: bool = False):
+            loadable: bool = False):
         self.namespace = namespace
         self.unformatted = unformatted
-        self.fullscript = fullscript
+        self.loadable = loadable
 
     def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
         with open(pathname, "rt") as fd:
@@ -164,7 +164,7 @@ class Python(Codec):
                 return code
             code, changed = yapf_api.FormatCode(code)
 
-        if self.fullscript:
+        if self.loadable:
             print("import datetime", file=file)
             print("from decimal import Decimal", file=file)
             if self.namespace:

@@ -224,7 +224,7 @@ class Edit(App):
         if self.args.style == "yaml":
             self.edit_codec = codec.YAML()
         elif self.args.style == "python":
-            self.edit_codec = codec.Python(fullscript=True)
+            self.edit_codec = codec.Python(loadable=True)
         else:
             raise Fail(f"Unsupported edit style {self.args.style!r}")
 
