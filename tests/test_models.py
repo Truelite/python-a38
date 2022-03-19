@@ -22,6 +22,11 @@ class TestModel(TestCase):
         self.assertEqual(o.name, "12")
         self.assertEqual(o.value, 42)
 
+    def test_misspelled_field(self):
+        o = Sample()
+        with self.assertRaises(AttributeError):
+            o.nome = "foo"
+
     def test_clean_value(self):
         # Assign from a model
         val = Sample.clean_value(Sample1("foo", "A"))

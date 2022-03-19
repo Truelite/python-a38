@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from typing import Any, Dict, Optional, Tuple
 
 from .fields import Field, ModelField
@@ -8,6 +8,8 @@ from .validation import Validation
 
 
 class ModelBase:
+    __slots__ = ()
+
     def __init__(self):
         pass
 
@@ -28,15 +30,8 @@ class ModelBase:
 
 
 class ModelMetaclass(type):
-    @classmethod
-    def __prepare__(self, name, bases):
-        # See https://stackoverflow.com/questions/4459531/how-to-read-class-attributes-in-the-same-order-as-declared
-        return OrderedDict()
-
     def __new__(cls, name, bases, dct):
-        res = super().__new__(cls, name, bases, dct)
-
-        _meta = OrderedDict()
+        _meta = {}
 
         # Add fields from subclasses
         for b in bases:
@@ -47,18 +42,30 @@ class ModelMetaclass(type):
                 continue
             _meta.update(b_meta)
 
-        for name, val in list(dct.items()):
+        # Add fields from the class itself
+        slots = []
+        for field_name, val in list(dct.items()):
             if isinstance(val, Field):
-                dct.pop(name)
-                _meta[name] = val
-                val.set_name(name)
+                # Store its description in the Model _meta
+                _meta[field_name] = val
+                val.set_name(field_name)
             elif isinstance(val, type) and issubclass(val, ModelBase):
-                dct.pop(name)
+                # Store its description in the Model _meta
                 val = ModelField(val)
-                _meta[name] = val
-                val.set_name(name)
-        res._meta = _meta
+                _meta[field_name] = val
+                val.set_name(field_name)
+            else:
+                # Leave untouched
+                continue
 
+            # Remove field_name from class variables
+            dct.pop(field_name)
+            # Add it as a slot in the instance
+            slots.append(field_name)
+
+        dct["__slots__"] = slots
+        res = super().__new__(cls, name, bases, dct)
+        res._meta = _meta
         return res
 
 
@@ -67,6 +74,8 @@ class Model(ModelBase, metaclass=ModelMetaclass):
     Declarative description of a data structure that can be validated and
     serialized to XML.
     """
+    __slots__ = ()
+
     def __init__(self, *args, **kw):
         super().__init__()
         for name, value in zip(self._meta.keys(), args):
