@@ -8,3 +8,5 @@
 * Export `a38.fattura.$MODEL` models as `a38.$MODEL`
 * Implemented `a38tool yaml` to export in YAML format
 * Implemented loading from YAML and JSON as if they were XML
+* Implemented `a38tool edit` to open a fattura in a text editor using YAML or
+  Python formats (#22)
