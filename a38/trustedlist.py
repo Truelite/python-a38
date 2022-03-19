@@ -2,7 +2,12 @@ import base64
 import logging
 import re
 import subprocess
-import xml.etree.ElementTree as ET
+
+try:
+    from defusedxml import ElementTree as ET
+except ModuleNotFoundError:
+    import xml.etree.ElementTree as ET
+
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict

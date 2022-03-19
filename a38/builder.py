@@ -1,3 +1,5 @@
+# This module builds XML trees but does not parse them, so it does not need
+# defusedxml
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
 

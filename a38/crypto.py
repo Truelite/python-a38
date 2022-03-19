@@ -3,7 +3,12 @@ import binascii
 import datetime
 import io
 import subprocess
-import xml.etree.ElementTree as ET
+
+try:
+    from defusedxml import ElementTree as ET
+except ModuleNotFoundError:
+    import xml.etree.ElementTree as ET
+
 from typing import BinaryIO, Union
 
 from asn1crypto.cms import ContentInfo

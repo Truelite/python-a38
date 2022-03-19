@@ -14,3 +14,4 @@
   (#19)
 * New module `a38.codec`, with functions to load and save from/to all supported
   formats
+* Use defusedxml for parsing if available (#24)

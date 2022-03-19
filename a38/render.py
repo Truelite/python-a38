@@ -18,7 +18,7 @@ if HAVE_LXML:
 
         def __call__(self, f):
             """
-            Return the xml.etree ElementTree for f rendered as HTML
+            Return the ElementTree for f rendered as HTML
             """
             tree = f.build_etree(lxml=True)
             return self.xslt(tree)

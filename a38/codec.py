@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import json
-import xml.etree.ElementTree as ET
-from typing import TYPE_CHECKING, Any, BinaryIO, Dict, List, Optional, Sequence, TextIO, Type, Union
+
+try:
+    from defusedxml import ElementTree as ET
+except ModuleNotFoundError:
+    import xml.etree.ElementTree as ET
+
+from typing import (TYPE_CHECKING, Any, BinaryIO, Dict, List, Optional,
+                    Sequence, TextIO, Type, Union)
 
 try:
     import ruamel.yaml
