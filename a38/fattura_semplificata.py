@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from . import consts, fields, models
 from .fattura import (Allegati, FullNameMixin, IdFiscaleIVA, IdTrasmittente,
                       IscrizioneREA, Sede, StabileOrganizzazione)

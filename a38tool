@@ -1,20 +1,21 @@
 #!/usr/bin/python3
+from __future__ import annotations
 import argparse
 import contextlib
-import json
 import logging
 import os.path
 import shutil
 import subprocess
 import sys
 import tempfile
-import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Dict
+from typing import TYPE_CHECKING, BinaryIO, TextIO, Union
 
-import a38
-import a38.models
-import a38.fattura_semplificata
+from a38 import codec, models
+
+if TYPE_CHECKING:
+    from .fattura import Fattura
+    from .fattura_semplificata import FatturaElettronicaSemplificata
 
 log = logging.getLogger("a38tool")
 
@@ -29,101 +30,9 @@ class App:
     def __init__(self, args):
         self.args = args
 
-    def load_fattura(self, pathname):
-        if pathname.endswith(".p7m"):
-            from a38.crypto import P7M
-            p7m = P7M(pathname)
-            return p7m.get_fattura()
-        elif pathname.endswith(".json"):
-            with open(pathname, "rt") as fd:
-                data = json.load(fd)
-            return self.fattura_from_data(data)
-        elif pathname.endswith(".yaml"):
-            try:
-                import ruamel.yaml
-
-                def load_yaml(fd):
-                    yaml_loader = ruamel.yaml.YAML(typ="safe", pure=True)
-                    return yaml_loader.load(fd)
-            except ModuleNotFoundError:
-                import yaml
-
-                def load_yaml(fd):
-                    return yaml.load(fd, Loader=yaml.CLoader)
-
-            with open(pathname, "rt") as fd:
-                data = load_yaml(fd)
-            return self.fattura_from_data(data)
-        elif pathname.endswith(".py"):
-            with open(pathname, "rt") as fd:
-                code = compile(fd.read(), pathname, 'exec')
-
-            loc = {}
-            exec(code, {}, loc)
-            return loc["fattura"]
-        else:
-            tree = ET.parse(pathname)
-            return a38.auto_from_etree(tree.getroot())
-
-    def fattura_from_data(self, data: Dict[str, Any]) -> a38.models.Model:
-        """
-        Given the equivalent of a Fattura.to_jsonable() data structure,
-        reconstruct the fattura
-        """
-        try:
-            formato = data["fattura_elettronica_header"]["dati_trasmissione"]["formato_trasmissione"]
-        except KeyError:
-            raise Fail("fattura_elettronica_header.dati_trasmissione.formato_trasmissione not found in input")
-
-        if formato == "FPR12":
-            return a38.FatturaPrivati12(**data)
-        elif formato == "FPA12":
-            return a38.FatturaPA12(**data)
-        elif formato == "FSM10":
-            return a38.fattura_semplificata.FatturaElettronicaSemplificata(**data)
-        else:
-            raise Fail(f"Unsupported formato_trasmissione: {formato!r}")
-
-    def write_xml(self, f, out):
-        tree = f.build_etree()
-        tree.write(out, encoding="utf-8", xml_declaration=True)
-        out.write(b"\n")
-
-    def write_json(self, f, out):
-        json.dump(f.to_jsonable(), out, indent=self.indent)
-        out.write("\n")
-
-    def write_yaml(self, f, out):
-        try:
-            from ruamel.yaml import YAML
-
-            def write_yaml(data: Dict[str, Any]):
-                yaml = YAML(typ="safe")
-                yaml.default_flow_style = False
-                yaml.allow_unicode = True
-                yaml.explicit_start = True
-                yaml.dump(data, out)
-        except ModuleNotFoundError:
-            import yaml
-
-            def write_yaml(data: Dict[str, Any]):
-                yaml.dump(
-                    data, stream=out, default_flow_style=False,
-                    allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
-
-        write_yaml(f.to_jsonable())
-
-    def write_python(self, f, out, namespace: str = "a38", unformatted=False):
-        code = f.to_python(namespace=namespace)
-        if unformatted:
-            return code
-
-        try:
-            from yapf.yapflib import yapf_api
-        except ModuleNotFoundError:
-            return code
-        code, changed = yapf_api.FormatCode(code)
-        print(code, file=out)
+    def load_fattura(self, pathname) -> Union[Fattura, FatturaElettronicaSemplificata]:
+        codec_cls = codec.Codec.from_filename(pathname)
+        return codec_cls().load(pathname)
 
     @classmethod
     def add_subparser(cls, subparsers):
@@ -196,22 +105,30 @@ class Validate(App):
 
 
 class Exporter(App):
-    WRITE_MODE = None
-
     def __init__(self, args):
         super().__init__(args)
         self.files = args.files
         self.output = args.output
+        self.codec = self.get_codec()
+
+    def get_codec(self) -> codec.Codec:
+        """
+        Instantiate the output codec to use for this exporter
+        """
+        raise NotImplementedError(f"{self.__class__.__name__}.get_codec is not implemented")
+
+    def write(self, f: models.Model, file: Union[TextIO, BinaryIO]):
+        self.codec.write_file(f, file)
 
     @contextlib.contextmanager
     def open_output(self):
         if self.output is None:
-            if "b" in self.WRITE_MODE:
+            if self.codec.binary:
                 yield sys.stdout.buffer
             else:
                 yield sys.stdout
         else:
-            with open(self.output, self.WRITE_MODE) as out:
+            with open(self.output, "wb" if self.codec.binary else "wt") as out:
                 yield out
 
     def run(self):
@@ -233,20 +150,17 @@ class ExportJSON(Exporter):
     output a fattura in JSON
     """
     NAME = "json"
-    WRITE_MODE = "wt"
 
-    def __init__(self, args):
-        super().__init__(args)
-        if args.indent == "no":
-            self.indent = None
+    def get_codec(self) -> codec.Codec:
+        if self.args.indent == "no":
+            indent = None
         else:
             try:
-                self.indent = int(args.indent)
+                indent = int(self.args.indent)
             except ValueError:
                 raise Fail("--indent argument must be an integer on 'no'")
 
-    def write(self, f, out):
-        self.write_json(f, out)
+        return codec.JSON(indent=indent)
 
     @classmethod
     def add_subparser(cls, subparsers):
@@ -261,10 +175,9 @@ class ExportYAML(Exporter):
     output a fattura in JSON
     """
     NAME = "yaml"
-    WRITE_MODE = "wt"
 
-    def write(self, f, out):
-        self.write_yaml(f, out)
+    def get_codec(self) -> codec.Codec:
+        return codec.YAML()
 
 
 class ExportXML(Exporter):
@@ -272,10 +185,9 @@ class ExportXML(Exporter):
     output a fattura in XML
     """
     NAME = "xml"
-    WRITE_MODE = "wb"
 
-    def write(self, f, out):
-        self.write_xml(f, out)
+    def get_codec(self) -> codec.Codec:
+        return codec.XML()
 
 
 class ExportPython(Exporter):
@@ -283,17 +195,13 @@ class ExportPython(Exporter):
     output a fattura as Python code
     """
     NAME = "python"
-    WRITE_MODE = "wt"
 
-    def __init__(self, args):
-        super().__init__(args)
-        self.namespace = args.namespace
-        if self.namespace == "":
-            self.namespace = False
-        self.unformatted = args.unformatted
+    def get_codec(self) -> codec.Codec:
+        namespace = self.args.namespace
+        if namespace == "":
+            namespace = False
 
-    def write(self, f, out):
-        self.write_python(f, out, namespace=self.args.namespace, unformatted=self.args.unformatted)
+        return codec.Python(namespace=namespace, unformatted=self.args.unformatted)
 
     @classmethod
     def add_subparser(cls, subparsers):
@@ -320,24 +228,22 @@ class Edit(App):
         """
         Write a fattura, as much as possible over the file being edited
         """
-        if self.args.file.endswith(".p7m"):
+        codec_cls = codec.Codec.from_filename(self.args.file)
+        if codec_cls == codec.P7M:
             with open(self.args.file[:-4], "wb") as fd:
-                self.write_xml(f, fd)
-        elif self.args.file.endswith(".json"):
-            with open(self.args.file, "wt") as fd:
-                self.write_json(f, fd)
-        elif self.args.file.endswith(".yaml"):
-            with open(self.args.file, "wt") as fd:
-                self.write_yaml(f, fd)
-        else:
+                codec_cls().write_file(f, fd)
+        elif codec_cls.binary:
             with open(self.args.file, "wb") as fd:
-                self.write_xml(f, fd)
+                codec_cls().write_file(f, fd)
+        else:
+            with open(self.args.file, "wt") as fd:
+                codec_cls().write_file(f, fd)
 
     def edit_yaml(self):
         f = self.load_fattura(self.args.file)
 
         with tempfile.NamedTemporaryFile(mode="wt", suffix=".yaml") as tf:
-            self.write_yaml(f, tf)
+            codec.YAML().write_file(f, tf)
             tf.flush()
             self.edit(tf.name)
             f = self.load_fattura(tf.name)
@@ -352,7 +258,7 @@ class Edit(App):
             print("import a38", file=tf)
             print(file=tf)
             print("fattura = ", file=tf, end="")
-            self.write_python(f, tf)
+            codec.Python().write_file(f, tf)
             tf.flush()
             self.edit(tf.name)
             f = self.load_fattura(tf.name)

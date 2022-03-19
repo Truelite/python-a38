@@ -1,6 +1,14 @@
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from . import consts, fields, models
+
+if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
+
+    from .fattura_semplificata import FatturaElettronicaSemplificata
 
 #
 # This file describes the data model of the Italian Fattura Elettronica.
@@ -777,7 +785,10 @@ class FatturaPA12(Fattura):
 
 
 @export
-def auto_from_etree(root):
+def auto_from_etree(root: ET.ElementTree) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    """
+    Instantiate a Fattura or FatturaElettronicaSemplificata from a parsed XML
+    """
     from .fattura_semplificata import NS10, FatturaElettronicaSemplificata
     tagname_ordinaria = "{{{}}}FatturaElettronica".format(NS)
     tagname_semplificata = "{{{}}}FatturaElettronicaSemplificata".format(NS10)
@@ -806,3 +817,25 @@ def auto_from_etree(root):
 
     res.from_etree(root)
     return res
+
+
+@export
+def auto_from_dict(data: Dict[str, Any]) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    """
+    Given the equivalent of a Fattura.to_jsonable() data structure,
+    reconstruct the fattura
+    """
+    from .fattura_semplificata import FatturaElettronicaSemplificata
+    try:
+        formato = data["fattura_elettronica_header"]["dati_trasmissione"]["formato_trasmissione"]
+    except KeyError:
+        raise RuntimeError("fattura_elettronica_header.dati_trasmissione.formato_trasmissione not found in input")
+
+    if formato == "FPR12":
+        return FatturaPrivati12(**data)
+    elif formato == "FPA12":
+        return FatturaPA12(**data)
+    elif formato == "FSM10":
+        return FatturaElettronicaSemplificata(**data)
+    else:
+        raise RuntimeError(f"Unsupported formato_trasmissione: {formato!r}")

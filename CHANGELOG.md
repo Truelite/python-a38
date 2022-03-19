@@ -12,3 +12,5 @@
   Python formats (#22)
 * Use UTF-8 encoding and include xml declaration when writing XML from a38tool
   (#19)
+* New module `a38.codec`, with functions to load and save from/to all supported
+  formats
