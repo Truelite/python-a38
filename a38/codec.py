@@ -130,13 +130,21 @@ class Python(Codec):
 
     The code assumes `import datetime` and `from decimal import Decimal`.
 
+    If fullscript is True, the file is written as a Python source that
+    creates a `fattura` variable with the fattura, with all the imports that
+    are needed.
+
     Note that loading Python fatture executes arbitrary Python code!
     """
     EXTENSIONS = ("py",)
 
-    def __init__(self, namespace: Union[None, bool, str] = "a38", unformatted: bool = False):
+    def __init__(
+            self, namespace: Union[None, bool, str] = "a38",
+            unformatted: bool = False,
+            fullscript: bool = False):
         self.namespace = namespace
         self.unformatted = unformatted
+        self.fullscript = fullscript
 
     def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
         with open(pathname, "rt") as fd:
@@ -156,6 +164,17 @@ class Python(Codec):
                 return code
             code, changed = yapf_api.FormatCode(code)
 
+        if self.fullscript:
+            print("import datetime", file=file)
+            print("from decimal import Decimal", file=file)
+            if self.namespace:
+                print("import", self.namespace, file=file)
+            elif self.namespace is False:
+                print("from a38.fattura import *", file=file)
+            else:
+                print("import a38", file=file)
+            print(file=file)
+            print("fattura = ", file=file, end="")
         print(code, file=file)
 
 

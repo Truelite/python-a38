@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 import contextlib
+import io
 import logging
 import os.path
 import shutil
@@ -218,12 +219,14 @@ class Edit(App):
     """
     Open a fattura for modification in a text editor
     """
-    def edit(self, fname: str):
-        """
-        Run an editor on the given file
-        """
-        editor = os.environ.get("EDITOR", "sensible-editor")
-        subprocess.run([editor, fname], check=True)
+    def __init__(self, args):
+        super().__init__(args)
+        if self.args.style == "yaml":
+            self.edit_codec = codec.YAML()
+        elif self.args.style == "python":
+            self.edit_codec = codec.Python(fullscript=True)
+        else:
+            raise Fail(f"Unsupported edit style {self.args.style!r}")
 
     def write_out(self, f):
         """
@@ -241,39 +244,59 @@ class Edit(App):
             with open(self.args.file, "wt") as fd:
                 codec_cls().write_file(f, fd)
 
-    def edit_yaml(self):
-        f = self.load_fattura(self.args.file)
+    def edit_buffer(self, buf: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+        """
+        Open an editor on buf and return the edited fattura.
 
-        with tempfile.NamedTemporaryFile(mode="wt", suffix=".yaml") as tf:
-            codec.YAML().write_file(f, tf)
-            tf.flush()
-            self.edit(tf.name)
-            f = codec.YAML().load(tf.name)
+        Return None if editing did not change the contents.
+        """
+        editor = os.environ.get("EDITOR", "sensible-editor")
 
-        self.write_out(f)
+        current = buf
+        error = None
 
-    def edit_python(self):
-        f = self.load_fattura(self.args.file)
-        with tempfile.NamedTemporaryFile(mode="wt", suffix=".py") as tf:
-            print("import datetime", file=tf)
-            print("from decimal import Decimal", file=tf)
-            print("import a38", file=tf)
-            print(file=tf)
-            print("fattura = ", file=tf, end="")
-            codec.Python().write_file(f, tf)
-            tf.flush()
-            self.edit(tf.name)
-            f = codec.Python().load(tf.name)
+        while True:
+            with tempfile.NamedTemporaryFile(
+                    mode="wt",
+                    suffix=f".{self.edit_codec.EXTENSIONS[0]}") as tf:
+                # Write out the current buffer
+                tf.write(current)
+                if error is not None:
+                    tf.write(f"# ERROR: {error}")
+                    error = None
+                tf.flush()
 
-        self.write_out(f)
+                # Run the editor on it
+                subprocess.run([editor, tf.name], check=True)
+
+                # Reopen by name in case the editor did not write on the same
+                # inode
+                with open(tf.name, "rt") as fd:
+                    lines = []
+                    for line in fd:
+                        if line.startswith("# ERROR: "):
+                            continue
+                        lines.append(line)
+                    edited = "".join(lines)
+
+                if edited == current:
+                    return None
+
+                try:
+                    return self.edit_codec.load(tf.name)
+                except Exception as e:
+                    log.error("%s: cannot load edited file: %s", tf.name, e)
+                    error = str(e)
 
     def run(self):
-        if self.args.style == "yaml":
-            self.edit_yaml()
-        elif self.args.style == "python":
-            self.edit_python()
-        else:
-            raise Fail(f"Unsupported edit style {self.args.style!r}")
+        f = self.load_fattura(self.args.file)
+
+        with io.StringIO() as orig:
+            self.edit_codec.write_file(f, orig)
+            f1 = self.edit_buffer(orig.getvalue())
+
+        if f1 is not None:
+            self.write_out(f1)
 
     @classmethod
     def add_subparser(cls, subparsers):
