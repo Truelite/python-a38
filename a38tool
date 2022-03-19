@@ -295,7 +295,7 @@ class Edit(App):
             self.edit_codec.write_file(f, orig)
             f1 = self.edit_buffer(orig.getvalue())
 
-        if f1 is not None:
+        if f1 is not None and f != f1:
             self.write_out(f1)
 
     @classmethod
