@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import xml.etree.ElementTree as ET
-from typing import TYPE_CHECKING, Any, BinaryIO, Dict, Optional, TextIO, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, Dict, List, Optional, Sequence, TextIO, Type, Union
 
 try:
     import ruamel.yaml
@@ -57,19 +57,6 @@ class Codec:
     # If True, file objects are expected to be open in binary mode
     binary = False
 
-    @classmethod
-    def from_filename(cls, pathname: str) -> Codec:
-        if pathname.endswith(".p7m"):
-            return P7M
-        elif pathname.endswith(".json"):
-            return JSON
-        elif pathname.endswith(".yaml"):
-            return YAML
-        elif pathname.endswith(".py"):
-            return Python
-        else:
-            return XML
-
     def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
         raise NotImplementedError(f"{self.__class__.__name__}.load is not implemented")
 
@@ -81,6 +68,8 @@ class P7M(Codec):
     """
     P7M codec, that only supports loading
     """
+    EXTENSIONS = ("p7m",)
+
     def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
         p7m = crypto.P7M(pathname)
         return p7m.get_fattura()
@@ -95,6 +84,8 @@ class JSON(Codec):
 
     `end` is a string that gets appended to the JSON structure.
     """
+    EXTENSIONS = ("json",)
+
     def __init__(self, indent: Optional[int] = 1, end="\n"):
         self.indent = indent
         self.end = end
@@ -114,6 +105,8 @@ class YAML(Codec):
     """
     YAML codec
     """
+    EXTENSIONS = ("yaml", "yml")
+
     def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
         with open(pathname, "rt") as fd:
             data = _load_yaml(fd)
@@ -139,6 +132,8 @@ class Python(Codec):
 
     Note that loading Python fatture executes arbitrary Python code!
     """
+    EXTENSIONS = ("py",)
+
     def __init__(self, namespace: Union[None, bool, str] = "a38", unformatted: bool = False):
         self.namespace = namespace
         self.unformatted = unformatted
@@ -168,6 +163,8 @@ class XML(Codec):
     """
     XML codec
     """
+    EXTENSIONS = ("xml",)
+
     binary = True
 
     def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
@@ -178,3 +175,44 @@ class XML(Codec):
         tree = f.build_etree()
         tree.write(file, encoding="utf-8", xml_declaration=True)
         file.write(b"\n")
+
+
+class Codecs:
+    """
+    A collection of codecs
+    """
+    ALL_CODECS = (XML, P7M, JSON, YAML, Python)
+
+    def __init__(
+            self,
+            include: Optional[Sequence[Type[Codec]]] = None,
+            exclude: Optional[Sequence[Type[Codec]]] = (Python,)):
+        """
+        if `include` is not None, only codecs in that list are used.
+
+        If `exclude` is not None, all codecs are used except the given one.
+
+        If neither `include` nor `exclude` are None, all codecs are used.
+
+        By default, `exclude` is not None but it is set to exclude Python.
+        """
+        self.codecs: List[Type[Codec]]
+
+        if include is not None and exclude is not None:
+            raise ValueError("include and exclude cannot both be set")
+        elif include is not None:
+            self.codecs = list(include)
+        elif exclude is not None:
+            self.codecs = [c for c in self.ALL_CODECS if c not in exclude]
+        else:
+            self.codecs = list(self.ALL_CODECS)
+
+    def codec_from_filename(self, pathname: str) -> Type[Codec]:
+        """
+        Infer a Codec class from the extension of the file at `pathname`.
+        """
+        ext = pathname.rsplit(".", 1)[1].lower()
+
+        for c in self.codecs:
+            if ext in c.EXTENSIONS:
+                return c

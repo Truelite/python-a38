@@ -31,7 +31,8 @@ class App:
         self.args = args
 
     def load_fattura(self, pathname) -> Union[Fattura, FatturaElettronicaSemplificata]:
-        codec_cls = codec.Codec.from_filename(pathname)
+        codecs = codec.Codecs()
+        codec_cls = codecs.codec_from_filename(pathname)
         return codec_cls().load(pathname)
 
     @classmethod
@@ -228,7 +229,8 @@ class Edit(App):
         """
         Write a fattura, as much as possible over the file being edited
         """
-        codec_cls = codec.Codec.from_filename(self.args.file)
+        codecs = codec.Codecs()
+        codec_cls = codecs.codec_from_filename(self.args.file)
         if codec_cls == codec.P7M:
             with open(self.args.file[:-4], "wb") as fd:
                 codec_cls().write_file(f, fd)
