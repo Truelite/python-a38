@@ -29,8 +29,6 @@ class ModelBase:
 
 class ModelMetaclass(type):
     def __new__(cls, name, bases, dct):
-        res = super().__new__(cls, name, bases, dct)
-
         _meta = {}
 
         # Add fields from subclasses
@@ -42,18 +40,18 @@ class ModelMetaclass(type):
                 continue
             _meta.update(b_meta)
 
-        for name, val in list(dct.items()):
+        # Add fields from the class itself
+        for field_name, val in dct.items():
             if isinstance(val, Field):
-                dct.pop(name)
-                _meta[name] = val
-                val.set_name(name)
+                _meta[field_name] = val
+                val.set_name(field_name)
             elif isinstance(val, type) and issubclass(val, ModelBase):
-                dct.pop(name)
                 val = ModelField(val)
-                _meta[name] = val
-                val.set_name(name)
-        res._meta = _meta
+                _meta[field_name] = val
+                val.set_name(field_name)
 
+        res = super().__new__(cls, name, bases, dct)
+        res._meta = _meta
         return res
 
 
