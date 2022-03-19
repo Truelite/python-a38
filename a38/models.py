@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from typing import Any, Dict, Optional, Tuple
 
 from .fields import Field, ModelField
@@ -31,7 +31,7 @@ class ModelMetaclass(type):
     def __new__(cls, name, bases, dct):
         res = super().__new__(cls, name, bases, dct)
 
-        _meta = OrderedDict()
+        _meta = {}
 
         # Add fields from subclasses
         for b in bases:
