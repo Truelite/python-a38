@@ -28,11 +28,6 @@ class ModelBase:
 
 
 class ModelMetaclass(type):
-    @classmethod
-    def __prepare__(self, name, bases):
-        # See https://stackoverflow.com/questions/4459531/how-to-read-class-attributes-in-the-same-order-as-declared
-        return OrderedDict()
-
     def __new__(cls, name, bases, dct):
         res = super().__new__(cls, name, bases, dct)
 
