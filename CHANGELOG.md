@@ -1,4 +1,4 @@
-# New in version UNRELEASED
+# New in version 0.1.4
 
 * When a Model instance is required, allow to pass a dict matching the Model
   fields instead
