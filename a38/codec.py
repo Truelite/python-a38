@@ -180,8 +180,9 @@ class Python(Codec):
             try:
                 from yapf.yapflib import yapf_api
             except ModuleNotFoundError:
-                return code
-            code, changed = yapf_api.FormatCode(code)
+                pass
+            else:
+                code, changed = yapf_api.FormatCode(code)
 
         if self.loadable:
             print("import datetime", file=file)
