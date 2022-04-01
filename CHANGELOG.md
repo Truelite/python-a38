@@ -1,3 +1,8 @@
+# New in version UNRELEASED
+
+* Added to `a38.codec` has a basic implementation of interactive editing in a
+  text editor
+
 # New in version 0.1.4
 
 * When a Model instance is required, allow to pass a dict matching the Model
@@ -15,5 +20,3 @@
 * New module `a38.codec`, with functions to load and save from/to all supported
   formats
 * Use defusedxml for parsing if available (#24)
-* `a38.codec` also has a basic implementation of interactive editing in a text
-  editor
