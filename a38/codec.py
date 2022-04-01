@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import io
 import json
+import logging
+import os
+import subprocess
+import tempfile
 
 try:
     from defusedxml import ElementTree as ET
@@ -28,6 +33,7 @@ if TYPE_CHECKING:
     from .fattura import Fattura
     from .fattura_semplificata import FatturaElettronicaSemplificata
 
+log = logging.getLogger("codec")
 
 if ruamel is not None:
     def _load_yaml(fd: TextIO):
@@ -81,6 +87,59 @@ class Codec:
         """
         with open(pathname, "wb" if self.binary else "wt") as fd:
             self.write_file(f, fd)
+
+    def interactive_edit(self, f: Model) -> Optional[Model]:
+        """
+        Edit the given model in an interactive editor, using the format of this
+        codec
+        """
+        with io.StringIO() as orig:
+            self.write_file(f, orig)
+            return self.edit_buffer(orig.getvalue())
+
+    def edit_buffer(self, buf: str) -> Optional[Model]:
+        """
+        Open an editor on buf and return the edited fattura.
+
+        Return None if editing did not change the contents.
+        """
+        editor = os.environ.get("EDITOR", "sensible-editor")
+
+        current = buf
+        error = None
+
+        while True:
+            with tempfile.NamedTemporaryFile(
+                    mode="wt",
+                    suffix=f".{self.EXTENSIONS[0]}") as tf:
+                # Write out the current buffer
+                tf.write(current)
+                if error is not None:
+                    tf.write(f"# ERROR: {error}")
+                    error = None
+                tf.flush()
+
+                # Run the editor on it
+                subprocess.run([editor, tf.name], check=True)
+
+                # Reopen by name in case the editor did not write on the same
+                # inode
+                with open(tf.name, "rt") as fd:
+                    lines = []
+                    for line in fd:
+                        if line.startswith("# ERROR: "):
+                            continue
+                        lines.append(line)
+                    edited = "".join(lines)
+
+                if edited == current:
+                    return None
+
+                try:
+                    return self.load(tf.name)
+                except Exception as e:
+                    log.error("%s: cannot load edited file: %s", tf.name, e)
+                    error = str(e)
 
 
 class P7M(Codec):
