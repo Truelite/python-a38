@@ -12,7 +12,7 @@ def parse_requirements(filename):
 
 setup(
     name="a38",
-    version="0.1.4",
+    version="0.1.5",
     description="parse and generate Italian Fattura Elettronica",
     long_description=long_description,
     long_description_content_type='text/markdown',
