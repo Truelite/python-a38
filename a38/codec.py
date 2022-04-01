@@ -12,8 +12,8 @@ try:
 except ModuleNotFoundError:
     import xml.etree.ElementTree as ET
 
-from typing import (TYPE_CHECKING, Any, BinaryIO, Dict, List, Optional,
-                    Sequence, TextIO, Type, Union)
+from typing import (Any, BinaryIO, Dict, List, Optional, Sequence, TextIO,
+                    Type, Union)
 
 try:
     import ruamel.yaml
@@ -28,10 +28,6 @@ except ModuleNotFoundError:
 from . import crypto
 from .fattura import auto_from_dict, auto_from_etree
 from .models import Model
-
-if TYPE_CHECKING:
-    from .fattura import Fattura
-    from .fattura_semplificata import FatturaElettronicaSemplificata
 
 log = logging.getLogger("codec")
 
@@ -69,9 +65,15 @@ class Codec:
     # If True, file objects are expected to be open in binary mode
     binary = False
 
-    def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    def load(
+            self,
+            pathname: str,
+            model: Optional[Type[Model]]) -> Model:
         """
-        Load a fattura from a file
+        Load a fattura from a file.
+
+        If model is provided it will be used for loading, otherwise the Model
+        type will be autodetected
         """
         raise NotImplementedError(f"{self.__class__.__name__}.load is not implemented")
 
@@ -95,9 +97,9 @@ class Codec:
         """
         with io.StringIO() as orig:
             self.write_file(f, orig)
-            return self.edit_buffer(orig.getvalue())
+            return self.edit_buffer(orig.getvalue(), model=f.__class__)
 
-    def edit_buffer(self, buf: str) -> Optional[Model]:
+    def edit_buffer(self, buf: str, model: Optional[Type[Model]] = None) -> Optional[Model]:
         """
         Open an editor on buf and return the edited fattura.
 
@@ -136,7 +138,7 @@ class Codec:
                     return None
 
                 try:
-                    return self.load(tf.name)
+                    return self.load(tf.name, model=model)
                 except Exception as e:
                     log.error("%s: cannot load edited file: %s", tf.name, e)
                     error = str(e)
@@ -148,7 +150,10 @@ class P7M(Codec):
     """
     EXTENSIONS = ("p7m",)
 
-    def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    def load(
+            self,
+            pathname: str,
+            model: Optional[Type[Model]] = None) -> Model:
         p7m = crypto.P7M(pathname)
         return p7m.get_fattura()
 
@@ -168,10 +173,16 @@ class JSON(Codec):
         self.indent = indent
         self.end = end
 
-    def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    def load(
+            self,
+            pathname: str,
+            model: Optional[Type[Model]] = None) -> Model:
         with open(pathname, "rt") as fd:
             data = json.load(fd)
-        return auto_from_dict(data)
+        if model:
+            return model(**data)
+        else:
+            return auto_from_dict(data)
 
     def write_file(self, f: Model, file: TextIO):
         json.dump(f.to_jsonable(), file, indent=self.indent)
@@ -185,10 +196,16 @@ class YAML(Codec):
     """
     EXTENSIONS = ("yaml", "yml")
 
-    def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    def load(
+            self,
+            pathname: str,
+            model: Optional[Type[Model]] = None) -> Model:
         with open(pathname, "rt") as fd:
             data = _load_yaml(fd)
-        return auto_from_dict(data)
+        if model:
+            return model(**data)
+        else:
+            return auto_from_dict(data)
 
     def write_file(self, f: Model, file: TextIO):
         _write_yaml(f.to_jsonable(), file)
@@ -224,7 +241,10 @@ class Python(Codec):
         self.unformatted = unformatted
         self.loadable = loadable
 
-    def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    def load(
+            self,
+            pathname: str,
+            model: Optional[Type[Model]] = None) -> Model:
         with open(pathname, "rt") as fd:
             code = compile(fd.read(), pathname, 'exec')
 
@@ -265,7 +285,10 @@ class XML(Codec):
 
     binary = True
 
-    def load(self, pathname: str) -> Union[Fattura, FatturaElettronicaSemplificata]:
+    def load(
+            self,
+            pathname: str,
+            model: Optional[Type[Model]] = None) -> Model:
         tree = ET.parse(pathname)
         return auto_from_etree(tree.getroot())
 
