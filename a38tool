@@ -359,6 +359,30 @@ class UpdateCAPath(App):
         from a38 import trustedlist as tl
         tl.update_capath(self.destdir, remove_old=self.remove_old)
 
+class VIES(App):
+    """
+    inspect the VIES (VAT Information Exchange System)
+    details for a given VAT number
+    """
+    NAME = "vies"
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.country_code = args.country_code
+        self.vat_number = args.vat_number
+    
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("--country-code", action="store_true", help="VAT Country Code e.g. IT")
+        parser.add_argument("--vat-number", action="store_true", help="VAT Number e.g. 01234567890")
+        return parser
+
+    def run(self):
+        from a38 import vies
+        vat_details = vies.get_vat_details(self.country_code, self.vat_number)
+        print(vat_details)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Handle fattura elettronica files")
@@ -378,6 +402,7 @@ def main():
     RenderHTML.add_subparser(subparsers)
     RenderPDF.add_subparser(subparsers)
     UpdateCAPath.add_subparser(subparsers)
+    VIES.add_subparser(subparsers)
 
     args = parser.parse_args()
 
