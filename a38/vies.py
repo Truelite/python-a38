@@ -45,3 +45,9 @@ def get_vat_details(vat_state_code: str, vat_number: str) -> List:
         )
 
     return vat_details
+
+
+def render_vat_details(vat_details: dict):
+    print()
+    for vat_detail in vat_details:
+        print(f"\t{vat_detail['detail']}: {vat_detail['content']}")

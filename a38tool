@@ -381,7 +381,7 @@ class VIES(App):
     def run(self):
         from a38 import vies
         vat_details = vies.get_vat_details(self.country_code, self.vat_number)
-        print(vat_details)
+        vies.render_vat_details(vat_details)
 
 
 def main():

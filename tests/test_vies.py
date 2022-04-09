@@ -29,3 +29,6 @@ class TestVIESRetrieval(TestCase):
         )
         # print(vat_details)
         assert len(vat_details) == 6
+
+        # from a38.vies import render_vat_details
+        # render_vat_details(vat_details)
