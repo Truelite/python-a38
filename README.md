@@ -22,11 +22,10 @@ parse all the example XML files distributed by
 
 ## Dependencies
 
-Required: dateutil, pytz, asn1crypto, and the python3 standard library.
+Required: dateutil, pytz, asn1crypto, defusedxml, lxml, requests and the python3 standard library.
 
 Optional:
  * yapf for formatting `a38tool python` output
- * lxml for rendering to HTML
  * the wkhtmltopdf command for rendering to PDF
  * requests for downloading CA certificates for signature verification
 
