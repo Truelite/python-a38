@@ -1,5 +1,7 @@
 # New in version UNRELEASED
 
+* Generate `dati_riepilogo` with properly set `natura` (#27)
+
 # New in version 0.1.5
 
 * Added to `a38.codec` has a basic implementation of interactive editing in a
