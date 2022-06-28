@@ -131,6 +131,38 @@ class TestDatiBeniServizi(TestFatturaMixin, TestCase):
                 o.dati_riepilogo[1],
                 a38.DatiRiepilogo(aliquota_iva="22", imponibile_importo="14.40", imposta="3.168", esigibilita_iva="I"))
 
+    def test_build_dati_riepilogo_natura(self):
+        self.maxDiff = None
+
+        common_args = {"descrizione": "Line", "quantita": 1, "unita_misura": "N"}
+
+        o = a38.DatiBeniServizi()
+        o.add_dettaglio_linee(prezzo_unitario=7, aliquota_iva=22, natura="N1", **common_args)
+        o.add_dettaglio_linee(prezzo_unitario="1", aliquota_iva=22, natura="N1", **common_args)
+        o.add_dettaglio_linee(prezzo_unitario="3.5", aliquota_iva=10, natura="N6", **common_args)
+        o.add_dettaglio_linee(prezzo_unitario="3.5", aliquota_iva=0, natura="N2.1", **common_args)
+        o.add_dettaglio_linee(prezzo_unitario="7.5", aliquota_iva=0, natura="N2.1", **common_args)
+        o.add_dettaglio_linee(prezzo_unitario="5", aliquota_iva=0, natura="N3.1", **common_args)
+        o.build_dati_riepilogo()
+
+        self.assertEqual(len(o.dati_riepilogo), 4)
+        self.assertEqual(
+                o.dati_riepilogo[0],
+                a38.DatiRiepilogo(
+                    aliquota_iva="0", imponibile_importo="11", imposta="0", esigibilita_iva="I", natura="N2.1"))
+        self.assertEqual(
+                o.dati_riepilogo[1],
+                a38.DatiRiepilogo(
+                    aliquota_iva="0", imponibile_importo="5", imposta="0", esigibilita_iva="I", natura="N3.1"))
+        self.assertEqual(
+                o.dati_riepilogo[2],
+                a38.DatiRiepilogo(
+                    aliquota_iva="10", imponibile_importo="3.5", imposta="0.35", esigibilita_iva="I", natura="N6"))
+        self.assertEqual(
+                o.dati_riepilogo[3],
+                a38.DatiRiepilogo(
+                    aliquota_iva="22", imponibile_importo="8", imposta="1.76", esigibilita_iva="I", natura="N1"))
+
 
 class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
     def test_build_importo_totale_documento(self):
