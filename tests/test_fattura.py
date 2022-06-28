@@ -131,6 +131,48 @@ class TestDatiBeniServizi(TestFatturaMixin, TestCase):
                 o.dati_riepilogo[1],
                 a38.DatiRiepilogo(aliquota_iva="22", imponibile_importo="14.40", imposta="3.168", esigibilita_iva="I"))
 
+    def test_build_dati_riepilogo_natura(self):
+        self.maxDiff = None
+
+        o = a38.DatiBeniServizi()
+        o.add_dettaglio_linee(
+                descrizione="Line 1", quantita=2, unita_misura="m²",
+                prezzo_unitario=7, aliquota_iva=22, natura="N1")
+        o.add_dettaglio_linee(
+                descrizione="Line 2", quantita=1, unita_misura="A",
+                prezzo_unitario="0.4", aliquota_iva=22, natura="N1")
+        o.add_dettaglio_linee(
+                descrizione="Line 3", quantita="3.5", unita_misura="A",
+                prezzo_unitario="0.5", aliquota_iva=10, natura="N6")
+        o.add_dettaglio_linee(
+                descrizione="Line 4", quantita="3.5", unita_misura="A",
+                prezzo_unitario="0.5", aliquota_iva=0, natura="N2.1")
+        o.add_dettaglio_linee(
+                descrizione="Line 5", quantita="7.5", unita_misura="A",
+                prezzo_unitario="0.5", aliquota_iva=0, natura="N2.1")
+        o.add_dettaglio_linee(
+                descrizione="Line 5", quantita="7.5", unita_misura="A",
+                prezzo_unitario="0.5", aliquota_iva=0, natura="N3.1")
+        o.build_dati_riepilogo()
+
+        self.assertEqual(len(o.dati_riepilogo), 4)
+        self.assertEqual(
+                o.dati_riepilogo[0],
+                a38.DatiRiepilogo(
+                    aliquota_iva="0", imponibile_importo="11", imposta="0", esigibilita_iva="I", natura="N2.1"))
+        self.assertEqual(
+                o.dati_riepilogo[1],
+                a38.DatiRiepilogo(
+                    aliquota_iva="0", imponibile_importo="7.5", imposta="0", esigibilita_iva="I", natura="N3.1"))
+        self.assertEqual(
+                o.dati_riepilogo[2],
+                a38.DatiRiepilogo(
+                    aliquota_iva="10", imponibile_importo="1.75", imposta="0.175", esigibilita_iva="I", natura="N6"))
+        self.assertEqual(
+                o.dati_riepilogo[3],
+                a38.DatiRiepilogo(
+                    aliquota_iva="22", imponibile_importo="14.40", imposta="3.168", esigibilita_iva="I", natura="N1"))
+
 
 class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
     def test_build_importo_totale_documento(self):
