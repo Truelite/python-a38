@@ -491,16 +491,16 @@ class DatiBeniServizi(models.Model):
         # Group by aliquota
         by_aliquota = defaultdict(list)
         for linea in self.dettaglio_linee:
-            by_aliquota[linea.aliquota_iva].append(linea)
+            by_aliquota[(linea.aliquota_iva, linea.natura)].append(linea)
 
         self.dati_riepilogo = []
-        for aliquota, linee in sorted(by_aliquota.items()):
+        for (aliquota, natura), linee in sorted(by_aliquota.items()):
             imponibile = sum(linea.prezzo_totale for linea in linee)
             imposta = imponibile * aliquota / 100
             self.dati_riepilogo.append(
                     DatiRiepilogo(
                         aliquota_iva=aliquota, imponibile_importo=imponibile,
-                        imposta=imposta, esigibilita_iva="I"))
+                        imposta=imposta, esigibilita_iva="I", natura=natura))
 
 
 @export
