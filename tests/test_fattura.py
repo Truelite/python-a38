@@ -94,8 +94,10 @@ class TestDatiTrasmissione(TestFatturaMixin, TestCase):
 class TestDatiBeniServizi(TestFatturaMixin, TestCase):
     def test_add_dettaglio_linee(self):
         o = a38.DatiBeniServizi()
-        o.add_dettaglio_linee(descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
-        o.add_dettaglio_linee(descrizione="Line 2", quantita=1, unita_misura="A", prezzo_unitario="0.4", aliquota_iva=22)
+        o.add_dettaglio_linee(
+                descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
+        o.add_dettaglio_linee(
+                descrizione="Line 2", quantita=1, unita_misura="A", prezzo_unitario="0.4", aliquota_iva=22)
         self.assertEqual(len(o.dettaglio_linee), 2)
         self.assertEqual(o.dettaglio_linee[0], a38.DettaglioLinee(
             numero_linea=1, descrizione="Line 1", quantita=2, unita_misura="m²",
@@ -108,26 +110,37 @@ class TestDatiBeniServizi(TestFatturaMixin, TestCase):
         o = a38.DatiBeniServizi()
         o.add_dettaglio_linee(descrizione="Line 1", prezzo_unitario=7, aliquota_iva=22)
         self.assertEqual(len(o.dettaglio_linee), 1)
-        self.assertEqual(o.dettaglio_linee[0], a38.DettaglioLinee(1, descrizione="Line 1", prezzo_unitario=7, prezzo_totale=7, aliquota_iva=22))
+        self.assertEqual(
+                o.dettaglio_linee[0],
+                a38.DettaglioLinee(1, descrizione="Line 1", prezzo_unitario=7, prezzo_totale=7, aliquota_iva=22))
 
     def test_build_dati_riepilogo(self):
         o = a38.DatiBeniServizi()
         o.add_dettaglio_linee(descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
-        o.add_dettaglio_linee(descrizione="Line 2", quantita=1, unita_misura="A", prezzo_unitario="0.4", aliquota_iva=22)
-        o.add_dettaglio_linee(descrizione="Line 3", quantita="3.5", unita_misura="A", prezzo_unitario="0.5", aliquota_iva=10)
+        o.add_dettaglio_linee(
+                descrizione="Line 2", quantita=1, unita_misura="A", prezzo_unitario="0.4", aliquota_iva=22)
+        o.add_dettaglio_linee(
+                descrizione="Line 3", quantita="3.5", unita_misura="A", prezzo_unitario="0.5", aliquota_iva=10)
         o.build_dati_riepilogo()
 
         self.assertEqual(len(o.dati_riepilogo), 2)
-        self.assertEqual(o.dati_riepilogo[0], a38.DatiRiepilogo(aliquota_iva="10", imponibile_importo="1.75", imposta="0.175", esigibilita_iva="I"))
-        self.assertEqual(o.dati_riepilogo[1], a38.DatiRiepilogo(aliquota_iva="22", imponibile_importo="14.40", imposta="3.168", esigibilita_iva="I"))
+        self.assertEqual(
+                o.dati_riepilogo[0],
+                a38.DatiRiepilogo(aliquota_iva="10", imponibile_importo="1.75", imposta="0.175", esigibilita_iva="I"))
+        self.assertEqual(
+                o.dati_riepilogo[1],
+                a38.DatiRiepilogo(aliquota_iva="22", imponibile_importo="14.40", imposta="3.168", esigibilita_iva="I"))
 
 
 class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
     def test_build_importo_totale_documento(self):
         o = a38.FatturaElettronicaBody()
-        o.dati_beni_servizi.add_dettaglio_linee(descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
-        o.dati_beni_servizi.add_dettaglio_linee(descrizione="Line 2", quantita=1, unita_misura="A", prezzo_unitario="0.4", aliquota_iva=22)
-        o.dati_beni_servizi.add_dettaglio_linee(descrizione="Line 3", quantita="3.5", unita_misura="A", prezzo_unitario="0.5", aliquota_iva=10)
+        o.dati_beni_servizi.add_dettaglio_linee(
+                descrizione="Line 1", quantita=2, unita_misura="m²", prezzo_unitario=7, aliquota_iva=22)
+        o.dati_beni_servizi.add_dettaglio_linee(
+                descrizione="Line 2", quantita=1, unita_misura="A", prezzo_unitario="0.4", aliquota_iva=22)
+        o.dati_beni_servizi.add_dettaglio_linee(
+                descrizione="Line 3", quantita="3.5", unita_misura="A", prezzo_unitario="0.5", aliquota_iva=10)
         o.dati_beni_servizi.build_dati_riepilogo()
         o.build_importo_totale_documento()
 
@@ -143,7 +156,8 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
                 anagrafica=a38.Anagrafica(denominazione="Test User"),
                 regime_fiscale="RF01",
             ),
-            a38.Sede(indirizzo="via Monferrato", numero_civico="1", cap="50100", comune="Firenze", provincia="FI", nazione="IT"),
+            a38.Sede(indirizzo="via Monferrato", numero_civico="1",
+                     cap="50100", comune="Firenze", provincia="FI", nazione="IT"),
             iscrizione_rea=a38.IscrizioneREA(
                 ufficio="FI",
                 numero_rea="123456",
@@ -157,7 +171,8 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
                 a38.IdFiscaleIVA("IT", "76543210987"),
                 anagrafica=a38.Anagrafica(denominazione="A Company SRL"),
             ),
-            a38.Sede(indirizzo="via Langhe", numero_civico="1", cap="50142", comune="Firenze", provincia="FI", nazione="IT"),
+            a38.Sede(indirizzo="via Langhe", numero_civico="1", cap="50142",
+                     comune="Firenze", provincia="FI", nazione="IT"),
         )
 
         f = a38.FatturaPrivati12()
@@ -210,7 +225,9 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
             tree.write(out, encoding="unicode")
             xml = out.getvalue()
 
-        self.assertIn('<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" versione="FPR12">', xml)
+        self.assertIn(
+            '<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"'
+            ' versione="FPR12">', xml)
         self.assertIn('<FormatoTrasmissione>FPR12</FormatoTrasmissione>', xml)
 
     def test_serialize_lxml(self):
@@ -224,7 +241,9 @@ class TestFatturaPrivati12(TestFatturaMixin, TestCase):
             tree.write(out)
             xml = out.getvalue()
 
-        self.assertIn(b'<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" versione="FPR12">', xml)
+        self.assertIn(
+            b'<ns0:FatturaElettronica xmlns:ns0="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"'
+            b' versione="FPR12">', xml)
         self.assertIn(b'<FormatoTrasmissione>FPR12</FormatoTrasmissione>', xml)
 
     def test_to_python(self):
