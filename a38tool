@@ -67,7 +67,7 @@ class Diff(App):
         from a38.diff import Diff
         res = Diff()
         first.diff(res, second)
-        if res:
+        if res.differences:
             for d in res.differences:
                 print(d)
             return 1
