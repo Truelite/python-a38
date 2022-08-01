@@ -352,6 +352,23 @@ class DecimalField(ChoicesField[Decimal]):
                         "'{}' should be no more than {} digits long".format(xml_value, self.max_length))
         return value
 
+    def diff(self, res: Diff, first: Optional[T], second: Optional[T]):
+        """
+        Report to res if there are differences between values first and second
+        """
+        first = self.clean_value(first)
+        second = self.clean_value(second)
+        has_first = self.has_value(first)
+        has_second = self.has_value(second)
+        if not has_first and not has_second:
+            return
+        elif has_first and not has_second:
+            res.add_only_first(self, first)
+        elif not has_first and has_second:
+            res.add_only_second(self, second)
+        elif first.quantize(self.quantize_sample) != second.quantize(self.quantize_sample):
+            res.add_different(self, first, second)
+
 
 class StringField(ChoicesField[str]):
     def __init__(self, length=None, min_length=None, max_length=None, **kw):

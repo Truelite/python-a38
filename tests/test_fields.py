@@ -354,7 +354,8 @@ class TestDecimalField(FieldTestMixin, TestCase):
     def test_diff(self):
         f = self.get_field()
         self.assert_diff_empty(f, Decimal("1.0"), "1.0")
-        self.assert_field_diff(f, "1.0001", "1.0002")
+        self.assert_diff_empty(f, "1.0001", "1.0002")
+        self.assert_field_diff(f, "1.1", "1.2")
 
     def test_xml(self):
         f = self.get_field(null=True)

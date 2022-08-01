@@ -1,6 +1,7 @@
 # New in version UNRELEASED
 
 * Generate `dati_riepilogo` with properly set `natura` (#27)
+* Ignore non-significant digits when computing differences between Decimal fields
 
 # New in version 0.1.5
 
