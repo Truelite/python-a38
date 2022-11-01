@@ -395,7 +395,7 @@ class DettaglioLinee(models.Model):
     unita_misura = fields.StringField(max_length=10, null=True)
     data_inizio_periodo = fields.DateField(null=True)
     data_fine_periodo = fields.DateField(null=True)
-    prezzo_unitario = fields.DecimalField(max_length=21)
+    prezzo_unitario = fields.DecimalField(max_length=21, decimals=3)
     sconto_maggiorazione = fields.ModelListField(ScontoMaggiorazione, null=True)
     prezzo_totale = fields.DecimalField(max_length=21)
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
