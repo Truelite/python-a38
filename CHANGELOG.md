@@ -3,6 +3,7 @@
 * Generate `dati_riepilogo` with properly set `natura` (#27)
 * Ignore non-significant digits when computing differences between Decimal fields
 * a38tool diff: return exit code 0 if there are no differences
+* Change Prezzo Unitario decimals precision to 3 digits, thanks @matteorizzello
 
 # New in version 0.1.5
 
