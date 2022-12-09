@@ -175,7 +175,7 @@ a38.fattura.FatturaPrivati12(
 
 ### Render to HTML or PDF
 
-You can use a .xslt file to render e fattura to HTML or PDF.
+You can use a .xslt file to render a fattura to HTML or PDF.
 
 ```text
 $ a38tool html --help
