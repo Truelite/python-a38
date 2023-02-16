@@ -9,3 +9,4 @@ include stubs/dateutil/*.pyi
 include download-docs
 include document-a38
 include test-coverage
+include requirements-lib.txt
