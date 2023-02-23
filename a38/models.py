@@ -59,7 +59,7 @@ class ModelMetaclass(type):
                 continue
 
             # Remove field_name from class variables
-            dct.pop(field_name)
+            del dct[field_name]
             # Add it as a slot in the instance
             slots.append(field_name)
 
