@@ -163,6 +163,23 @@ class TestDatiBeniServizi(TestFatturaMixin, TestCase):
                 a38.DatiRiepilogo(
                     aliquota_iva="22", imponibile_importo="8", imposta="1.76", esigibilita_iva="I", natura="N1"))
 
+    def test_build_dati_riepilogo_natura_issue33(self):
+        self.maxDiff = None
+
+        o = a38.DatiBeniServizi()
+        o.add_dettaglio_linee(
+                descrizione="Bollo", quantita=1, unita_misura="EUR",
+                prezzo_unitario="2", aliquota_iva="0.00", natura="N1")
+        o.build_dati_riepilogo()
+
+        self.assertEqual(o.dati_riepilogo[0].natura, "N1")
+
+        from a38.validation import Validation
+        res = Validation()
+        o.validate(res)
+        self.assertEqual(res.warnings, [])
+        self.assertEqual(res.errors, [])
+
 
 class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
     def test_build_importo_totale_documento(self):
