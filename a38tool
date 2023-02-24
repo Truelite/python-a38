@@ -405,6 +405,31 @@ class UpdateCAPath(App):
         tl.update_capath(self.destdir, remove_old=self.remove_old)
 
 
+class Allegati(App):
+    """
+    Show the attachments in the fattura
+    """
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.pathname = args.file
+
+    @classmethod
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("file", help="input file (.xml or .xml.p7m)")
+        return parser
+
+    def run(self):
+        f = self.load_fattura(self.pathname)
+        index = 1
+        for body in f.fattura_elettronica_body:
+            for allegato in body.allegati:
+                print(f"{index:02d}: {allegato.nome_attachment}")
+                if allegato.descrizione_attachment:
+                    print(f"    {allegato.descrizione_attachment}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Handle fattura elettronica files")
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
@@ -423,6 +448,7 @@ def main():
     RenderHTML.add_subparser(subparsers)
     RenderPDF.add_subparser(subparsers)
     UpdateCAPath.add_subparser(subparsers)
+    Allegati.add_subparser(subparsers)
 
     args = parser.parse_args()
 
