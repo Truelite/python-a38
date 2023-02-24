@@ -9,7 +9,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, TextIO, Union
+from typing import TYPE_CHECKING, Optional, IO, Union
 
 from a38 import codec, models
 
@@ -125,7 +125,7 @@ class Exporter(App):
             f"{self.__class__.__name__}.get_codec is not implemented"
         )
 
-    def write(self, f: models.Model, file: Union[TextIO, BinaryIO]):
+    def write(self, f: models.Model, file: Union[IO[str], IO[bytes]]):
         self.codec.write_file(f, file)
 
     @contextlib.contextmanager
@@ -429,9 +429,11 @@ class Allegati(App):
     @classmethod
     def add_subparser(cls, subparsers):
         parser = super().add_subparser(subparsers)
-        parser.add_argument("--extract", "-x", help="extract selected attachments")
+        parser.add_argument("--extract", "-x", action="store_true", help="extract selected attachments")
         parser.add_argument("--json", action="store_true", help="show attachments in json format")
         parser.add_argument("--yaml", action="store_true", help="show attachments in yaml format")
+        parser.add_argument("--output", "-o", action="store",
+                            help="destination file name (-o file) or directory (-o dir/)")
         parser.add_argument("file", help="input file (.xml or .xml.p7m)")
         parser.add_argument("attachments", nargs="*",
                             help="IDs or names of attachments to extract. Shell-like wildcards allowed")
@@ -454,7 +456,7 @@ class Allegati(App):
 
         return False
 
-    def process_allegato(self, index: int, allegato: fattura.Allegati) -> None:
+    def print_allegato(self, index: int, allegato: fattura.Allegati) -> None:
         print(f"{index:02d}: {allegato.formato_attachment} {allegato.nome_attachment}")
         if allegato.descrizione_attachment:
             print(f"    {allegato.descrizione_attachment}")
@@ -486,9 +488,36 @@ class Allegati(App):
                 yaml.dump(
                     output, stream=sys.stdout, default_flow_style=False, sort_keys=False,
                     allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
+        elif self.args.extract:
+            destname: Optional[str]
+            destdir: str
+
+            if self.args.output:
+                if os.path.isdir(self.args.output) or self.args.output.endswith(os.sep):
+                    destname = None
+                    destdir = self.args.output
+                else:
+                    destname = self.args.output
+                    destdir = "."
+            else:
+                destname = None
+                destdir = "."
+
+            if destname is not None and len(selected) > 1:
+                raise Fail("there are multiple attachment to save, and--output points to a single file name")
+
+            os.makedirs(destdir, exist_ok=True)
+
+            for index, allegato in selected:
+                if destname is None:
+                    destname = os.path.basename(allegato.nome_attachment)
+                dest = os.path.join(destdir, destname)
+                log.info("Extracting %s to %s", allegato.nome_attachment, dest)
+                with open(dest, "wb") as fd:
+                    fd.write(allegato.attachment)
         else:
             for index, allegato in selected:
-                self.process_allegato(index, allegato)
+                self.print_allegato(index, allegato)
 
 
 def main():
