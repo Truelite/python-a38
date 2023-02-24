@@ -48,7 +48,7 @@ elif yaml is not None:
 
     def _write_yaml(data: Dict[str, Any], file: TextIO):
         yaml.dump(
-            data, stream=file, default_flow_style=False,
+            data, stream=file, default_flow_style=False, sort_keys=False,
             allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
 else:
     def _load_yaml(fd: TextIO):
