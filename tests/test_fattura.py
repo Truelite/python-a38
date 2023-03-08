@@ -178,6 +178,17 @@ class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
 
         self.assertEqual(o.dati_generali.dati_generali_documento.importo_totale_documento, Decimal("19.493"))
 
+    def test_rounding_xml(self):
+        f = a38.FatturaPrivati12()
+        o = f.fattura_elettronica_body[0]
+        o.dati_beni_servizi.add_dettaglio_linee(
+            descrizione="Line 1", prezzo_unitario="0.35", aliquota_iva=10, unita_misura='pz', quantita=1)
+        o.dati_beni_servizi.build_dati_riepilogo()
+        o.build_importo_totale_documento()
+
+        self.assertEqual(f.fattura_elettronica_body[0].dati_generali.dati_generali_documento.importo_totale_documento, Decimal("0.385"))
+        self.assertEqual(f.build_etree().getroot().find('.//ImportoTotaleDocumento').text, "0.39")
+
 
 class TestFatturaPrivati12(TestFatturaMixin, TestCase):
     def build_sample(self):

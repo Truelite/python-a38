@@ -359,7 +359,7 @@ class TestDecimalField(FieldTestMixin, TestCase):
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, "12.345"), "<T><Sample>12.34</Sample></T>")
+        self.assertEqual(self.to_xml(f, "12.345"), "<T><Sample>12.35</Sample></T>")
         self.assertEqual(self.to_xml(f, "34.567"), "<T><Sample>34.57</Sample></T>")
 
 
