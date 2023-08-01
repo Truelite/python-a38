@@ -329,7 +329,7 @@ class DecimalField(ChoicesField[Decimal]):
     def to_str(self, value):
         if not self.has_value(value):
             return "None"
-        return str(self.clean_value(value).quantize(self.quantize_sample))
+        return str(self.clean_value(value).quantize(self.quantize_sample, rounding=decimal.ROUND_HALF_UP))
 
     def to_jsonable(self, value):
         """
