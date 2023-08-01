@@ -111,5 +111,6 @@ class TestSignature(TestCase):
         if p7m.is_expired():
             self.skipTest("test signature has expired and needs to be regenerated")
         with tempfile.TemporaryDirectory() as capath:
-            with self.assertRaisesRegexp(InvalidSignatureError, r"Verify error:unable to get local issuer certificate"):
+            with self.assertRaisesRegexp(
+                    InvalidSignatureError, r"Verify error:\s*unable to get local issuer certificate"):
                 p7m.verify_signature(capath)
