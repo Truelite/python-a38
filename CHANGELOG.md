@@ -4,6 +4,8 @@
 * Ignore non-significant digits when computing differences between Decimal fields
 * a38tool diff: return exit code 0 if there are no differences
 * Change Prezzo Unitario decimals precision to 3 digits, thanks @matteorizzello
+* Fixed a rounding issue (#35), thanks @tschager
+* Updated signature in test certificate
 
 # New in version 0.1.5
 
