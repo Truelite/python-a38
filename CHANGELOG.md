@@ -1,5 +1,8 @@
 # New in version UNRELEASED
 
+* Allow ranges of decimal digits in some fields, to match specifications more
+  closely
+
 # New in version 0.1.6
 
 * Generate `dati_riepilogo` with properly set `natura` (#27)
