@@ -1,5 +1,7 @@
 # New in version UNRELEASED
 
+# New in version 0.1.6
+
 * Generate `dati_riepilogo` with properly set `natura` (#27)
 * Ignore non-significant digits when computing differences between Decimal fields
 * a38tool diff: return exit code 0 if there are no differences
