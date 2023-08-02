@@ -305,7 +305,28 @@ class TestDecimalField(FieldTestMixin, TestCase):
         f = self.get_field()
         self.assert_validates(f, 12, result=Decimal("12.00"))
         self.assert_validates(f, "12", result=Decimal("12.00"))
+        self.assert_validates(f, "12.345", result=Decimal("12.35"))
+        self.assert_validates(f, "foo", result="foo", errors=[
+            "sample: 'foo' cannot be converted to Decimal",
+        ])
+
+    def test_decimals_fixed(self):
+        f = self.get_field(decimals=3)
+        self.assert_validates(f, 12, result=Decimal("12.000"))
+        self.assert_validates(f, "12", result=Decimal("12.000"))
         self.assert_validates(f, "12.345", result=Decimal("12.345"))
+        self.assert_validates(f, "12.345678", result=Decimal("12.346"))
+        self.assert_validates(f, "foo", result="foo", errors=[
+            "sample: 'foo' cannot be converted to Decimal",
+        ])
+
+    def test_decimals_range(self):
+        f = self.get_field(decimals=(2, 6))
+        self.assert_validates(f, 12, result=Decimal("12.00"))
+        self.assert_validates(f, "12", result=Decimal("12.00"))
+        self.assert_validates(f, "12.345", result=Decimal("12.345"))
+        self.assert_validates(f, "12.345678", result=Decimal("12.345678"))
+        self.assert_validates(f, "12.3456789", result=Decimal("12.345679"))
         self.assert_validates(f, "foo", result="foo", errors=[
             "sample: 'foo' cannot be converted to Decimal",
         ])
@@ -324,30 +345,24 @@ class TestDecimalField(FieldTestMixin, TestCase):
         ])
 
     def test_choices(self):
-        f = self.get_field(choices=("1.1", "2.2"))
+        f = self.get_field(choices=("1.1", "2.2"), decimals=1)
         self.assert_validates(f, "1.1", result=Decimal("1.1"))
         self.assert_validates(f, Decimal("2.2"), result=Decimal("2.2"))
-        # 1.1 does not have an exact decimal representation
-        self.assert_validates(
-            f, 1.1,
-            result=Decimal("1.100000000000000088817841970012523233890533447265625"),
-            errors=[
-                "sample: Decimal('1.100000000000000088817841970012523233890533447265625')"
-                " is not a valid choice for this field"])
+        # 1.1 does not have an exact decimal representation, but clean_value
+        # will constrain it to the configured number of digits
+        self.assert_validates(f, 1.1, result=Decimal("1.1"))
         self.assert_validates(f, None, result=None, errors=[
             "sample: missing value",
         ])
 
     def test_choices_nullable(self):
-        f = self.get_field(choices=("1.1", "2.2"), null=True)
+        f = self.get_field(choices=("1.1", "2.2"), null=True, decimals=1)
         self.assert_validates(f, "1.1", result=Decimal("1.1"))
         self.assert_validates(f, Decimal("2.2"), result=Decimal("2.2"))
         self.assert_validates(f, None, result=None)
-        # 1.1 does not have an exact decimal representation
-        dec11 = Decimal(1.1)
-        self.assert_validates(f, 1.1, result=dec11, errors=[
-            "sample: {!r} is not a valid choice for this field".format(dec11),
-        ])
+        # 1.1 does not have an exact decimal representation, but gets fit into
+        # the allowed decimals
+        self.assert_validates(f, 1.1, result=Decimal("1.1"))
 
     def test_to_python(self):
         f = self.get_field()

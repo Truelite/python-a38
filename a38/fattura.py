@@ -375,7 +375,7 @@ class DatiGeneraliDocumento(models.Model):
 class AltriDatiGestionali(models.Model):
     tipo_dato = fields.StringField(max_length=10)
     riferimento_testo = fields.StringField(max_length=60, null=True)
-    riferimento_numero = fields.DecimalField(max_length=21, null=True)
+    riferimento_numero = fields.DecimalField(max_length=21, decimals=(2, 8), null=True)
     riferimento_data = fields.DateField(null=True)
 
 
@@ -391,13 +391,13 @@ class DettaglioLinee(models.Model):
     tipo_cessione_prestazione = fields.StringField(length=2, choices=("SC", "PR", "AB", "AC"), null=True)
     codice_articolo = fields.ModelListField(CodiceArticolo, null=True)
     descrizione = fields.StringField(max_length=1000)
-    quantita = fields.DecimalField(max_length=21, decimals=2, null=True)
+    quantita = fields.DecimalField(max_length=21, decimals=(2, 8), null=True)
     unita_misura = fields.StringField(max_length=10, null=True)
     data_inizio_periodo = fields.DateField(null=True)
     data_fine_periodo = fields.DateField(null=True)
-    prezzo_unitario = fields.DecimalField(max_length=21, decimals=3)
+    prezzo_unitario = fields.DecimalField(max_length=21, decimals=(2, 8))
     sconto_maggiorazione = fields.ModelListField(ScontoMaggiorazione, null=True)
-    prezzo_totale = fields.DecimalField(max_length=21)
+    prezzo_totale = fields.DecimalField(max_length=21, decimals=(2, 8))
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
     ritenuta = fields.StringField(length=2, choices=("SI",), null=True)
     natura = fields.StringField(min_length=2, max_length=4, null=True, choices=consts.NATURA_IVA)
@@ -434,7 +434,7 @@ class DatiRiepilogo(models.Model):
     aliquota_iva = fields.DecimalField(xmltag="AliquotaIVA", max_length=6)
     natura = fields.StringField(min_length=2, max_length=4, null=True, choices=consts.NATURA_IVA)
     spese_accessorie = fields.DecimalField(max_length=15, null=True)
-    arrotondamento = fields.DecimalField(max_length=21, null=True)
+    arrotondamento = fields.DecimalField(max_length=21, decimals=(2, 8), null=True)
     # FIXME: Su questo valore il sistema effettua un controllo per verificare
     # la correttezza del calcolo; per i dettagli sull’algoritmo di calcolo si
     # rimanda al file Elenco controlli versione 1.4 presente sul sito

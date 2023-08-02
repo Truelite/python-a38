@@ -193,7 +193,10 @@ class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
         o.dati_beni_servizi.build_dati_riepilogo()
         o.build_importo_totale_documento()
 
-        self.assertEqual(o.dati_generali.dati_generali_documento.importo_totale_documento, Decimal("19.493"))
+        # It would be 19.49 if all operations where made in full float, but
+        # since we first compute imponibile and imposta, fit them into the
+        # required number of digits, then add them up, 19.50 is what we get
+        self.assertEqual(o.dati_generali.dati_generali_documento.importo_totale_documento, Decimal("19.50"))
 
     def test_rounding_xml(self):
         f = a38.FatturaPrivati12()
@@ -203,7 +206,9 @@ class TestFatturaElettronicaBody(TestFatturaMixin, TestCase):
         o.dati_beni_servizi.build_dati_riepilogo()
         o.build_importo_totale_documento()
 
-        self.assertEqual(f.fattura_elettronica_body[0].dati_generali.dati_generali_documento.importo_totale_documento, Decimal("0.385"))
+        self.assertEqual(
+            f.fattura_elettronica_body[0].dati_generali.dati_generali_documento.importo_totale_documento,
+            Decimal("0.39"))
         self.assertEqual(f.build_etree().getroot().find('.//ImportoTotaleDocumento').text, "0.39")
 
 

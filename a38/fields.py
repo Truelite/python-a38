@@ -7,7 +7,8 @@ import logging
 import re
 import time
 from decimal import Decimal
-from typing import Any, Generic, List, Optional, Sequence, TypeVar
+from typing import (Any, Generic, List, Optional, Sequence, Tuple, TypeVar,
+                    Union)
 
 import pytz
 from dateutil.parser import isoparse
@@ -311,25 +312,50 @@ class IntegerField(ChoicesField[int]):
 
 
 class DecimalField(ChoicesField[Decimal]):
-    def __init__(self, max_length=None, decimals=2, **kw):
-        super().__init__(**kw)
+    def __init__(
+            self,
+            max_length: Optional[int] = None,
+            decimals: Union[int, Tuple[int, int]] = 2,
+            **kw):
+        # Set these attributes before calling ChoicesField's __init__, since
+        # that will call clean_value, that needs these fields
         self.max_length = max_length
-        self.decimals = decimals
-        self.quantize_sample = Decimal(10) ** -decimals
+        if isinstance(decimals, int):
+            self.decimals_min = decimals
+            self.decimals_max = decimals
+        else:
+            self.decimals_min, self.decimals_max = decimals
+
+        super().__init__(**kw)
 
     def clean_value(self, value):
         value = super().clean_value(value)
         if value is None:
             return value
         try:
-            return Decimal(value)
+            dec_value = Decimal(value)
         except decimal.InvalidOperation:
             raise TypeError("{} cannot be converted to Decimal".format(repr(value)))
+
+        # Enforce fitting into the required range of decimal digits
+        sign, digits, exponent = dec_value.as_tuple()
+        if exponent < 0:
+            # We have decimal digits
+            if -exponent < self.decimals_min:
+                dec_value = dec_value.quantize(Decimal(10) ** -self.decimals_min, rounding=decimal.ROUND_HALF_UP)
+            elif -exponent > self.decimals_max:
+                dec_value = dec_value.quantize(Decimal(10) ** -self.decimals_max, rounding=decimal.ROUND_HALF_UP)
+        else:
+            # No decimal digits
+            if self.decimals_min > 0:
+                dec_value = dec_value.quantize(Decimal(10) ** -self.decimals_min, rounding=decimal.ROUND_HALF_UP)
+
+        return dec_value
 
     def to_str(self, value):
         if not self.has_value(value):
             return "None"
-        return str(self.clean_value(value).quantize(self.quantize_sample, rounding=decimal.ROUND_HALF_UP))
+        return str(self.clean_value(value))
 
     def to_jsonable(self, value):
         """
@@ -366,7 +392,7 @@ class DecimalField(ChoicesField[Decimal]):
             res.add_only_first(self, first)
         elif not has_first and has_second:
             res.add_only_second(self, second)
-        elif first.quantize(self.quantize_sample) != second.quantize(self.quantize_sample):
+        elif first != second:
             res.add_different(self, first, second)
 
 
