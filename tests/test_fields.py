@@ -328,9 +328,12 @@ class TestDecimalField(FieldTestMixin, TestCase):
         self.assert_validates(f, "1.1", result=Decimal("1.1"))
         self.assert_validates(f, Decimal("2.2"), result=Decimal("2.2"))
         # 1.1 does not have an exact decimal representation
-        self.assert_validates(f, 1.1, result=Decimal("1.100000000000000088817841970012523233890533447265625"), errors=[
-            "sample: Decimal('1.100000000000000088817841970012523233890533447265625') is not a valid choice for this field",
-        ])
+        self.assert_validates(
+            f, 1.1,
+            result=Decimal("1.100000000000000088817841970012523233890533447265625"),
+            errors=[
+                "sample: Decimal('1.100000000000000088817841970012523233890533447265625')"
+                " is not a valid choice for this field"])
         self.assert_validates(f, None, result=None, errors=[
             "sample: missing value",
         ])
@@ -473,7 +476,9 @@ class TestDateTimeField(FieldTestMixin, TestCase):
 
     def test_xml(self):
         f = self.get_field(null=True)
-        self.assertEqual(self.to_xml(f, self.mkdt(2019, 1, 2, 12, 30)), "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, self.mkdt(2019, 1, 2, 12, 30)),
+            "<T><Sample>2019-01-02T12:30:00+01:00</Sample></T>")
         self.assertEqual(self.to_xml(f, "2019-01-02T12:13:14"), "<T><Sample>2019-01-02T12:13:14+01:00</Sample></T>")
 
 
@@ -625,7 +630,9 @@ class TestModelListField(FieldTestMixin, TestCase):
     def test_xml(self):
         f = self.get_field(null=True)
         self.assertIsNone(self.to_xml(f, []))
-        self.assertEqual(self.to_xml(f, [Sample("test", 7)]), "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
+        self.assertEqual(
+            self.to_xml(f, [Sample("test", 7)]),
+            "<T><Sample><Name>test</Name><Value>7</Value></Sample></T>")
 
 
 class TestListField(FieldTestMixin, TestCase):
