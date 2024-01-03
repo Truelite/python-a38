@@ -59,6 +59,18 @@
         <Numero>1</Numero>
         <ImportoTotaleDocumento>123.45</ImportoTotaleDocumento>
         <Causale>Test Causale</Causale>
+        <DatiRitenuta>
+          <TipoRitenuta>RT04</TipoRitenuta>
+          <ImportoRitenuta>70.00</ImportoRitenuta>
+          <AliquotaRitenuta>1.00</AliquotaRitenuta>
+          <CausalePagamento>ZO</CausalePagamento>
+        </DatiRitenuta>
+        <DatiRitenuta>
+          <TipoRitenuta>RT02</TipoRitenuta>
+          <ImportoRitenuta>805.00</ImportoRitenuta>
+          <AliquotaRitenuta>11.50</AliquotaRitenuta>
+          <CausalePagamento>Q</CausalePagamento>
+        </DatiRitenuta>
       </DatiGeneraliDocumento>
       <DatiOrdineAcquisto>
         <RiferimentoNumeroLinea>1</RiferimentoNumeroLinea>

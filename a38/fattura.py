@@ -344,7 +344,7 @@ class DatiGeneraliDocumento(models.Model):
     divisa = fields.StringField()
     data = fields.DateField()
     numero = fields.StringField(max_length=20)
-    dati_ritenuta = fields.ModelField(DatiRitenuta, null=True)
+    dati_ritenuta = fields.ModelListField(DatiRitenuta, null=True)
     dati_bollo = fields.ModelField(DatiBollo, null=True)
     dati_cassa_previdenziale = fields.ModelListField(DatiCassaPrevidenziale, null=True)
     sconto_maggiorazione = fields.ModelListField(ScontoMaggiorazione, null=True)
