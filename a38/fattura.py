@@ -672,16 +672,19 @@ class DatiGenerali(models.Model):
 
     def validate_model(self, validation):
         super().validate_model(validation)
-        dfc_dates = [x.data for x in self.dati_fatture_collegate if x.data is not None]
-        if dfc_dates and self.dati_generali_documento.data < min(dfc_dates):
-            validation.add_error(
-                (
-                    self.dati_fatture_collegate._meta["data"],
-                    self.dati_generali_documento._meta["data"],
-                ),
-                "dati_generali_documento.data is earlier than dati_fatture_collegate.data",
-                code="00418",
-            )
+        for idx, dfc in enumerate(self.dati_fatture_collegate):
+            if dfc.data is None:
+                continue
+            if self.dati_generali_documento.data < dfc.data:
+                validation.add_error(
+                    (
+                        dfc._meta["data"],
+                        self.dati_generali_documento._meta["data"],
+                    ),
+                    f"dati_generali_documento[{idx}].data"
+                    " is earlier than dati_fatture_collegate.data",
+                    code="00418",
+                )
 
 
 @export
