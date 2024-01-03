@@ -2,6 +2,8 @@
 
 ![full workflow](https://github.com/Truelite/python-a38/actions/workflows/py.yml/badge.svg)
 
+<a href="https://pypi.org/project/a38/"><img alt="PyPI" src="https://img.shields.io/pypi/v/a38"></a>
+
 Library to generate Italian Fattura Elettronica from Python.
 
 This library implements a declarative data model similar to Django models, that
@@ -20,11 +22,10 @@ parse all the example XML files distributed by
 
 ## Dependencies
 
-Required: dateutil, pytz, asn1crypto, and the python3 standard library.
+Required: dateutil, pytz, asn1crypto, defusedxml, lxml, requests and the python3 standard library.
 
 Optional:
  * yapf for formatting `a38tool python` output
- * lxml for rendering to HTML
  * the wkhtmltopdf command for rendering to PDF
  * requests for downloading CA certificates for signature verification
 
@@ -35,23 +36,24 @@ A simple command line wrapper to the library functions is available as `a38tool`
 
 ```text
 $ a38tool --help
-usage: a38tool [-h] [--verbose] [--debug]
-               {json,xml,python,diff,validate,html,pdf,update_capath} ...
+usage: a38tool [-h] [--verbose] [--debug] {json,yaml,xml,python,edit,diff,validate,html,pdf,update_capath,vies} ...
 
 Handle fattura elettronica files
 
 positional arguments:
-  {json,xml,python,diff,validate,html,pdf,update_capath}
+  {json,yaml,xml,python,edit,diff,validate,html,pdf,update_capath,vies}
                         actions
     json                output a fattura in JSON
+    yaml                output a fattura in JSON
     xml                 output a fattura in XML
     python              output a fattura as Python code
+    edit                Open a fattura for modification in a text editor
     diff                show the difference between two fatture
     validate            validate the contents of a fattura
     html                render a Fattura as HTML using a .xslt stylesheet
     pdf                 render a Fattura as PDF using a .xslt stylesheet
-    update_capath       create/update an openssl CApath with CA certificates
-                        that can be used to validate digital signatures
+    update_capath       create/update an openssl CApath with CA certificates that can be used to validate digital signatures
+    vies                inspect the VIES (VAT Information Exchange System) details for a given VAT number
 
 optional arguments:
   -h, --help            show this help message and exit
