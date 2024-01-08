@@ -1,7 +1,8 @@
 from contextlib import contextmanager
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from . import fields
+if TYPE_CHECKING:
+    from . import fields
 
 
 class Annotation:
