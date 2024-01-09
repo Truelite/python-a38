@@ -470,7 +470,8 @@ class Allegati(App):
         return False
 
     def print_allegato(self, index: int, allegato: fattura.Allegati) -> None:
-        print(f"{index:02d}: {allegato.formato_attachment} {allegato.nome_attachment}")
+        formato = allegato.formato_attachment or "-"
+        print(f"{index:02d}: {formato} {allegato.nome_attachment}")
         if allegato.descrizione_attachment:
             print(f"    {allegato.descrizione_attachment}")
 
