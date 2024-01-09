@@ -413,16 +413,18 @@ class Allegati(App):
     Show the attachments in the fattura
     """
 
-    def __init__(self, args):
+    def __init__(self, args: argparse.Namespace) -> None:
         super().__init__(args)
         self.pathname = args.file
         self.ids: set[int] = set()
-        self.globs: list[re.pattern] = []
+        self.globs: list[re.Pattern] = []
         self.has_filter = False
         for pattern in self.args.attachments:
             self.has_filter = True
             if pattern.isdigit():
                 self.ids.add(int(pattern))
+            elif pattern.startswith("^"):
+                self.globs.append(re.compile(pattern))
             else:
                 self.globs.append(re.compile(fnmatch.translate(pattern)))
 
@@ -448,7 +450,7 @@ class Allegati(App):
         parser.add_argument(
             "attachments",
             nargs="*",
-            help="IDs or names of attachments to extract. Shell-like wildcards allowed",
+            help="IDs or names of attachments to extract. Shell-like wildcards allowed, or regexps if starting with ^",
         )
         return parser
 
