@@ -2,6 +2,9 @@
 
 * Allow ranges of decimal digits in some fields, to match specifications more
   closely
+* Added `allegati` subcommand to list and extract attachments. See #32
+* Allow more than one DatiRitenuta tag in DatiGeneraliDocumento, thanks
+  @tschager, see #38
 
 # New in version 0.1.6
 
