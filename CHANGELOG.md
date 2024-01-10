@@ -1,5 +1,7 @@
 # New in version UNRELEASED
 
+New in version 0.1.7
+
 * Allow ranges of decimal digits in some fields, to match specifications more
   closely
 * Added `allegati` subcommand to list and extract attachments. See #32
