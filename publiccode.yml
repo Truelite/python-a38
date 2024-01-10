@@ -27,7 +27,7 @@ softwareType: library
 dependsOn:
   open:
     - name: Python
-      versionMin: '3.5'
+      versionMin: '3.11'
       optional: false 
 maintenance:
   type: internal 

@@ -5,6 +5,7 @@
 * Added `allegati` subcommand to list and extract attachments. See #32
 * Allow more than one DatiRitenuta tag in DatiGeneraliDocumento, thanks
   @tschager, see #38
+* Bump minimum supported Python version to 3.11
 
 # New in version 0.1.6
 
