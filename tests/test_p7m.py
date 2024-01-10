@@ -103,7 +103,7 @@ class TestSignature(TestCase):
         encap_content_info["content"] = b"All your base are belong to us"
         p7m.data = p7m.content_info.dump()
         with self.capath() as capath:
-            with self.assertRaisesRegexp(InvalidSignatureError, r"routines:CMS_verify:content verify error"):
+            with self.assertRaisesRegex(InvalidSignatureError, r"routines:CMS_verify:content verify error"):
                 p7m.verify_signature(capath)
 
     def test_verify_noca(self):
@@ -111,6 +111,6 @@ class TestSignature(TestCase):
         if p7m.is_expired():
             self.skipTest("test signature has expired and needs to be regenerated")
         with tempfile.TemporaryDirectory() as capath:
-            with self.assertRaisesRegexp(
+            with self.assertRaisesRegex(
                     InvalidSignatureError, r"Verify error:\s*unable to get local issuer certificate"):
                 p7m.verify_signature(capath)

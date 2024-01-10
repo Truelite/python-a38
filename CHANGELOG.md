@@ -1,5 +1,7 @@
 # New in version UNRELEASED
 
+* Fix tests for Python 3.12
+
 New in version 0.1.7
 
 * Allow ranges of decimal digits in some fields, to match specifications more
